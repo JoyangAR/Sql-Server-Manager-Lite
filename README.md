@@ -19,7 +19,7 @@ SQL Server Manager Lite is a versatile tool designed to interact with Microsoft 
 
 ## Acknowledgments
 
-This application's original code was authored by Martin P. Rizal. Unfortunately, I couldn't find a GitHub repository for Martin P. Rizal, and their SourceForge account has been inactive for the past 7 years. We express our gratitude to Martin P. Rizal for the foundational work in creating this tool.
+This application's original code was authored by Martin P. Rizal. Unfortunately, I couldn't find a GitHub repository for Martin P. Rizal, and their SourceForge account has been inactive for the past 7 years. I express our gratitude to Martin P. Rizal for the foundational work in creating this tool.
 
 Iv've done my best to update and improve the application. Some features may not be fully operational in Integrated mode (System.Data.SqlClient), and a few are commented out due to mysterious errors or forgetfulness – they might need replacement or have already been replaced. I appreciate your understanding and patience!
 
