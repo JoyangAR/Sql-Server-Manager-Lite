@@ -14,8 +14,12 @@ SQL Server Manager Lite is a versatile tool designed to interact with Microsoft 
 - **Delete:** Delete a SQL Server database.
 - **Repair:** Repair a corrupted SQL Server database.
 - **Size Information:** Retrieve and display the size information of MDF and LDF files for a database.
+- **Kill Connections:** Terminate active connections to a SQL Server database.
+- **Show Tables:** View a list of tables in a SQL Server database.
+- **Show Rows:** Display rows of a specific table in a SQL Server database.
 - **Set Guest User:** Set the guest user for a SQL Server database.
 - **User Management:** Add, change passwords, and delete users for a SQL Server instance.
+
 
 ## Acknowledgments
 
