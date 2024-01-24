@@ -135,6 +135,12 @@
     <Compile Include="frmmain.vb">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="frmtableview.Designer.vb">
+      <DependentUpon>frmtableview.vb</DependentUpon>
+    </Compile>
+    <Compile Include="frmtableview.vb">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Module1.vb">
       <SubType>Code</SubType>
     </Compile>
@@ -161,6 +167,9 @@
       <DependentUpon>frmpwd.vb</DependentUpon>
     </EmbeddedResource>
     <Content Include="Project1.ico" />
+    <EmbeddedResource Include="frmtableview.resx">
+      <DependentUpon>frmtableview.vb</DependentUpon>
+    </EmbeddedResource>
     <None Include="_UpgradeReport.htm">
       <SubType>Preview</SubType>
     </None>
