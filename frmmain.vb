@@ -536,6 +536,20 @@ xc:
         End If
     End Sub
 
+    Private Sub cmdtables_Click(sender As Object, e As EventArgs) Handles cmdtables.Click
+        ' Check if a database is selected in lstdb
+        If lstdb.SelectedIndex = -1 Then
+            MsgBox("Select a database first.", MsgBoxStyle.Exclamation)
+            Exit Sub
+        End If
+
+        ' Create an instance of frmtables
+        Dim tablesForm As New frmtableview()
+
+        ' Show frmtables
+        tablesForm.Show()
+    End Sub
+
     Private Sub frmmain_Load(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles MyBase.Load
         LoadUser()
         LoadDatabase()
@@ -892,6 +906,7 @@ xc:
         Me.cmdgetsize.Enabled = d
         Me.cmddetach.Enabled = d
         If Not prov2 = "sqloledb" Then Me.cmdkillconn.Enabled = d
+        Me.cmdtables.Enabled = d
     End Sub
 
     Sub KeyUser(ByRef d As Boolean)
@@ -901,10 +916,9 @@ xc:
 
     Private Sub lstdb_SelectedIndexChanged(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles lstdb.SelectedIndexChanged
 
-        cmdguest.BackColor = System.Drawing.ColorTranslator.FromOle(vGray)
-        cmdguest.Enabled = True
-        LookGuest(VB6.GetItemString(lstdb, lstdb.SelectedIndex))
-        Debug.Print(GetDBFile(VB6.GetItemString(lstdb, lstdb.SelectedIndex)))
+        If Not islocaldb Then cmdguest.BackColor = System.Drawing.ColorTranslator.FromOle(vGray)
+        If Not islocaldb Then cmdguest.Enabled = True
+        If Not islocaldb Then LookGuest(VB6.GetItemString(lstdb, lstdb.SelectedIndex))
 
     End Sub
 
@@ -958,10 +972,12 @@ xc:
         End If
     End Sub
     Private Sub frmmain_FormClosing(sender As Object, e As FormClosingEventArgs) Handles Me.FormClosing
-        ' Verifica si frmLogin está abierto y lo cierra
+        ' Check if frmLogin is open and close it
         If Not frmlogin Is Nothing AndAlso Not frmlogin.IsDisposed Then
             frmlogin.Close()
         End If
     End Sub
+
+
 
 End Class

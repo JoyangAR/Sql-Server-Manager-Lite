@@ -57,6 +57,7 @@
         Me.cmdbackup = New System.Windows.Forms.Button()
         Me.cmddelete = New System.Windows.Forms.Button()
         Me.cmdrepairdb = New System.Windows.Forms.Button()
+        Me.cmdtables = New System.Windows.Forms.Button()
         Me.Frame3 = New System.Windows.Forms.GroupBox()
         Me.cmdclear = New System.Windows.Forms.Button()
         Me.txtlog = New System.Windows.Forms.TextBox()
@@ -223,13 +224,27 @@
         Me.ToolTip1.SetToolTip(Me.cmdrepairdb, "Run one of various DBCC checks for the selected Database")
         Me.cmdrepairdb.UseVisualStyleBackColor = False
         '
+        'cmdtables
+        '
+        Me.cmdtables.BackColor = System.Drawing.SystemColors.Control
+        Me.cmdtables.Cursor = System.Windows.Forms.Cursors.Default
+        Me.cmdtables.ForeColor = System.Drawing.SystemColors.ControlText
+        Me.cmdtables.Location = New System.Drawing.Point(176, 185)
+        Me.cmdtables.Name = "cmdtables"
+        Me.cmdtables.RightToLeft = System.Windows.Forms.RightToLeft.No
+        Me.cmdtables.Size = New System.Drawing.Size(81, 25)
+        Me.cmdtables.TabIndex = 22
+        Me.cmdtables.Text = "Show Tables"
+        Me.ToolTip1.SetToolTip(Me.cmdtables, "Detach Database")
+        Me.cmdtables.UseVisualStyleBackColor = False
+        '
         'Frame3
         '
         Me.Frame3.BackColor = System.Drawing.SystemColors.Control
         Me.Frame3.Controls.Add(Me.cmdclear)
         Me.Frame3.Controls.Add(Me.txtlog)
         Me.Frame3.ForeColor = System.Drawing.SystemColors.ControlText
-        Me.Frame3.Location = New System.Drawing.Point(8, 216)
+        Me.Frame3.Location = New System.Drawing.Point(8, 240)
         Me.Frame3.Name = "Frame3"
         Me.Frame3.Padding = New System.Windows.Forms.Padding(0)
         Me.Frame3.RightToLeft = System.Windows.Forms.RightToLeft.No
@@ -271,6 +286,7 @@
         'Frame2
         '
         Me.Frame2.BackColor = System.Drawing.SystemColors.Control
+        Me.Frame2.Controls.Add(Me.cmdtables)
         Me.Frame2.Controls.Add(Me.cmdkillconn)
         Me.Frame2.Controls.Add(Me.cmddetach)
         Me.Frame2.Controls.Add(Me.cmdpurge)
@@ -286,7 +302,7 @@
         Me.Frame2.Name = "Frame2"
         Me.Frame2.Padding = New System.Windows.Forms.Padding(0)
         Me.Frame2.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.Frame2.Size = New System.Drawing.Size(353, 201)
+        Me.Frame2.Size = New System.Drawing.Size(353, 226)
         Me.Frame2.TabIndex = 4
         Me.Frame2.TabStop = False
         Me.Frame2.Text = "Database"
@@ -299,7 +315,7 @@
         Me.lstdb.Location = New System.Drawing.Point(8, 24)
         Me.lstdb.Name = "lstdb"
         Me.lstdb.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.lstdb.Size = New System.Drawing.Size(161, 160)
+        Me.lstdb.Size = New System.Drawing.Size(161, 186)
         Me.lstdb.TabIndex = 5
         '
         'Frame1
@@ -314,7 +330,7 @@
         Me.Frame1.Name = "Frame1"
         Me.Frame1.Padding = New System.Windows.Forms.Padding(0)
         Me.Frame1.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.Frame1.Size = New System.Drawing.Size(281, 129)
+        Me.Frame1.Size = New System.Drawing.Size(281, 155)
         Me.Frame1.TabIndex = 0
         Me.Frame1.TabStop = False
         Me.Frame1.Text = "Users"
@@ -366,7 +382,7 @@
         Me.lstuser.Location = New System.Drawing.Point(8, 24)
         Me.lstuser.Name = "lstuser"
         Me.lstuser.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.lstuser.Size = New System.Drawing.Size(169, 95)
+        Me.lstuser.Size = New System.Drawing.Size(169, 121)
         Me.lstuser.TabIndex = 1
         '
         'Frame4
@@ -376,7 +392,7 @@
         Me.Frame4.Controls.Add(Me.chkfirewall)
         Me.Frame4.Controls.Add(Me.chksqlbrowser)
         Me.Frame4.ForeColor = System.Drawing.SystemColors.ControlText
-        Me.Frame4.Location = New System.Drawing.Point(368, 144)
+        Me.Frame4.Location = New System.Drawing.Point(368, 169)
         Me.Frame4.Name = "Frame4"
         Me.Frame4.Padding = New System.Windows.Forms.Padding(0)
         Me.Frame4.RightToLeft = System.Windows.Forms.RightToLeft.No
@@ -430,7 +446,7 @@
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.BackColor = System.Drawing.SystemColors.Control
-        Me.ClientSize = New System.Drawing.Size(657, 442)
+        Me.ClientSize = New System.Drawing.Size(657, 469)
         Me.Controls.Add(Me.cmdgetsize)
         Me.Controls.Add(Me.Frame3)
         Me.Controls.Add(Me.Frame2)
@@ -456,5 +472,6 @@
 
     Public WithEvents cmddetach As Button
     Public WithEvents cmdkillconn As Button
+    Public WithEvents cmdtables As Button
 #End Region
 End Class
