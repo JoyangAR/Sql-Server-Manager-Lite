@@ -981,4 +981,47 @@ xc:
         Catch ex As Exception
         End Try
     End Sub
+
+    Function KillConnections(ByVal dbName As String, ByRef errmsg As String) As Boolean
+        On Error GoTo xc
+
+        If prov2.ToLower() = "sqloledb" Then
+            ' Not supported for sqloledb provider
+            Throw New Exception("KillConnections is not supported for sqloledb provider.")
+        ElseIf prov2.ToLower() = "integrated" Then
+            Using con As New SqlConnection(frmmain.strlogin)
+                con.Open()
+
+                Dim commandText As String = $"USE master; ALTER DATABASE [{dbName}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; USE [{dbName}];"
+                Using cmd As New SqlCommand(commandText, con)
+                    cmd.ExecuteNonQuery()
+                End Using
+
+                commandText = $"USE master; ALTER DATABASE [{dbName}] SET MULTI_USER;"
+                Using cmd As New SqlCommand(commandText, con)
+                    cmd.ExecuteNonQuery()
+                End Using
+            End Using
+        Else
+            Throw New Exception("prov2 Value is not valid!")
+        End If
+
+        KillConnections = True
+        Exit Function
+
+xc:
+        Dim errLoop As SqlError
+
+        ' Loop through each Error object in Errors collection.
+        If con.Errors.Count > 1 Then
+            For Each errLoop In con.Errors
+                errmsg = errLoop.Message
+                frmmain.Logg(errmsg)
+            Next errLoop
+        Else
+            errmsg = Err.Description
+        End If
+
+        KillConnections = False
+    End Function
 End Module
