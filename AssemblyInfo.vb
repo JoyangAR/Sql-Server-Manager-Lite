@@ -13,9 +13,9 @@ Imports System.Security.Principal
 
 <Assembly: AssemblyTitle("A simple database management tool for MS SQL Server")>
 <Assembly: AssemblyDescription("")>
-<Assembly: AssemblyCompany("Martin P. Rizal")>
+<Assembly: AssemblyCompany("JoyangAR")>
 <Assembly: AssemblyProduct("SQL Server Manager Lite")>
-<Assembly: AssemblyCopyright("LGPL v2.0")>
+<Assembly: AssemblyCopyright("MIT License")>
 <Assembly: AssemblyTrademark("MS SQL Server is a trademark of Microsoft Corp.")>
 <Assembly: AssemblyCulture("")>
 
@@ -29,6 +29,6 @@ Imports System.Security.Principal
 ' You can specify all the values or you can default the Build and Revision Numbers
 ' by using the '*' as shown below:
 
-<Assembly:  AssemblyVersion("1.0.*")>
+<Assembly: AssemblyVersion("1.1.*")>
 
 
