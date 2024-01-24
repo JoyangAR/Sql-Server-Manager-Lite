@@ -1024,4 +1024,107 @@ xc:
 
         KillConnections = False
     End Function
+
+    Function GetTableNames(ByVal selectedDatabase As String) As List(Of String)
+        Dim tableNames As New List(Of String)
+
+        Try
+            If prov2.ToLower() = "sqloledb" Then
+                ' Logic to get table names using ADODB for SQL Server
+                ' You can adapt the logic according to your needs
+                Dim rsTables As New ADODB.Recordset
+                con.Execute("USE " & selectedDatabase)
+
+                ' Query to get table names
+                rsTables.Open("SELECT table_name FROM information_schema.tables WHERE table_type = 'BASE TABLE'", con, ADODB.CursorTypeEnum.adOpenStatic, ADODB.LockTypeEnum.adLockOptimistic)
+
+                Do Until rsTables.EOF
+                    tableNames.Add(rsTables.Fields("table_name").Value.ToString())
+                    rsTables.MoveNext()
+                Loop
+                rsTables.Close()
+            ElseIf prov2.ToLower() = "integrated" Then
+                ' Logic to get table names using SqlConnection for SQL Server
+                ' You can adapt the logic according to your needs
+                Try
+                    Using sqlCon As New SqlConnection(frmmain.strlogin)
+                        sqlCon.Open()
+                        Dim query As String = $"USE {selectedDatabase} Select TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'"
+                        Using cmd As New SqlCommand(query, sqlCon)
+                            Dim reader As SqlDataReader = cmd.ExecuteReader()
+                            While reader.Read()
+                                tableNames.Add(reader("TABLE_NAME").ToString())
+                            End While
+                        End Using
+                    End Using
+                Catch ex As Exception
+                    Return New List(Of String)()
+                End Try
+            Else
+                Throw New Exception("prov2 Value is not valid!")
+            End If
+
+            ' Sort the list alphabetically
+            tableNames.Sort()
+
+            Return tableNames
+        Catch ex As Exception
+            Return New List(Of String)()
+        End Try
+    End Function
+
+    Function GetRows(ByVal selectedTable As String, ByVal selectedRows As Integer) As DataTable
+        Dim resultTable As New DataTable()
+
+        Try
+            Dim query As String = $"SELECT TOP {selectedRows} * FROM {selectedTable}"
+
+            If prov2.ToLower() = "sqloledb" Then
+                ' Logic to get rows using ADODB for SQL Server
+                ' You can adapt the logic according to your needs
+                Dim rsRows As New ADODB.Recordset
+                con.Execute(query, , 1024) ' 1024 is the value of adExecuteNoRecords
+
+                ' Open the recordset
+                rsRows.Open(query, con, ADODB.CursorTypeEnum.adOpenStatic, ADODB.LockTypeEnum.adLockOptimistic)
+
+                ' Add columns to the DataTable based on the columns in the Recordset
+                For Each field As ADODB.Field In rsRows.Fields
+                    resultTable.Columns.Add(field.Name, Type.GetType("System.Object"))
+                Next
+
+                ' Fill the DataTable with data from the Recordset
+                Do Until rsRows.EOF
+                    Dim newRow As DataRow = resultTable.NewRow()
+                    For Each field As ADODB.Field In rsRows.Fields
+                        newRow(field.Name) = field.Value
+                    Next
+                    resultTable.Rows.Add(newRow)
+                    rsRows.MoveNext()
+                Loop
+
+                ' Close the Recordset
+                rsRows.Close()
+            ElseIf prov2.ToLower() = "integrated" Then
+                ' Logic to get rows using SqlConnection for SQL Server
+                ' You can adapt the logic according to your needs
+                Using sqlCon As New SqlConnection(frmmain.strlogin)
+                    sqlCon.Open()
+                    Using adapter As New SqlDataAdapter(query, sqlCon)
+                        adapter.Fill(resultTable)
+                    End Using
+                End Using
+            Else
+                Throw New Exception("prov2 Value is not valid!")
+            End If
+
+            Return resultTable
+        Catch ex As Exception
+            ' Handle errors here as needed
+            Return New DataTable()
+        End Try
+    End Function
+
+
+
 End Module
