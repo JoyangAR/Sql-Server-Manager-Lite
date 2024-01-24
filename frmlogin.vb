@@ -93,6 +93,7 @@ Friend Class frmlogin
 
             Catch ex As Exception
             End Try
+            frmmain.islocaldb = chklocaldb.Checked
             frmmain.Loadstr(connectionString)
             frmmain.Show()
 

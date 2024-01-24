@@ -14,6 +14,7 @@ Friend Class frmmain
     Const vGray As Integer = &H8000000F
     Dim dbpath As String
     Dim bckpath As String
+    Public islocaldb As Boolean
 
 
     Private Sub adduser_Click(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles adduser.Click
@@ -456,7 +457,84 @@ xc:
     End Sub
 
 
+    Private Sub cmddetach_Click(sender As Object, e As EventArgs) Handles cmddetach.Click
 
+        Dim err1 As String
+
+        If lstdb.SelectedIndex = -1 Then
+            MsgBox("Select database", MsgBoxStyle.Exclamation, "")
+            Exit Sub
+        End If
+
+        Dim x1 As String
+        Dim d1 As String
+        If MsgBox("Are you sure do you want to detach the database?", MsgBoxStyle.Exclamation + MsgBoxStyle.YesNo, "") = MsgBoxResult.Yes Then
+
+
+
+            Randomize()
+
+            d1 = Format(Int(Rnd() * 999999), "000000")
+
+            x1 = InputBox("Type this code to continue: " & d1, "Detach database")
+
+            If x1 = "" Or x1 <> d1 Then
+                Exit Sub
+            End If
+
+            System.Windows.Forms.Application.DoEvents()
+
+            Dim selectedDatabase As String = If(lstdb.SelectedIndex <> -1, lstdb.SelectedItem.ToString(), String.Empty)
+
+            If DetachDatabase(selectedDatabase, err1) Then
+                Logg("Database " & selectedDatabase & " detached!")
+                Me.LoadDatabase()
+            Else
+                Logg("Cannot detach database: " & err1)
+            End If
+
+        End If
+
+    End Sub
+
+    Private Sub cmdkillconn_Click(sender As Object, e As EventArgs) Handles cmdkillconn.Click
+
+        Dim err1 As String
+
+        If lstdb.SelectedIndex = -1 Then
+            MsgBox("Select database", MsgBoxStyle.Exclamation, "")
+            Exit Sub
+        End If
+
+        Dim x1 As String
+        Dim d1 As String
+        If MsgBox("Are you sure do you want to kill all connections with the database?", MsgBoxStyle.Exclamation + MsgBoxStyle.YesNo, "") = MsgBoxResult.Yes Then
+
+
+
+            Randomize()
+
+            d1 = Format(Int(Rnd() * 999999), "000000")
+
+            x1 = InputBox("Type this code to continue: " & d1, "Detach database")
+
+            If x1 = "" Or x1 <> d1 Then
+                Exit Sub
+            End If
+
+            System.Windows.Forms.Application.DoEvents()
+
+            Dim selectedDatabase As String = If(lstdb.SelectedIndex <> -1, lstdb.SelectedItem.ToString(), String.Empty)
+
+
+            If KillConnections(selectedDatabase, err1) Then
+                Logg("Existing connections to the database " & selectedDatabase & " killed!")
+            Else
+                Logg("Cannot kill connections to the database: " & err1)
+            End If
+
+        End If
+    End Sub
 
     Private Sub frmmain_Load(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles MyBase.Load
         LoadUser()
@@ -809,9 +887,11 @@ xc:
         Me.cmddelete.Enabled = d
         Me.cmdrepairdb.Enabled = d
         Me.cmdrestore.Enabled = d
-        Me.cmdguest.Enabled = d
+        If Not islocaldb Then Me.cmdguest.Enabled = d
         Me.cmdpurge.Enabled = d
         Me.cmdgetsize.Enabled = d
+        Me.cmddetach.Enabled = d
+        If Not prov2 = "sqloledb" Then Me.cmdkillconn.Enabled = d
     End Sub
 
     Sub KeyUser(ByRef d As Boolean)
@@ -884,43 +964,4 @@ xc:
         End If
     End Sub
 
-    Private Sub cmddetach_Click(sender As Object, e As EventArgs) Handles cmddetach.Click
-
-        Dim err1 As String
-
-        If lstdb.SelectedIndex = -1 Then
-            MsgBox("Select database", MsgBoxStyle.Exclamation, "")
-            Exit Sub
-        End If
-
-        Dim x1 As String
-        Dim d1 As String
-        If MsgBox("Are you sure do you want to detach the database?", MsgBoxStyle.Exclamation + MsgBoxStyle.YesNo, "") = MsgBoxResult.Yes Then
-
-
-
-            Randomize()
-
-            d1 = Format(Int(Rnd() * 999999), "000000")
-
-            x1 = InputBox("Type this code to continue: " & d1, "Detach database")
-
-            If x1 = "" Or x1 <> d1 Then
-                Exit Sub
-            End If
-
-            System.Windows.Forms.Application.DoEvents()
-
-            Dim selectedDatabase As String = If(lstdb.SelectedIndex <> -1, lstdb.SelectedItem.ToString(), String.Empty)
-
-            If DetachDatabase(selectedDatabase, err1) Then
-                Logg("Database " & selectedDatabase & " detached!")
-                Me.LoadDatabase()
-            Else
-                Logg("Cannot detach database: " & err1)
-            End If
-
-        End If
-
-    End Sub
 End Class
