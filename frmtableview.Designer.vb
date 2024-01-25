@@ -22,6 +22,7 @@ Partial Class frmtableview
     ' Do not modify it with the code editor.
     <System.Diagnostics.DebuggerStepThrough()> _
     Private Sub InitializeComponent()
+        Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(frmtableview))
         Me.dtgridtable = New System.Windows.Forms.DataGridView()
         Me.lsttables = New System.Windows.Forms.ListBox()
         Me.txtrows = New System.Windows.Forms.TextBox()
@@ -72,6 +73,7 @@ Partial Class frmtableview
         Me.Controls.Add(Me.lsttables)
         Me.Controls.Add(Me.dtgridtable)
         Me.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Fixed3D
+        Me.Icon = CType(resources.GetObject("$this.Icon"), System.Drawing.Icon)
         Me.MaximizeBox = False
         Me.MaximumSize = New System.Drawing.Size(820, 498)
         Me.MinimumSize = New System.Drawing.Size(820, 498)
