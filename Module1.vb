@@ -107,7 +107,7 @@ Module Module1
                 End Using
             End Using
         Else
-            Throw New Exception("prov2 Value is not valid!")
+            Debug.Print("prov2 value is not valid")
         End If
 
         If resultList.Count >= 2 Then
@@ -260,7 +260,7 @@ xc:
                 End Using
             End Using
         Else
-            Throw New Exception("prov2 Value is not valid!")
+            Debug.Print("prov2 value is not valid")
         End If
 
         RestoreDatabase2 = True
@@ -288,7 +288,7 @@ xc:
                 End Using
             End Using
         Else
-            Throw New Exception("prov2 Value is not valid!")
+            Debug.Print("prov2 value is not valid")
         End If
 
         RestoreDatabase = True
@@ -334,7 +334,7 @@ xc:
                 End Using
             End Using
         Else
-            Throw New Exception("prov2 Value is not valid!")
+            Debug.Print("prov2 value is not valid")
         End If
 
         Return col
@@ -379,7 +379,7 @@ xc:
                 End Using
             End Using
         Else
-            Throw New Exception("prov2 Value is not valid!")
+            Debug.Print("prov2 value is not valid")
         End If
 
         Return col
@@ -403,7 +403,7 @@ xc:
                 End Using
             End Using
         Else
-            Throw New Exception("prov2 Value is not valid!")
+            Debug.Print("prov2 value is not valid")
         End If
 
         ChangePwd = True
@@ -431,7 +431,7 @@ xc:
                 End Using
             End Using
         Else
-            Throw New Exception("prov2 Value is not valid!")
+            Debug.Print("prov2 value is not valid")
         End If
 
         DeleteAccount = True
@@ -472,7 +472,7 @@ xc:
                     End Using
                 End Using
             Else
-                Throw New Exception("prov2 Value is not valid!")
+                Debug.Print("prov2 value is not valid")
             End If
         Catch ex As Exception
             MsgBox(ex.Message, MsgBoxStyle.Exclamation, "")
@@ -514,7 +514,7 @@ xc:
                 End Using
             End Using
         Else
-            Throw New Exception("prov2 Value is not valid!")
+            Debug.Print("prov2 value is not valid")
         End If
 
         Debug.Print(str_Renamed)
@@ -554,7 +554,7 @@ xc:
                 End Using
             End Using
         Else
-            Throw New Exception("prov2 Value is not valid!")
+            Debug.Print("prov2 value is not valid")
         End If
 
         DeleteDatabase = True
@@ -596,7 +596,7 @@ ErrorHandler:
                 End Using
             End Using
         Else
-            Throw New Exception("prov2 Value is not valid!")
+            Debug.Print("prov2 value is not valid")
         End If
 
         BackupDatabase = True
@@ -660,7 +660,7 @@ xc:
                 End Using
             End Using
         Else
-            Throw New Exception("prov2 Value is not valid!")
+            Debug.Print("prov2 value is not valid")
         End If
 
         GuestAllowed = tmp
@@ -708,7 +708,7 @@ xc:
                 End Using
             End Using
         Else
-            Throw New Exception("prov2 Value is not valid!")
+            Debug.Print("prov2 value is not valid")
         End If
 
     End Sub
@@ -742,7 +742,7 @@ xc:
                 End Using
             End Using
         Else
-            Throw New Exception("prov2 Value is not valid!")
+            Debug.Print("prov2 value is not valid")
         End If
 
         Return tmp
@@ -808,7 +808,7 @@ xc:
                 End Using
             End Using
         Else
-            Throw New Exception("prov2 Value is not valid!")
+            Debug.Print("prov2 value is not valid")
         End If
 
         If pMode = pShrinkMode.pReleaseUnused Then
@@ -854,7 +854,7 @@ xc:
                 End Using
             End Using
         Else
-            Throw New Exception("prov2 Value is not valid!")
+            Debug.Print("prov2 value is not valid")
         End If
 
         If dbid = 0 Then
@@ -949,7 +949,7 @@ xc:
                 End Using
             End Using
         Else
-            Throw New Exception("prov2 Value is not valid!")
+            Debug.Print("prov2 value is not valid")
         End If
 
         DetachDatabase = True
@@ -1003,7 +1003,7 @@ xc:
                 End Using
             End Using
         Else
-            Throw New Exception("prov2 Value is not valid!")
+            Debug.Print("prov2 value is not valid")
         End If
 
         KillConnections = True
@@ -1058,10 +1058,11 @@ xc:
                         End Using
                     End Using
                 Catch ex As Exception
+                    Debug.Print("Error in GetTableNames (Integrated): " & ex.Message)
                     Return New List(Of String)()
                 End Try
             Else
-                Throw New Exception("prov2 Value is not valid!")
+                Debug.Print("prov2 value is not valid")
             End If
 
             ' Sort the list alphabetically
@@ -1069,31 +1070,35 @@ xc:
 
             Return tableNames
         Catch ex As Exception
+            Debug.Print("Error in GetTableNames: " & ex.Message)
             Return New List(Of String)()
         End Try
     End Function
 
-    Function GetRows(ByVal selectedTable As String, ByVal selectedRows As Integer) As DataTable
+    Function GetRows(ByVal SelectedDatabase As String, ByVal selectedTable As String, ByVal selectedRows As Integer) As DataTable
         Dim resultTable As New DataTable()
 
         Try
-            Dim query As String = $"SELECT TOP {selectedRows} * FROM {selectedTable}"
+            ' Get the schema of the table
+            Dim schemaName As String = GetTableSchema(SelectedDatabase, selectedTable)
+            If String.IsNullOrEmpty(schemaName) Then
+                Throw New Exception("Failed to get the schema of the table.")
+            End If
+
+            ' Form the SQL query with the obtained schema
+            Dim query As String = String.Format("SELECT TOP {0} * FROM [{1}].[{2}].[{3}]", selectedRows, SelectedDatabase, schemaName, selectedTable)
 
             If prov2.ToLower() = "sqloledb" Then
                 ' Logic to get rows using ADODB for SQL Server
-                ' You can adapt the logic according to your needs
                 Dim rsRows As New ADODB.Recordset
                 con.Execute(query, , 1024) ' 1024 is the value of adExecuteNoRecords
 
-                ' Open the recordset
                 rsRows.Open(query, con, ADODB.CursorTypeEnum.adOpenStatic, ADODB.LockTypeEnum.adLockOptimistic)
 
-                ' Add columns to the DataTable based on the columns in the Recordset
                 For Each field As ADODB.Field In rsRows.Fields
                     resultTable.Columns.Add(field.Name, Type.GetType("System.Object"))
                 Next
 
-                ' Fill the DataTable with data from the Recordset
                 Do Until rsRows.EOF
                     Dim newRow As DataRow = resultTable.NewRow()
                     For Each field As ADODB.Field In rsRows.Fields
@@ -1103,28 +1108,54 @@ xc:
                     rsRows.MoveNext()
                 Loop
 
-                ' Close the Recordset
                 rsRows.Close()
             ElseIf prov2.ToLower() = "integrated" Then
                 ' Logic to get rows using SqlConnection for SQL Server
-                ' You can adapt the logic according to your needs
-                Using sqlCon As New SqlConnection(frmmain.strlogin)
-                    sqlCon.Open()
-                    Using adapter As New SqlDataAdapter(query, sqlCon)
-                        adapter.Fill(resultTable)
+                Try
+                    Using sqlCon As New SqlConnection(frmmain.strlogin)
+                        sqlCon.Open()
+                        Using cmd As New SqlCommand(query, sqlCon)
+                            Using reader As SqlDataReader = cmd.ExecuteReader()
+                                resultTable.Load(reader)
+                            End Using
+                        End Using
                     End Using
-                End Using
+                Catch ex As SqlException
+                    Debug.Print("Error in GetRows (Integrated): " & ex.Message)
+                    Return New DataTable()
+                End Try
             Else
-                Throw New Exception("prov2 Value is not valid!")
+                Debug.Print("prov2 value is not valid")
             End If
 
             Return resultTable
         Catch ex As Exception
-            ' Handle errors here as needed
+            Debug.Print("Error in GetRows: " & ex.Message)
             Return New DataTable()
         End Try
     End Function
 
+    Function GetTableSchema(ByVal databaseName As String, ByVal tableName As String) As String
+        Dim schemaName As String = String.Empty
 
+        Try
+            Using sqlCon As New SqlConnection(frmmain.strlogin)
+                sqlCon.Open()
+                ' Make sure the database name is included in the connection string or use it in the SQL query.
+                Dim query As String = String.Format("SELECT TABLE_SCHEMA FROM {0}.INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = @TableName", databaseName)
+                Using cmd As New SqlCommand(query, sqlCon)
+                    cmd.Parameters.AddWithValue("@TableName", tableName)
+                    Dim result As Object = cmd.ExecuteScalar()
+                    If result IsNot Nothing Then
+                        schemaName = result.ToString()
+                    End If
+                End Using
+            End Using
+        Catch ex As SqlException
+            Debug.Print("Error getting table schema: " & ex.Message)
+        End Try
+
+        Return schemaName
+    End Function
 
 End Module
