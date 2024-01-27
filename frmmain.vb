@@ -85,14 +85,17 @@ Friend Class frmmain
                     SetServiceStartMode(serviceName, ServiceStartMode.Automatic)
                 End If
 
-                StartService(serviceName)
-                Logg("SQL Browser has been started")
+                If StartService(serviceName) Then
+                    Logg("SQL Browser has been started")
+                End If
             End If
-        Else
+                Else
             Logg("Stopping SQL Browser...")
             SetServiceStartMode(serviceName, ServiceStartMode.Manual)
-            StopService(serviceName)
-            Logg("SQL Browser has been stopped")
+
+            If StopService(serviceName) Then
+                Logg("SQL Browser has been stopped")
+            End If
         End If
     End Sub
 
@@ -150,7 +153,7 @@ Friend Class frmmain
     End Sub
 
 
-    Sub StartService(ByVal serviceName As String)
+    Function StartService(ByVal serviceName As String)
         Try
             Using controller As New ServiceController(serviceName)
                 If controller.Status = ServiceControllerStatus.Stopped Then
@@ -159,31 +162,51 @@ Friend Class frmmain
                     ' Wait until the service is in the 'Running' state
                     controller.WaitForStatus(ServiceControllerStatus.Running)
                     Logg($"The service {serviceName} has been started successfully.")
+                    return True
                 Else
                     Logg($"The service {serviceName} is already running.")
+                    Return True
                 End If
             End Using
         Catch ex As InvalidOperationException
             ' The exception occurs if the service does not exist or if the service cannot be controlled (e.g., may require elevated privileges).
             Logg($"Error attempting to start the service {serviceName}: {ex.Message}")
+            Return False
         Catch ex As TimeoutException
             ' The exception occurs if the timeout is exceeded while waiting for the service to reach the 'Running' state.
             Logg($"Timeout error while starting the service {serviceName}: {ex.Message}")
+            Return False
         Catch ex As Exception
             ' Catch other unexpected exceptions
             Logg($"Unexpected error while starting the service {serviceName}: {ex.Message}")
+            Return False
         End Try
-    End Sub
+    End Function
 
 
-    Sub StopService(ByVal serviceName As String)
+    Function StopService(ByVal serviceName As String)
         Dim controller As New ServiceController(serviceName)
 
         If controller.Status = ServiceControllerStatus.Running Then
-            controller.Stop()
-            controller.WaitForStatus(ServiceControllerStatus.Stopped)
+            Try
+                controller.Stop()
+                controller.WaitForStatus(ServiceControllerStatus.Stopped)
+                Return True
+            Catch ex As InvalidOperationException
+                ' The exception occurs if the service does not exist or if the service cannot be controlled (e.g., may require elevated privileges).
+                Logg($"Error attempting to stopping the service {serviceName}: {ex.Message}")
+                Return False
+            Catch ex As TimeoutException
+                ' The exception occurs if the timeout is exceeded while waiting for the service to reach the 'Running' state.
+                Logg($"Timeout error while stopping the service {serviceName}: {ex.Message}")
+                Return False
+            Catch ex As Exception
+                ' Catch other unexpected exceptions
+                Logg($"Unexpected error while stopping the service {serviceName}: {ex.Message}")
+                Return False
+            End Try
         End If
-    End Sub
+    End Function
 
 
     Private Sub cmdadd_Click(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles cmdadd.Click
@@ -693,9 +716,9 @@ xc:
                     Else
                         mdfo = True
                     End If
-
+                    Debug.Print(newpath)
                     If RestoreDatabase2(newpath, tmp1, dbfile, logfile, err1) Then
-                        SetGuest(dbname, True)
+                        'SetGuest(dbname, True)
                         'con.Execute($"USE {dbname} GRANT CONNECT TO GUEST")
                         'con.Execute("USE master")
 
