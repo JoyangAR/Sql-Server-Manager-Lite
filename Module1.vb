@@ -243,6 +243,10 @@ xc:
             End If
 
             con.Execute(str_Renamed)
+
+            ' Alter the database to set to single-user mode and back to multi-user mode
+            con.Execute($"ALTER DATABASE {db1} SET SINGLE_USER WITH ROLLBACK IMMEDIATE")
+            con.Execute($"ALTER DATABASE {db1} SET MULTI_USER")
         ElseIf prov2.ToLower() = "integrated" Then
             Using connnection As New SqlConnection(frmmain.strlogin)
                 connnection.Open()
@@ -256,6 +260,14 @@ xc:
                 End If
 
                 Using cmd As New SqlCommand(commandText, connnection)
+                    cmd.ExecuteNonQuery()
+                End Using
+
+                ' Alter the database to set to single-user mode and back to multi-user mode
+                Using cmd As New SqlCommand($"ALTER DATABASE [{db1}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE", connnection)
+                    cmd.ExecuteNonQuery()
+                End Using
+                Using cmd As New SqlCommand($"ALTER DATABASE [{db1}] SET MULTI_USER", connnection)
                     cmd.ExecuteNonQuery()
                 End Using
             End Using
