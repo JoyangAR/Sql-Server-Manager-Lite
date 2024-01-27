@@ -26,7 +26,7 @@ Public Class frmtableview
         End If
 
         ' Get the rows and display them in the DataGridView
-        Dim dataTable As DataTable = GetRows(selectedTable, numRows)
+        Dim dataTable As DataTable = GetRows(selectedDatabase, selectedTable, numRows)
         dtgridtable.DataSource = dataTable
     End Sub
 End Class
