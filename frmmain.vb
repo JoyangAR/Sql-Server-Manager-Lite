@@ -32,7 +32,14 @@ Friend Class frmmain
                 Dim connections = IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpConnections()
 
                 ' Check if there is a local connection on port 1433
-                Dim isLocalPortInUse = connections.Any(Function(connection) connection.LocalEndPoint.Port = 1433)
+                Dim isLocalPortInUse As Boolean = False
+
+                For Each connection As TcpConnectionInformation In connections
+                    If connection.LocalEndPoint.Port = 1433 Then
+                        isLocalPortInUse = True
+                        Exit For
+                    End If
+                Next
 
                 If Not isLocalPortInUse Then
                     ' Add firewall exception for port 1433
@@ -48,6 +55,7 @@ Friend Class frmmain
             Logg("Failed to apply firewall exception: " & ex.Message)
         End Try
     End Sub
+
 
 
 
@@ -579,17 +587,18 @@ xc:
         windrive = System.IO.Path.GetPathRoot(System.Environment.SystemDirectory)
         dbpath = GetDatabasePath()
 
-        ' Check if port 1433 is open
-        'chkfirewall.CheckState = IsPortOpen(1433)
+        'Check If port 1433 Is open
+        If Not islocaldb Then chkfirewall.CheckState = IsPortOpen(1433)
+        If islocaldb Then chkfirewall.Enabled = False
 
-        ' Check if the SQLBrowser service is installed and running
-        ' Dim serviceName As String = "SQLBrowser"
-        ' chksqlbrowser.Enabled = ServiceController.GetServices().Any(Function(s) s.ServiceName = serviceName)
+        'Check If the SQLBrowser service Is installed And running
+        Dim serviceName As String = "SQLBrowser"
+        chksqlbrowser.Enabled = ServiceController.GetServices().Any(Function(s) s.ServiceName = serviceName)
 
-        ' If chksqlbrowser.Enabled Then
-        ' Dim serviceController As New ServiceController(serviceName)
-        ' chksqlbrowser.CheckState = If(serviceController.Status = ServiceControllerStatus.Running, CheckState.Checked, CheckState.Unchecked)
-        ' End If
+        If chksqlbrowser.Enabled Then
+            Dim serviceController As New ServiceController(serviceName)
+            chksqlbrowser.CheckState = If(serviceController.Status = ServiceControllerStatus.Running, CheckState.Checked, CheckState.Unchecked)
+        End If
 
     End Sub
 
