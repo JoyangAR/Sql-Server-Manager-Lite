@@ -983,23 +983,36 @@ xc:
 
     Function IsPortInUse(port As Integer) As Boolean
         ' Get information from the connections table
-        Dim connections = IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpConnections()
+        Dim connections() As TcpConnectionInformation = IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpConnections()
 
         ' Check if the port is in use
-        Return connections.Any(Function(connection) connection.LocalEndPoint.Port = port)
+        For Each connection As TcpConnectionInformation In connections
+            If connection.LocalEndPoint.Port = port Then
+                Return True
+            End If
+        Next
+
+        Return False
     End Function
 
     Sub AddFirewallException(port As Integer, ruleName As String)
         Try
-            ' Create an instance of the Netsh object
+            ' Create an instance of Netsh
             Dim netsh As New ProcessStartInfo("netsh", $"advfirewall firewall add rule name=""{ruleName}"" dir=in action=allow protocol=TCP localport={port}")
             netsh.WindowStyle = ProcessWindowStyle.Hidden
+            netsh.RedirectStandardOutput = True
+            netsh.UseShellExecute = False
 
             ' Execute the Netsh command to add the firewall rule
             Using process As Process = Process.Start(netsh)
                 process.WaitForExit()
+                Dim output As String = process.StandardOutput.ReadToEnd()
+                If process.ExitCode <> 0 Then
+                    frmmain.Logg("Failed to add firewall exception. Output: " & output)
+                End If
             End Using
         Catch ex As Exception
+            frmmain.Logg("Error adding firewall exception: " & ex.Message)
         End Try
     End Sub
 
