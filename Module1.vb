@@ -270,6 +270,10 @@ xc:
         Debug.Print(str_Renamed)
         errmsg = Err.Description
         RestoreDatabase2 = False
+        ' Close the connection if an error occurs
+        If con.State = ConnectionState.Open Then
+            con.Close()
+        End If
     End Function
 
     Function RestoreDatabase(ByRef bckfile As String, ByRef dbname As String, Optional ByRef errmsg As String = "") As Boolean
@@ -299,7 +303,12 @@ xc:
 
         errmsg = Err.Description
         RestoreDatabase = False
+        ' Close the connection if an error occurs
+        If con.State = ConnectionState.Open Then
+            con.Close()
+        End If
     End Function
+
 
     Function ListUsers() As Collection
         Dim col As New Collection
