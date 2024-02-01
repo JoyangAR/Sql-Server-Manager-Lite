@@ -18,7 +18,8 @@ Friend Class frmmain
 
 
     Private Sub adduser_Click(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles adduser.Click
-        VB6.ShowForm(frmadduser, VB6.FormShowConstants.Modal, Me)
+        ' Replace VB6.ShowForm
+        frmadduser.ShowDialog(Me)
     End Sub
 
     Sub FirewallExcepted(ByRef mode As Boolean)
@@ -260,7 +261,11 @@ Friend Class frmmain
         End If
 
         Wait(True)
-        ProcessBackup(VB6.GetItemString(lstdb, lstdb.SelectedIndex))
+        ' Ensure that there is a selected item in the ListBox
+        If lstdb.SelectedIndex <> -1 Then
+            Dim selectedItem As String = lstdb.SelectedItem.ToString()
+            ProcessBackup(selectedItem)
+        End If
         Wait(False)
 
     End Sub
@@ -271,7 +276,8 @@ Friend Class frmmain
             Exit Sub
         End If
 
-        VB6.ShowForm(frmpwd, VB6.FormShowConstants.Modal, Me)
+        ' Replace VB6.ShowForm
+        frmpwd.ShowDialog(Me)
 
     End Sub
 
@@ -306,12 +312,19 @@ Friend Class frmmain
 
             System.Windows.Forms.Application.DoEvents()
 
-            If DeleteDatabase(VB6.GetItemString(Me.lstdb, lstdb.SelectedIndex), err1) = True Then
-                Logg("Database " & VB6.GetItemString(Me.lstdb, lstdb.SelectedIndex) & " deleted!")
-                Me.LoadDatabase()
-            Else
-                Logg("Cannot delete database: " & err1)
+            ' Ensure that there is a selected item in the ListBox
+            If lstdb.SelectedIndex <> -1 Then
+                Dim selectedDatabase As String = lstdb.Items(lstdb.SelectedIndex).ToString()
+
+                ' Call the DeleteDatabase function and handle the result
+                If DeleteDatabase(selectedDatabase, err1) Then
+                    Logg("Database " & selectedDatabase & " deleted!")
+                    LoadDatabase()
+                Else
+                    Logg("Cannot delete database: " & err1)
+                End If
             End If
+
 
         End If
 
@@ -332,7 +345,7 @@ Friend Class frmmain
 
             Randomize()
 
-            d1 = VB6.Format(Int(Rnd() * 999999), "000000")
+            d1 = Format(Int(Rnd() * 999999), "000000")
 
             x1 = InputBox("Type this code to continue: " & d1, "Delete user")
 
@@ -344,12 +357,19 @@ Friend Class frmmain
 
             System.Windows.Forms.Application.DoEvents()
 
-            If DeleteAccount(VB6.GetItemString(Me.lstuser, lstuser.SelectedIndex), err1) = True Then
-                Logg("User " & VB6.GetItemString(Me.lstuser, lstuser.SelectedIndex) & " deleted!")
-                Me.LoadUser()
-            Else
-                Logg("Cannot delete user: " & err1)
+            ' Ensure that there is a selected item in the ListBox
+            If lstuser.SelectedIndex <> -1 Then
+                Dim selectedUser As String = lstuser.Items(lstuser.SelectedIndex).ToString()
+
+                ' Call the DeleteAccount function and handle the result
+                If DeleteAccount(selectedUser, err1) Then
+                    Logg("User " & selectedUser & " deleted!")
+                    LoadUser()
+                Else
+                    Logg("Cannot delete user: " & err1)
+                End If
             End If
+
 
             Wait(False)
 
@@ -435,7 +455,14 @@ Friend Class frmmain
         End If
 
         If MsgBox("Are you sure do you want to clear the log file for this database?" & vbCrLf & "The database might be less reliable", MsgBoxStyle.Exclamation + MsgBoxStyle.YesNo, "") = MsgBoxResult.Yes Then
-            RebuildLog(VB6.GetItemString(Me.lstdb, Me.lstdb.SelectedIndex))
+            ' Ensure that there is a selected item in the ListBox
+            If lstdb.SelectedIndex <> -1 Then
+                Dim selectedDatabase As String = lstdb.SelectedItem.ToString()
+
+                ' Call the RebuildLog function
+                RebuildLog(selectedDatabase)
+            End If
+
         End If
 
         LoadDatabase()
@@ -950,7 +977,14 @@ xc:
 
         If Not islocaldb Then cmdguest.BackColor = System.Drawing.ColorTranslator.FromOle(vGray)
         If Not islocaldb Then cmdguest.Enabled = True
-        If Not islocaldb Then LookGuest(VB6.GetItemString(lstdb, lstdb.SelectedIndex))
+        ' Ensure that there is a selected item in the ListBox
+        If lstdb.SelectedIndex <> -1 Then
+            Dim selectedDatabase As String = lstdb.SelectedItem.ToString()
+
+            ' Call the LookGuest function if islocaldb is False
+            If Not islocaldb Then LookGuest(selectedDatabase)
+        End If
+
 
     End Sub
 

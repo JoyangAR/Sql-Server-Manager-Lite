@@ -30,6 +30,7 @@ Friend Class frmlogin
         If optoledb.Checked Then
             ' OLEDB
             connectionString = $"Provider={txtprovider.Text};Data Source={serverName};Initial Catalog=master;User Id={txtname.Text};Password={txtpwd.Text};"
+            Debug.Print("1" & connectionString)
             prov = "sqloledb"
         ElseIf optodbc.Checked Then
             ' ODBC
@@ -49,7 +50,7 @@ Friend Class frmlogin
             cUser = txtname.Text
             cPwd = txtpwd.Text
 
-            ' Ruta del archivo XML de configuración en el directorio de la aplicación
+            ' Path to the XML configuration file in the application directory
             Dim configFileName As String = "SSMLConf.xml"
             Dim configFilePath As String = System.IO.Path.Combine(Application.StartupPath, configFileName)
 

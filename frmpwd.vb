@@ -26,12 +26,18 @@ Friend Class frmpwd
 		
 		frmmain.Wait(True)
 
-		If ChangePwd(VB6.GetItemString(frmmain.lstuser, frmmain.lstuser.SelectedIndex), (Me.txtpwd.Text), err1) = True Then
-			frmmain.Logg("Password for user " & VB6.GetItemString(frmmain.lstuser, frmmain.lstuser.SelectedIndex) & " changed!")
-		Else
-			frmmain.Logg("Failed to change password: " & err1)
+		' Ensure that there is a selected item in the ListBox and the password is not empty
+		If frmmain.lstuser.SelectedIndex <> -1 AndAlso Not String.IsNullOrEmpty(Me.txtpwd.Text) Then
+			Dim selectedUser As String = frmmain.lstuser.SelectedItem.ToString()
+
+			' Call the ChangePwd function
+			If ChangePwd(selectedUser, Me.txtpwd.Text, err1) Then
+				frmmain.Logg("Password for user " & selectedUser & " changed!")
+			Else
+				frmmain.Logg("Failed to change password: " & err1)
+			End If
 		End If
-		
+
 		frmmain.Wait(False)
 		
 		Me.Close()

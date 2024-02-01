@@ -20,7 +20,11 @@ Friend Class frmdialog
 		End If
 
 		Me.Hide()
-		frmmain.ProcessRepair(VB6.GetItemString(frmmain.lstdb, frmmain.lstdb.SelectedIndex), pmode1)
+		' Ensure that there is a selected item in the ListBox
+		If frmmain.lstdb.SelectedIndex <> -1 Then
+			Dim selectedItem As String = frmmain.lstdb.SelectedItem.ToString()
+			frmmain.ProcessRepair(selectedItem, pmode1)
+		End If
 		Me.Close()
 	End Sub
 End Class
