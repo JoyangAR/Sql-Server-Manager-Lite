@@ -1,10 +1,12 @@
 Option Strict Off
 Option Explicit On
+
 Imports System.Configuration
 Imports System.Xml
 
 Friend Class frmlogin
     Inherits System.Windows.Forms.Form
+
     Private Sub chktrust_CheckStateChanged(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles chktrust.CheckStateChanged
         InputMode(Not chktrust.Checked)
     End Sub
@@ -14,6 +16,10 @@ Friend Class frmlogin
     End Sub
 
     Private Sub cmdconnect_Click(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles cmdconnect.Click
+        Connect()
+    End Sub
+
+    Sub Connect()
         Cursor = System.Windows.Forms.Cursors.WaitCursor
         Dim prov As String
         Dim connectionString As String
@@ -82,6 +88,7 @@ Friend Class frmlogin
 
                     writer.WriteElementString("Trusted", If(chktrust.CheckState = System.Windows.Forms.CheckState.Checked, "1", "0"))
                     writer.WriteElementString("localdb", If(Me.chklocaldb.CheckState = System.Windows.Forms.CheckState.Checked, "1", "0"))
+                    writer.WriteElementString("autologin", If(Me.chkautologin.CheckState = System.Windows.Forms.CheckState.Checked, "1", "0"))
 
                     ' Close the root element <Configuration>
                     writer.WriteEndElement()
@@ -89,8 +96,6 @@ Friend Class frmlogin
                     ' Finish the XML document
                     writer.WriteEndDocument()
                 End Using
-
-
             Catch ex As Exception
             End Try
             frmmain.islocaldb = chklocaldb.Checked
@@ -104,14 +109,12 @@ Friend Class frmlogin
         End If
 
         Me.Cursor = System.Windows.Forms.Cursors.Default
-
     End Sub
 
     Sub InputMode(ByRef X As Boolean)
         txtname.Enabled = X
         txtpwd.Enabled = X
     End Sub
-
 
     Private Sub frmlogin_Load(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles MyBase.Load
         ' Path to the XML configuration file in the application directory
@@ -131,6 +134,7 @@ Friend Class frmlogin
                     Dim driver As String = ""
                     Dim trusted As Boolean = False
                     Dim localdb As Boolean = False
+                    Dim autologin As Boolean = False
 
                     ' Read the XML file
                     While reader.Read()
@@ -157,6 +161,9 @@ Friend Class frmlogin
                                 Case "localdb"
                                     reader.Read()
                                     localdb = (reader.Value = "1")
+                                Case "autologin"
+                                    reader.Read()
+                                    autologin = (reader.Value = "1")
                             End Select
                         End If
                     End While
@@ -166,6 +173,7 @@ Friend Class frmlogin
                     txtpwd.Text = password
                     chklocaldb.Checked = localdb
                     chktrust.Checked = trusted
+                    chkautologin.Checked = autologin
                     If connectMode = "OLEDB" Then
                         optoledb.Checked = True
                     ElseIf connectMode = "ODBC" Then
@@ -179,11 +187,28 @@ Friend Class frmlogin
                 ' You can handle this according to your needs
             End If
             RefreshObjects()
+            If chkautologin.Checked Then
+                Timerstart()
+            End If
         Catch ex As Exception
             ' Handle exceptions as needed
         End Try
     End Sub
 
+    Private Sub Timerstart()
+        ' Configure the timer
+        Timer1.Interval = 1000 ' 1 second = 1000 milliseconds
+        AddHandler Timer1.Tick, AddressOf Timer1_Tick
+        Timer1.Enabled = True ' Start the timer
+    End Sub
+
+    Private Sub Timer1_Tick(sender As Object, e As EventArgs)
+        ' Stop the timer to prevent the AutoLogin method from executing more than once
+        Timer1.Enabled = False
+
+        ' Call the AutoLogin method
+        Connect()
+    End Sub
 
     Private Sub SaveConfiguration()
         Try
@@ -209,7 +234,6 @@ Friend Class frmlogin
         End If
     End Sub
 
-
     Private Sub optoledb_CheckedChanged(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles optoledb.CheckedChanged
         If eventSender.Checked Then
             RefreshObjects()
@@ -226,4 +250,5 @@ Friend Class frmlogin
     Private Sub optintegrated_CheckedChanged(sender As Object, e As EventArgs) Handles optintegrated.CheckedChanged
         RefreshObjects()
     End Sub
+
 End Class

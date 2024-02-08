@@ -61,6 +61,8 @@
         Me.Label3 = New System.Windows.Forms.Label()
         Me.txtsvr = New System.Windows.Forms.TextBox()
         Me.Label6 = New System.Windows.Forms.Label()
+        Me.chkautologin = New System.Windows.Forms.CheckBox()
+        Me.Timer1 = New System.Windows.Forms.Timer(Me.components)
         Me.Frame1.SuspendLayout()
         Me.SuspendLayout()
         '
@@ -106,11 +108,11 @@
         Me.txtparam.BackColor = System.Drawing.SystemColors.Window
         Me.txtparam.Cursor = System.Windows.Forms.Cursors.IBeam
         Me.txtparam.ForeColor = System.Drawing.SystemColors.WindowText
-        Me.txtparam.Location = New System.Drawing.Point(104, 187)
+        Me.txtparam.Location = New System.Drawing.Point(117, 187)
         Me.txtparam.MaxLength = 0
         Me.txtparam.Name = "txtparam"
         Me.txtparam.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.txtparam.Size = New System.Drawing.Size(161, 20)
+        Me.txtparam.Size = New System.Drawing.Size(148, 20)
         Me.txtparam.TabIndex = 15
         '
         'txtdriver
@@ -175,10 +177,10 @@
         Me.Label5.BackColor = System.Drawing.SystemColors.Control
         Me.Label5.Cursor = System.Windows.Forms.Cursors.Default
         Me.Label5.ForeColor = System.Drawing.SystemColors.ControlText
-        Me.Label5.Location = New System.Drawing.Point(8, 187)
+        Me.Label5.Location = New System.Drawing.Point(4, 190)
         Me.Label5.Name = "Label5"
         Me.Label5.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.Label5.Size = New System.Drawing.Size(97, 29)
+        Me.Label5.Size = New System.Drawing.Size(111, 29)
         Me.Label5.TabIndex = 16
         Me.Label5.Text = "Custom Parameters:"
         '
@@ -187,7 +189,7 @@
         Me.Label4.BackColor = System.Drawing.SystemColors.Control
         Me.Label4.Cursor = System.Windows.Forms.Cursors.Default
         Me.Label4.ForeColor = System.Drawing.SystemColors.ControlText
-        Me.Label4.Location = New System.Drawing.Point(32, 145)
+        Me.Label4.Location = New System.Drawing.Point(32, 148)
         Me.Label4.Name = "Label4"
         Me.Label4.RightToLeft = System.Windows.Forms.RightToLeft.No
         Me.Label4.Size = New System.Drawing.Size(81, 17)
@@ -199,7 +201,7 @@
         Me.Label1.BackColor = System.Drawing.SystemColors.Control
         Me.Label1.Cursor = System.Windows.Forms.Cursors.Default
         Me.Label1.ForeColor = System.Drawing.SystemColors.ControlText
-        Me.Label1.Location = New System.Drawing.Point(32, 89)
+        Me.Label1.Location = New System.Drawing.Point(32, 92)
         Me.Label1.Name = "Label1"
         Me.Label1.RightToLeft = System.Windows.Forms.RightToLeft.No
         Me.Label1.Size = New System.Drawing.Size(81, 17)
@@ -336,12 +338,26 @@
         Me.Label6.TabIndex = 10
         Me.Label6.Text = "Instance:"
         '
+        'chkautologin
+        '
+        Me.chkautologin.BackColor = System.Drawing.SystemColors.Control
+        Me.chkautologin.Cursor = System.Windows.Forms.Cursors.Default
+        Me.chkautologin.ForeColor = System.Drawing.SystemColors.ControlText
+        Me.chkautologin.Location = New System.Drawing.Point(8, 379)
+        Me.chkautologin.Name = "chkautologin"
+        Me.chkautologin.RightToLeft = System.Windows.Forms.RightToLeft.No
+        Me.chkautologin.Size = New System.Drawing.Size(98, 25)
+        Me.chkautologin.TabIndex = 11
+        Me.chkautologin.Text = "Auto Login"
+        Me.chkautologin.UseVisualStyleBackColor = False
+        '
         'frmlogin
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.BackColor = System.Drawing.SystemColors.Control
         Me.ClientSize = New System.Drawing.Size(289, 411)
+        Me.Controls.Add(Me.chkautologin)
         Me.Controls.Add(Me.txtsvr)
         Me.Controls.Add(Me.Label6)
         Me.Controls.Add(Me.Frame1)
@@ -373,5 +389,7 @@
     Public WithEvents optintegrated As RadioButton
     Public WithEvents txtsvr As TextBox
     Public WithEvents Label6 As Label
+    Public WithEvents chkautologin As CheckBox
+    Friend WithEvents Timer1 As Timer
 #End Region
 End Class
