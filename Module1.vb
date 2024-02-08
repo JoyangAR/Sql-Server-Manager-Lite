@@ -1,5 +1,6 @@
 Option Strict Off
 Option Explicit On
+
 Imports System.Collections.Generic
 Imports System.Data.SqlClient
 Imports System.Net.NetworkInformation
@@ -9,15 +10,16 @@ Imports Microsoft.Win32
 Module Module1
     Public con As New ADODB.Connection
     Public connection As New SqlConnection
+
     ' Other variables to replace objects from the Std Framework
     Public prov2 As String
+
     Public inf As Object ' Replace with the appropriate data type
     Public reg1 As Object ' Replace with the appropriate data type
     Public cUser As String
     Public cPwd As String
     Public srv1 As Object ' Replace with the appropriate data type
     Public srvc As Object ' Replace with the appropriate data type
-
 
     Enum pShrinkMode
         pReleaseUnused = 0
@@ -53,6 +55,7 @@ Module Module1
         Dim principal = New WindowsPrincipal(identity)
         Return principal.IsInRole(WindowsBuiltInRole.Administrator)
     End Function
+
     Function AttachData(ByRef DatabaseName As String, ByRef path As String, Optional ByRef errmsg As String = "") As Boolean
 
         System.Windows.Forms.Application.DoEvents()
@@ -172,7 +175,6 @@ xc:
         CreateAccount = False
     End Function
 
-
     Function ConnectDB(ByRef str_Renamed As String, ByRef prov1 As String) As Boolean
         prov2 = prov1
         Try
@@ -190,13 +192,11 @@ xc:
             ConnectDB = True
 
             Exit Function
-
         Catch ex As Exception
             MsgBox(ex.Message)
             ConnectDB = False
         End Try
     End Function
-
 
     Function DatabaseExists(ByRef dbname As String) As Boolean
 
@@ -222,7 +222,6 @@ xc:
 
         DatabaseExists = False
     End Function
-
 
     Public Function RestoreDatabase2(ByRef bckpath As String, ByRef NewDBpath As String, ByRef dbfile As String, ByRef logfile As String, Optional ByRef errmsg As String = "", Optional ByRef MDF_Only As Boolean = False, Optional ByRef MDF_ID As Integer = 0) As Boolean
         On Error GoTo xc
@@ -321,7 +320,6 @@ xc:
         End If
     End Function
 
-
     Function ListUsers() As Collection
         Dim col As New Collection
         Dim tmp As String
@@ -361,7 +359,6 @@ xc:
         Return col
 
     End Function
-
 
     Function ListDatabases() As Collection
         Dim col As New Collection
@@ -406,8 +403,6 @@ xc:
         Return col
     End Function
 
-
-
     Function ChangePwd(ByRef username As String, ByRef pwd As String, Optional ByRef errmsg As String = "") As Boolean
         On Error GoTo xc
 
@@ -435,7 +430,6 @@ xc:
         ChangePwd = False
     End Function
 
-
     Function DeleteAccount(ByRef username As String, Optional ByRef errmsg As String = "") As Boolean
         On Error GoTo xc
 
@@ -462,7 +456,6 @@ xc:
         errmsg = Err.Description
         DeleteAccount = False
     End Function
-
 
     Function AccountExists(ByVal username As String) As Boolean
         Dim tmp As Boolean = False
@@ -501,8 +494,6 @@ xc:
 
         Return tmp
     End Function
-
-
 
     Function RepairDB(ByRef dbname As String, Optional ByRef forced As pRepairMode = pRepairMode.pStandard, Optional ByRef errmsg As String = "", Optional ByRef rs As ADODB.Recordset = Nothing) As Boolean
         Dim str_Renamed As String
@@ -594,7 +585,6 @@ ErrorHandler:
         ' if an error occurs, this function returns False
     End Function
 
-
     Function BackupDatabase(ByRef dbname1 As String, ByRef ipath As String, ByRef bckfile As String, Optional ByRef errmsg As String = "") As Boolean
         Dim newbck As String = ""
 
@@ -639,7 +629,6 @@ xc:
         ' ... additional logic ...
         Return keyAsciiMode
     End Function
-
 
     Function GuestAllowed(ByRef dbname As String) As Boolean
         System.Windows.Forms.Application.DoEvents()
@@ -695,7 +684,6 @@ xc:
 xc:
         GuestAllowed = False
     End Function
-
 
     Sub SetGuest(ByRef dbname As String, ByRef Grant As Boolean)
 
@@ -768,6 +756,49 @@ xc:
 
         Return tmp
 
+    End Function
+
+    Function GetInstanceVersion(ByRef version As String, ByRef errmsg As String)
+
+        On Error GoTo xc
+
+        If prov2.ToLower() = "sqloledb" Then
+            Dim rs As New ADODB.Recordset
+
+            rs.Open("SELECT @@VERSION AS version", con, ADODB.CursorTypeEnum.adOpenStatic, ADODB.LockTypeEnum.adLockReadOnly)
+            If Not rs.EOF Then
+                version = rs.Fields("version").Value.ToString()
+            End If
+            rs.Close()
+
+        ElseIf prov2.ToLower() = "integrated" Then
+            Using con As New SqlConnection(frmmain.strlogin)
+
+                con.Open()
+                Dim query As String = "SELECT @@VERSION AS version"
+                Using cmd As New SqlCommand(query, con)
+                    Dim reader As SqlDataReader = cmd.ExecuteReader()
+
+                    If reader.Read() Then
+                        version = reader("version").ToString()
+                    Else
+                        ' Handle case where no records were found
+                        version = "No version found."
+                    End If
+                End Using
+
+            End Using
+        Else
+            Debug.Print("prov2 value is not valid")
+        End If
+
+        Return True
+        Return version
+        Exit Function
+
+xc:
+        errmsg = Err.Description
+        Return False
     End Function
 
     Function GetBackupPath() As String
@@ -936,7 +967,6 @@ xc:
 
     End Function
 
-
     Function PathDepth(ByVal path As String) As Integer
         Dim tmp As String
 
@@ -954,6 +984,7 @@ xc:
 
         Return UBound(t)
     End Function
+
     Function DetachDatabase(ByRef dbname As String, Optional ByRef errmsg As String = "") As Boolean
         On Error GoTo xc
 
