@@ -599,7 +599,14 @@ xc:
             Dim serviceController As New ServiceController(serviceName)
             chksqlbrowser.CheckState = If(serviceController.Status = ServiceControllerStatus.Running, CheckState.Checked, CheckState.Unchecked)
         End If
-
+        Dim errmsg As String
+        Dim version As String
+        If GetInstanceVersion(version, errmsg) Then
+            'Display SQL Server version
+            Logg($"SQL Server version: {version}")
+        Else
+            Logg(errmsg)
+        End If
     End Sub
 
 
