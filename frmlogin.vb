@@ -6,6 +6,15 @@ Imports System.Xml
 
 Friend Class frmlogin
     Inherits System.Windows.Forms.Form
+    Public username As String = ""
+    Public password As String = ""
+    Public instance As String = ""
+    Public connectMode As String = ""
+    Public provider As String = ""
+    Public driver As String = ""
+    Public trusted As Boolean = False
+    Public localdb As Boolean = False
+    Public autologin As Boolean = False
 
     Private Sub chktrust_CheckStateChanged(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles chktrust.CheckStateChanged
         InputMode(Not chktrust.Checked)
@@ -40,7 +49,7 @@ Friend Class frmlogin
         ElseIf optodbc.Checked Then
             ' ODBC
             connectionString = $"Driver={txtdriver.Text};Server={serverName};Uid={txtname.Text};Pwd={txtpwd.Text};"
-            prov = "sqloledb"
+            prov = "odbc"
         ElseIf optintegrated.Checked Then
             prov = "integrated"
             If chktrust.Checked Then
@@ -54,50 +63,13 @@ Friend Class frmlogin
         If ConnectDB(connectionString, prov) Then
             cUser = txtname.Text
             cPwd = txtpwd.Text
-
-            ' Ruta del archivo XML de configuración en el directorio de la aplicación
-            Dim configFileName As String = "SSMLConf.xml"
-            Dim configFilePath As String = System.IO.Path.Combine(Application.StartupPath, configFileName)
-
-            Try
-                ' Create a new XML configuration file
-                Using writer As New XmlTextWriter(configFilePath, Nothing)
-                    ' Start the XML document
-                    writer.WriteStartDocument()
-
-                    ' Root element <Configuration>
-                    writer.WriteStartElement("Configuration")
-
-                    ' Elements within <Configuration>
-                    writer.WriteElementString("Username", cUser)
-                    writer.WriteElementString("Password", cPwd)
-                    ' If Len(cPwd) > 0 Then
-                    '     writer.WriteElementString("Password", Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(cPwd)))
-                    ' End If
-
-                    If Me.optoledb.Checked Then
-                        writer.WriteElementString("ConnectMode", "OLEDB")
-                        writer.WriteElementString("Provider", Me.txtprovider.Text)
-                    ElseIf Me.optodbc.Checked Then
-                        writer.WriteElementString("ConnectMode", "ODBC")
-                        writer.WriteElementString("Driver", Me.txtdriver.Text)
-                    ElseIf Me.optintegrated.Checked Then
-                        writer.WriteElementString("ConnectMode", "Integrated")
-                        writer.WriteElementString("Instance", Me.txtsvr.Text)
-                    End If
-
-                    writer.WriteElementString("Trusted", If(chktrust.CheckState = System.Windows.Forms.CheckState.Checked, "1", "0"))
-                    writer.WriteElementString("localdb", If(Me.chklocaldb.CheckState = System.Windows.Forms.CheckState.Checked, "1", "0"))
-                    writer.WriteElementString("autologin", If(Me.chkautologin.CheckState = System.Windows.Forms.CheckState.Checked, "1", "0"))
-
-                    ' Close the root element <Configuration>
-                    writer.WriteEndElement()
-
-                    ' Finish the XML document
-                    writer.WriteEndDocument()
-                End Using
-            Catch ex As Exception
-            End Try
+            instance = txtsvr.Text
+            provider = txtprovider.Text
+            driver = txtdriver.Text
+            trusted = chktrust.CheckState
+            localdb = chklocaldb.CheckState
+            autologin = chkautologin.CheckState
+            WriteXML(cUser, cPwd, instance, provider, driver, trusted, localdb, autologin, defaultmdf, defaultldf)
             frmmain.islocaldb = chklocaldb.Checked
             frmmain.Loadstr(connectionString)
             frmmain.Show()
@@ -117,25 +89,12 @@ Friend Class frmlogin
     End Sub
 
     Private Sub frmlogin_Load(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles MyBase.Load
-        ' Path to the XML configuration file in the application directory
-        Dim configFileName As String = "SSMLConf.xml"
-        Dim configFilePath As String = System.IO.Path.Combine(Application.StartupPath, configFileName)
 
         Try
             ' Check if the XML configuration file exists
             If System.IO.File.Exists(configFilePath) Then
                 ' Create an XML reader
                 Using reader As New XmlTextReader(configFilePath)
-                    ' Variables to store the read configuration
-                    Dim username As String = ""
-                    Dim password As String = ""
-                    Dim connectMode As String = ""
-                    Dim provider As String = ""
-                    Dim driver As String = ""
-                    Dim trusted As Boolean = False
-                    Dim localdb As Boolean = False
-                    Dim autologin As Boolean = False
-
                     ' Read the XML file
                     While reader.Read()
                         If reader.NodeType = XmlNodeType.Element Then
@@ -155,15 +114,24 @@ Friend Class frmlogin
                                 Case "Driver"
                                     reader.Read()
                                     driver = reader.Value
+                                Case "Instance"
+                                    reader.Read()
+                                    instance = reader.Value
                                 Case "Trusted"
                                     reader.Read()
                                     trusted = (reader.Value = "1")
-                                Case "localdb"
+                                Case "LocalDB"
                                     reader.Read()
                                     localdb = (reader.Value = "1")
-                                Case "autologin"
+                                Case "AutoLogin"
                                     reader.Read()
                                     autologin = (reader.Value = "1")
+                                Case "DefaultMDFPath"
+                                    reader.Read()
+                                    defaultmdf = reader.Value
+                                Case "DefaultLDFPath"
+                                    reader.Read()
+                                    defaultldf = reader.Value
                             End Select
                         End If
                     End While
@@ -171,6 +139,7 @@ Friend Class frmlogin
                     ' Apply the configuration
                     txtname.Text = username
                     txtpwd.Text = password
+                    txtsvr.Text = instance
                     chklocaldb.Checked = localdb
                     chktrust.Checked = trusted
                     chkautologin.Checked = autologin
@@ -208,24 +177,6 @@ Friend Class frmlogin
 
         ' Call the AutoLogin method
         Connect()
-    End Sub
-
-    Private Sub SaveConfiguration()
-        Try
-            Dim config As Configuration = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None)
-
-            config.AppSettings.Settings("Provider").Value = Me.txtprovider.Text
-            config.AppSettings.Settings("Driver").Value = Me.txtdriver.Text
-            config.AppSettings.Settings("ConnectMode").Value = If(Me.optoledb.Checked, "OLEDB", If(Me.optodbc.Checked, "ODBC", String.Empty))
-            config.AppSettings.Settings("Username").Value = Me.txtname.Text
-            config.AppSettings.Settings("Password").Value = If(String.IsNullOrEmpty(Me.txtpwd.Text), String.Empty, Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(Me.txtpwd.Text)))
-            config.AppSettings.Settings("SQLExpress").Value = If(Me.chklocaldb.CheckState = CheckState.Checked, "1", "0")
-            config.AppSettings.Settings("Trusted").Value = If(Me.chktrust.CheckState = CheckState.Checked, "1", "0")
-
-            config.Save(ConfigurationSaveMode.Modified)
-            ConfigurationManager.RefreshSection("appSettings")
-        Catch ex As Exception
-        End Try
     End Sub
 
     Private Sub optodbc_CheckedChanged(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles optodbc.CheckedChanged
