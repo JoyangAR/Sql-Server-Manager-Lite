@@ -692,9 +692,26 @@ xc:
         System.Windows.Forms.Application.DoEvents()
 
         If PathDepth(bakfile) > 1 Then
-            newpath = Path.Combine(windrive, Path.GetFileName(bakfile))
-            System.IO.File.Copy(bakfile, newpath)
-            mvf = True
+            ' Ask the user if they want to restore the database to the default location
+            If MsgBox("Do you want to restore the database in the default location?", MsgBoxStyle.Question + MsgBoxStyle.YesNo, "Notice") = MsgBoxResult.Yes Then
+                ' Declare variables to store the default data and log paths
+                Dim defaultDataPath As String = ""
+                Dim defaultLogPath As String = ""
+
+                ' Get the default data and log locations
+                GetDefaultDataAndLogLocations(defaultDataPath, defaultLogPath)
+
+                ' Use the default location for restoration
+                dbfile = Path.Combine(defaultDataPath, Path.GetFileNameWithoutExtension(bakfile) & ".mdf")
+                logfile = Path.Combine(defaultLogPath, Path.GetFileNameWithoutExtension(bakfile) & ".ldf")
+
+                ' Keep the path of the .bak file for deletion later
+                newpath = bakfile
+            Else
+                newpath = Path.Combine(windrive, Path.GetFileName(bakfile))
+                System.IO.File.Copy(bakfile, newpath)
+                mvf = True
+            End If
         Else
             newpath = bakfile
             mvf = False
@@ -1017,6 +1034,13 @@ xc:
         End If
     End Sub
 
-
-
+    Private Sub cmddataloc_Click(sender As Object, e As EventArgs) Handles cmddataloc.Click
+        Dim defaultDataPath As String = String.Empty
+        Dim defaultLogPath As String = String.Empty
+        If GetDefaultDataAndLogLocations(defaultDataPath, defaultLogPath) Then
+            frmfilespath.Show()
+            frmfilespath.TxtMDF.Text = defaultDataPath
+            frmfilespath.TxtLDF.Text = defaultLogPath
+        End If
+    End Sub
 End Class

@@ -58,6 +58,7 @@
         Me.cmddelete = New System.Windows.Forms.Button()
         Me.cmdrepairdb = New System.Windows.Forms.Button()
         Me.cmdtables = New System.Windows.Forms.Button()
+        Me.cmddataloc = New System.Windows.Forms.Button()
         Me.Frame3 = New System.Windows.Forms.GroupBox()
         Me.cmdclear = New System.Windows.Forms.Button()
         Me.txtlog = New System.Windows.Forms.TextBox()
@@ -100,7 +101,7 @@
         Me.cmdkillconn.Cursor = System.Windows.Forms.Cursors.Default
         Me.cmdkillconn.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.cmdkillconn.ForeColor = System.Drawing.SystemColors.ControlText
-        Me.cmdkillconn.Location = New System.Drawing.Point(263, 151)
+        Me.cmdkillconn.Location = New System.Drawing.Point(264, 151)
         Me.cmdkillconn.Name = "cmdkillconn"
         Me.cmdkillconn.RightToLeft = System.Windows.Forms.RightToLeft.No
         Me.cmdkillconn.Size = New System.Drawing.Size(81, 25)
@@ -229,7 +230,7 @@
         Me.cmdtables.BackColor = System.Drawing.SystemColors.Control
         Me.cmdtables.Cursor = System.Windows.Forms.Cursors.Default
         Me.cmdtables.ForeColor = System.Drawing.SystemColors.ControlText
-        Me.cmdtables.Location = New System.Drawing.Point(176, 185)
+        Me.cmdtables.Location = New System.Drawing.Point(176, 182)
         Me.cmdtables.Name = "cmdtables"
         Me.cmdtables.RightToLeft = System.Windows.Forms.RightToLeft.No
         Me.cmdtables.Size = New System.Drawing.Size(81, 25)
@@ -237,6 +238,20 @@
         Me.cmdtables.Text = "Show Tables"
         Me.ToolTip1.SetToolTip(Me.cmdtables, "Detach Database")
         Me.cmdtables.UseVisualStyleBackColor = False
+        '
+        'cmddataloc
+        '
+        Me.cmddataloc.BackColor = System.Drawing.SystemColors.Control
+        Me.cmddataloc.Cursor = System.Windows.Forms.Cursors.Default
+        Me.cmddataloc.ForeColor = System.Drawing.SystemColors.ControlText
+        Me.cmddataloc.Location = New System.Drawing.Point(264, 182)
+        Me.cmddataloc.Name = "cmddataloc"
+        Me.cmddataloc.RightToLeft = System.Windows.Forms.RightToLeft.No
+        Me.cmddataloc.Size = New System.Drawing.Size(81, 25)
+        Me.cmddataloc.TabIndex = 23
+        Me.cmddataloc.Text = "Data location"
+        Me.ToolTip1.SetToolTip(Me.cmddataloc, "Detach Database")
+        Me.cmddataloc.UseVisualStyleBackColor = False
         '
         'Frame3
         '
@@ -286,6 +301,7 @@
         'Frame2
         '
         Me.Frame2.BackColor = System.Drawing.SystemColors.Control
+        Me.Frame2.Controls.Add(Me.cmddataloc)
         Me.Frame2.Controls.Add(Me.cmdtables)
         Me.Frame2.Controls.Add(Me.cmdkillconn)
         Me.Frame2.Controls.Add(Me.cmddetach)
@@ -473,5 +489,6 @@
     Public WithEvents cmddetach As Button
     Public WithEvents cmdkillconn As Button
     Public WithEvents cmdtables As Button
+    Public WithEvents cmddataloc As Button
 #End Region
 End Class
