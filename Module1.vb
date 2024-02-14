@@ -2,15 +2,23 @@ Option Strict Off
 Option Explicit On
 
 Imports System.Collections.Generic
+Imports System.Configuration
 Imports System.Data.SqlClient
 Imports System.Net.NetworkInformation
 Imports System.Security.Principal
+Imports System.Xml
+Imports Microsoft.VisualBasic.Compatibility.VB6
 Imports Microsoft.Win32
 
 Module Module1
     Public con As New ADODB.Connection
     Public connection As New SqlConnection
 
+    ' Path to the configuration XML file in the application directory
+    Public configFileName As String = "SSMLConf.xml"
+    Public configFilePath As String = System.IO.Path.Combine(Application.StartupPath, configFileName)
+    Public defaultmdf As String
+    Public defaultldf As String
     ' Other variables to replace objects from the Std Framework
     Public prov2 As String
 
@@ -801,11 +809,123 @@ xc:
         Return False
     End Function
 
-    Function GetBackupPath() As String
+    Function ChangeDefaultDataLocation(ByRef newDataPath As String) As Boolean
+        Dim result As Boolean = False
 
+        If prov2.ToLower() = "integrated" Then
+            defaultMDF = newDataPath
+            result = True
+            WriteXML(frmlogin.username, frmlogin.password, frmlogin.instance, frmlogin.provider, frmlogin.driver, frmlogin.trusted, frmlogin.localdb, frmlogin.autologin, newDataPath, defaultldf)
+        Else
+            Debug.Print("prov2 value is not valid")
+            result = False
+        End If
+
+        Return result
+    End Function
+
+    Function ChangeDefaultLogLocation(ByRef newLogPath As String) As Boolean
+        Dim result As Boolean = False
+
+        If prov2.ToLower() = "integrated" Then
+            defaultLDF = newLogPath
+            result = True
+        Else
+            Debug.Print("prov2 value is not valid")
+            result = False
+        End If
+        WriteXML(frmlogin.username, frmlogin.password, frmlogin.instance, frmlogin.provider, frmlogin.driver, frmlogin.trusted, frmlogin.localdb, frmlogin.autologin, defaultmdf, newLogPath)
+        Return result
+    End Function
+
+    Function GetDefaultDataAndLogLocations(ByRef DefaultDataPath As String, ByRef DefaultLogPath As String)
+        ' Check if default data and log paths are already set
+        If Not String.IsNullOrEmpty(defaultmdf) Or Not String.IsNullOrEmpty(defaultldf) Then
+            ' If default values are already set, return them
+            DefaultDataPath = defaultmdf
+            DefaultLogPath = defaultldf
+        Else
+            ' If default values are not set, retrieve them based on the provider type
+            If prov2.ToLower() = "sqloledb" Then
+                ' Get the default data and log locations from the registry for SQL Server instance
+                Using regKey As Microsoft.Win32.RegistryKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey($"Software\Microsoft\Microsoft SQL Server\{frmlogin.instance}")
+                    If regKey IsNot Nothing Then
+                        DefaultDataPath = CStr(regKey.GetValue("DefaultData"))
+                        DefaultLogPath = CStr(regKey.GetValue("DefaultLog"))
+                    End If
+                End Using
+            ElseIf prov2.ToLower() = "integrated" Then
+                ' Try to obtain the default data and log locations from SQL Server instance properties
+                Using con As New SqlConnection(frmmain.strlogin)
+                    Try
+                        con.Open()
+                        Using cmd As New SqlCommand("SELECT SERVERPROPERTY('InstanceDefaultDataPath') AS DefaultDataPath, SERVERPROPERTY('InstanceDefaultLogPath') AS DefaultLogPath", con)
+                            Dim reader As SqlDataReader = cmd.ExecuteReader()
+                            If reader.Read() Then
+                                DefaultDataPath = If(IsDBNull(reader("DefaultDataPath")), String.Empty, reader("DefaultDataPath").ToString())
+                                Debug.Print(DefaultDataPath)
+                                DefaultLogPath = If(IsDBNull(reader("DefaultLogPath")), String.Empty, reader("DefaultLogPath").ToString())
+                                Debug.Print(DefaultLogPath)
+                                Return True
+                            End If
+                        End Using
+                    Catch ex As Exception
+                        Debug.Print("Error obtaining default data/log locations: " & ex.Message)
+                    End Try
+                End Using
+            Else
+                Debug.Print("prov2 value is not valid")
+            End If
+        End If
+
+        Return True
+    End Function
+
+    Sub WriteXML(ByRef username As String, ByRef password As String, ByRef instance As String, ByRef provider As String, ByRef driver As String, ByRef trusted As CheckState, ByRef localdb As CheckState, ByRef autologin As CheckState, mdfpath As String, ByRef ldfpath As String)
+        Try
+            ' Create a new XML configuration file
+            Using writer As New XmlTextWriter(configFilePath, Nothing)
+                ' Start the XML document
+                writer.WriteStartDocument()
+
+                ' Root element <Configuration>
+                writer.WriteStartElement("Configuration")
+
+                ' Elements within <Configuration>
+                writer.WriteElementString("Username", username)
+                writer.WriteElementString("Password", password)
+                ' If Len(cPwd) > 0 Then
+                '     writer.WriteElementString("Password", Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(cPwd)))
+                ' End If
+                If prov2.ToLower() = "sqloledb" Then
+                    writer.WriteElementString("ConnectMode", "OLEDB")
+                    writer.WriteElementString("Provider", provider)
+                ElseIf prov2.ToLower() = "odbc" Then
+                    writer.WriteElementString("ConnectMode", "ODBC")
+                    writer.WriteElementString("Driver", driver)
+                ElseIf prov2.ToLower() = "integrated" Then
+                    writer.WriteElementString("ConnectMode", "Integrated")
+                    writer.WriteElementString("Instance", instance)
+                End If
+
+                writer.WriteElementString("Trusted", If(trusted = -1, "1", "0"))
+                writer.WriteElementString("LocalDB", If(localdb = -1, "1", "0"))
+                writer.WriteElementString("AutoLogin", If(autologin = -1, "1", "0"))
+                writer.WriteElementString("DefaultMDFPath", mdfpath)
+                writer.WriteElementString("DefaultLDFPath", ldfpath)
+
+                ' Close the root element <Configuration>
+                writer.WriteEndElement()
+
+                ' Finish the XML document
+                writer.WriteEndDocument()
+            End Using
+        Catch ex As Exception
+        End Try
+    End Sub
+    Function GetBackupPath() As String
         Dim rs1 As ADODB.Recordset
         Dim tmp As String
-
         con.Execute("use master")
         rs1 = con.Execute("master..xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\Microsoft\MSSQLServer\MSSQLServer', N'BackupDirectory'")
         tmp = rs1.Fields(1).Value
