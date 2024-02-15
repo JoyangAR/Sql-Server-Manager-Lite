@@ -236,7 +236,7 @@
         Me.cmdtables.Size = New System.Drawing.Size(81, 25)
         Me.cmdtables.TabIndex = 22
         Me.cmdtables.Text = "Show Tables"
-        Me.ToolTip1.SetToolTip(Me.cmdtables, "Detach Database")
+        Me.ToolTip1.SetToolTip(Me.cmdtables, "Show tables of selected Database")
         Me.cmdtables.UseVisualStyleBackColor = False
         '
         'cmddataloc
@@ -250,7 +250,7 @@
         Me.cmddataloc.Size = New System.Drawing.Size(81, 25)
         Me.cmddataloc.TabIndex = 23
         Me.cmddataloc.Text = "Data location"
-        Me.ToolTip1.SetToolTip(Me.cmddataloc, "Detach Database")
+        Me.ToolTip1.SetToolTip(Me.cmddataloc, "Get/Set default Database files locations")
         Me.cmddataloc.UseVisualStyleBackColor = False
         '
         'Frame3
