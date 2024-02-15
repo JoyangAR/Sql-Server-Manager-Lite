@@ -78,6 +78,7 @@ Partial Class frmtableview
         Me.MaximumSize = New System.Drawing.Size(820, 498)
         Me.MinimumSize = New System.Drawing.Size(820, 498)
         Me.Name = "frmtableview"
+        Me.ShowIcon = False
         Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
         Me.Text = "Table View"
         CType(Me.dtgridtable, System.ComponentModel.ISupportInitialize).EndInit()
