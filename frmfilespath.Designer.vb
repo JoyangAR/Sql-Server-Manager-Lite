@@ -22,12 +22,14 @@ Partial Class frmfilespath
     ' Do not modify it with the code editor.
     <System.Diagnostics.DebuggerStepThrough()> _
     Private Sub InitializeComponent()
+        Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(frmfilespath))
         Me.TxtMDF = New System.Windows.Forms.TextBox()
         Me.TxtLDF = New System.Windows.Forms.TextBox()
         Me.cmdmdfpath = New System.Windows.Forms.Button()
         Me.cmdldfpath = New System.Windows.Forms.Button()
         Me.Label1 = New System.Windows.Forms.Label()
         Me.Label2 = New System.Windows.Forms.Label()
+        Me.cmdapply = New System.Windows.Forms.Button()
         Me.SuspendLayout()
         '
         'TxtMDF
@@ -57,7 +59,7 @@ Partial Class frmfilespath
         '
         Me.cmdldfpath.Location = New System.Drawing.Point(560, 68)
         Me.cmdldfpath.Name = "cmdldfpath"
-        Me.cmdldfpath.Size = New System.Drawing.Size(32, 20)
+        Me.cmdldfpath.Size = New System.Drawing.Size(32, 21)
         Me.cmdldfpath.TabIndex = 3
         Me.cmdldfpath.Text = "..."
         Me.cmdldfpath.UseVisualStyleBackColor = True
@@ -80,11 +82,21 @@ Partial Class frmfilespath
         Me.Label2.TabIndex = 5
         Me.Label2.Text = "LDF Default Path"
         '
+        'cmdapply
+        '
+        Me.cmdapply.Location = New System.Drawing.Point(513, 106)
+        Me.cmdapply.Name = "cmdapply"
+        Me.cmdapply.Size = New System.Drawing.Size(79, 23)
+        Me.cmdapply.TabIndex = 6
+        Me.cmdapply.Text = "Apply"
+        Me.cmdapply.UseVisualStyleBackColor = True
+        '
         'frmfilespath
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.ClientSize = New System.Drawing.Size(604, 132)
+        Me.Controls.Add(Me.cmdapply)
         Me.Controls.Add(Me.Label2)
         Me.Controls.Add(Me.Label1)
         Me.Controls.Add(Me.cmdldfpath)
@@ -92,8 +104,12 @@ Partial Class frmfilespath
         Me.Controls.Add(Me.TxtLDF)
         Me.Controls.Add(Me.TxtMDF)
         Me.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Fixed3D
+        Me.Icon = CType(resources.GetObject("$this.Icon"), System.Drawing.Icon)
+        Me.MaximizeBox = False
+        Me.MinimizeBox = False
         Me.Name = "frmfilespath"
         Me.ShowIcon = False
+        Me.ShowInTaskbar = False
         Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
         Me.Text = "Data Files Path"
         Me.ResumeLayout(False)
@@ -107,4 +123,5 @@ Partial Class frmfilespath
     Friend WithEvents cmdldfpath As Button
     Friend WithEvents Label1 As Label
     Friend WithEvents Label2 As Label
+    Friend WithEvents cmdapply As Button
 End Class

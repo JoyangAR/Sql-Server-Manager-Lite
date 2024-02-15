@@ -1,4 +1,7 @@
 ﻿Public Class frmfilespath
+    Dim newmdfpath As String = ""
+    Dim newldfpath As String = ""
+
     Private Sub cmdmdfpath_Click(sender As Object, e As EventArgs) Handles cmdmdfpath.Click
         ' Create an instance of FolderBrowserDialog
         Using folderBrowser As New FolderBrowserDialog()
@@ -11,11 +14,9 @@
             ' Check if the user selected a folder and clicked OK
             If result = DialogResult.OK AndAlso Not String.IsNullOrWhiteSpace(folderBrowser.SelectedPath) Then
                 ' Save the selected path in the variable newmdfpath
-                Dim newmdfpath As String = folderBrowser.SelectedPath
-
+                newmdfpath = folderBrowser.SelectedPath
                 frmmain.Logg("Selected path: " & newmdfpath)
                 If ChangeDefaultDataLocation(newmdfpath) Then
-                    frmmain.Logg("Default MDF path set to: " & newmdfpath)
                     TxtMDF.Text = newmdfpath
                 End If
             Else
@@ -37,11 +38,9 @@
             ' Check if the user selected a folder and clicked OK
             If result = DialogResult.OK AndAlso Not String.IsNullOrWhiteSpace(folderBrowser.SelectedPath) Then
                 ' Save the selected path in the variable newldfpath
-                Dim newldfpath As String = folderBrowser.SelectedPath
-
+                newldfpath = folderBrowser.SelectedPath
                 frmmain.Logg("Selected path: " & newldfpath)
                 If ChangeDefaultLogLocation(newldfpath) Then
-                    frmmain.Logg("Default LDF path set to: " & newldfpath)
                     TxtLDF.Text = newldfpath
                 End If
             Else
@@ -51,4 +50,15 @@
         End Using
     End Sub
 
+    Private Sub cmdapply_Click(sender As Object, e As EventArgs) Handles cmdapply.Click
+        If Not String.IsNullOrEmpty(newmdfpath) Then
+            WriteXML(frmlogin.username, frmlogin.password, frmlogin.instance, frmlogin.provider, frmlogin.driver, frmlogin.trusted, frmlogin.localdb, frmlogin.autologin, newmdfpath, defaultldf)
+            frmmain.Logg("Default MDF path set to: " & newmdfpath)
+        End If
+        If Not String.IsNullOrEmpty(newldfpath) Then
+            WriteXML(frmlogin.username, frmlogin.password, frmlogin.instance, frmlogin.provider, frmlogin.driver, frmlogin.trusted, frmlogin.localdb, frmlogin.autologin, defaultmdf, newldfpath)
+            frmmain.Logg("Default LDF path set to: " & newldfpath)
+        End If
+        Me.Close()
+    End Sub
 End Class
