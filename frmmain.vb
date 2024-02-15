@@ -98,7 +98,7 @@ Friend Class frmmain
                     Logg("SQL Browser has been started")
                 End If
             End If
-                Else
+        Else
             Logg("Stopping SQL Browser...")
             SetServiceStartMode(serviceName, ServiceStartMode.Manual)
 
@@ -171,7 +171,7 @@ Friend Class frmmain
                     ' Wait until the service is in the 'Running' state
                     controller.WaitForStatus(ServiceControllerStatus.Running)
                     Logg($"The service {serviceName} has been started successfully.")
-                    return True
+                    Return True
                 Else
                     Logg($"The service {serviceName} is already running.")
                     Return True
@@ -1072,9 +1072,9 @@ xc:
         Dim defaultDataPath As String = String.Empty
         Dim defaultLogPath As String = String.Empty
         If GetDefaultDataAndLogLocations(defaultDataPath, defaultLogPath) Then
-            frmfilespath.Show()
             frmfilespath.TxtMDF.Text = defaultDataPath
             frmfilespath.TxtLDF.Text = defaultLogPath
+            frmfilespath.ShowDialog()
         End If
     End Sub
 End Class
