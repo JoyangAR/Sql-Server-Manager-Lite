@@ -605,6 +605,7 @@ xc:
         Dim tablesForm As New frmtableview()
 
         ' Show frmtables
+        tablesForm.Text = lstdb.SelectedItem
         tablesForm.Show()
     End Sub
 
