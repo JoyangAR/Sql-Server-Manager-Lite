@@ -815,7 +815,7 @@ xc:
         If prov2.ToLower() = "integrated" Then
             defaultmdf = newDataPath
             result = True
-            WriteXML(frmlogin.username, frmlogin.password, frmlogin.instance, frmlogin.provider, frmlogin.driver, frmlogin.trusted, frmlogin.localdb, frmlogin.autologin, newDataPath, defaultldf)
+
         Else
             Debug.Print("prov2 value is not valid")
             result = False
@@ -834,7 +834,7 @@ xc:
             Debug.Print("prov2 value is not valid")
             result = False
         End If
-        WriteXML(frmlogin.username, frmlogin.password, frmlogin.instance, frmlogin.provider, frmlogin.driver, frmlogin.trusted, frmlogin.localdb, frmlogin.autologin, defaultmdf, newLogPath)
+
         Return result
     End Function
 
