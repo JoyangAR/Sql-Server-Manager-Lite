@@ -19,6 +19,7 @@ SQL Server Manager Lite is a versatile tool designed to interact with Microsoft 
 - **Show Rows:** Display rows of a specific table in a SQL Server database.
 - **Set Guest User:** Set the guest user for a SQL Server database.
 - **User Management:** Add, change passwords, and delete users for a SQL Server instance.
+- **Default MDF/LDF Location Selection:** Set the default location for MDF and LDF files of a SQL Server database.
 
 
 ## Acknowledgments
