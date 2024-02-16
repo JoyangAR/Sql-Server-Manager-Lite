@@ -605,6 +605,7 @@ xc:
         Dim tablesForm As New frmtableview()
 
         ' Show frmtables
+        tablesForm.Text = lstdb.SelectedItem
         tablesForm.Show()
     End Sub
 
@@ -984,7 +985,7 @@ xc:
         Me.cmddelete.Enabled = d
         Me.cmdrepairdb.Enabled = d
         Me.cmdrestore.Enabled = d
-        If Not islocaldb Then Me.cmdguest.Enabled = d
+        If Not prov2 = "integrated" Then Me.cmdguest.Enabled = d
         Me.cmdpurge.Enabled = d
         Me.cmdgetsize.Enabled = d
         Me.cmddetach.Enabled = d
@@ -999,14 +1000,14 @@ xc:
 
     Private Sub lstdb_SelectedIndexChanged(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles lstdb.SelectedIndexChanged
 
-        If Not islocaldb Then cmdguest.BackColor = System.Drawing.ColorTranslator.FromOle(vGray)
-        If Not islocaldb Then cmdguest.Enabled = True
+        If Not prov2 = "integrated" Then cmdguest.BackColor = System.Drawing.ColorTranslator.FromOle(vGray)
+        If Not prov2 = "integrated" Then cmdguest.Enabled = True
         ' Ensure that there is a selected item in the ListBox
         If lstdb.SelectedIndex <> -1 Then
             Dim selectedDatabase As String = lstdb.SelectedItem.ToString()
 
             ' Call the LookGuest function if islocaldb is False
-            If Not islocaldb Then LookGuest(selectedDatabase)
+            If Not prov2 = "integrated" Then LookGuest(selectedDatabase)
         End If
 
 

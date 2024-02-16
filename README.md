@@ -1,6 +1,6 @@
-# SQL Server Manager Lite (Updated from VB6 to Visual Studio 2022)
+# SQL Server Manager Lite (Updated from VB6 to VB.NET)
 
-This repository contains the modernized version of SQL Server Manager Lite, a database management tool originally written in Visual Basic 6.0. The application has been updated to use more recent components, making it compatible with Visual Studio 2022.
+This repository contains the modernized version of SQL Server Manager Lite, a database management tool originally written in Visual Basic 6.0. The application has been updated to use more recent components, making it compatible with Visual Basic .NET.
 
 ## Overview
 
@@ -30,7 +30,7 @@ Iv've done my best to update and improve the application. Some features may not 
 ## Getting Started
 
 1. Clone this repository to your local machine.
-2. Open the project in Visual Studio 2022.
+2. Open the project in Visual Studio.
 3. Build and run the application.
 
 Ensure you have the necessary permissions and credentials to perform the database management operations.
