@@ -812,7 +812,10 @@ xc:
     Function ChangeDefaultDataLocation(ByRef newDataPath As String) As Boolean
         Dim result As Boolean = False
 
-        If prov2.ToLower() = "integrated" Then
+        If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
+            defaultmdf = newDataPath
+            result = True
+        ElseIf prov2.ToLower() = "integrated" Then
             defaultmdf = newDataPath
             result = True
 
@@ -827,7 +830,10 @@ xc:
     Function ChangeDefaultLogLocation(ByRef newLogPath As String) As Boolean
         Dim result As Boolean = False
 
-        If prov2.ToLower() = "integrated" Then
+        If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
+            defaultldf = newLogPath
+            result = True
+        ElseIf prov2.ToLower() = "integrated" Then
             defaultldf = newLogPath
             result = True
         Else
