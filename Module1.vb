@@ -2,7 +2,6 @@ Option Strict Off
 Option Explicit On
 
 Imports System.Collections.Generic
-Imports System.Configuration
 Imports System.Data.SqlClient
 Imports System.Net.NetworkInformation
 Imports System.Security.Principal
@@ -65,36 +64,26 @@ Module Module1
     End Function
 
     Function AttachData(ByRef DatabaseName As String, ByRef path As String, Optional ByRef errmsg As String = "") As Boolean
+        On Error GoTo xc
 
         System.Windows.Forms.Application.DoEvents()
         If prov2 = "sqloledb" Then
-            Try
-                con.Execute("CREATE DATABASE [" & DatabaseName & "] ON (FILENAME = '" & path & "') FOR ATTACH_REBUILD_LOG;")
-            Catch ex As Exception
-                MsgBox(ex.Message)
-                Return False
-            End Try
+            con.Execute("CREATE DATABASE [" & DatabaseName & "] ON (FILENAME = '" & path & "') FOR ATTACH_REBUILD_LOG;")
         Else
-            Try
-                Using connection As New SqlConnection(frmmain.strlogin)
-                    connection.Open()
+            Using connection As New SqlConnection(frmmain.strlogin)
+                connection.Open()
 
-                    Using cmd As New SqlCommand("CREATE DATABASE [" & DatabaseName & "] ON (FILENAME = '" & path & "') FOR ATTACH_REBUILD_LOG;", connection)
-                        cmd.ExecuteNonQuery()
-                    End Using
+                Using cmd As New SqlCommand("CREATE DATABASE [" & DatabaseName & "] ON (FILENAME = '" & path & "') FOR ATTACH_REBUILD_LOG;", connection)
+                    cmd.ExecuteNonQuery()
                 End Using
+            End Using
 
-                Return True
-            Catch ex As Exception
-                MsgBox(ex.Message)
-                Return False
-            End Try
         End If
-        AttachData = True
+        Return True
         Exit Function
-
+xc:
         errmsg = Err.Description
-        AttachData = False
+        Return False
     End Function
 
     Function TabulateDatabase(ByRef bakPath As String, Optional ByRef dbname As String = "", Optional ByRef LogName As String = "", Optional ByRef errmsg As String = "", Optional ByRef mdfid As Integer = 0) As Boolean
@@ -117,8 +106,6 @@ Module Module1
                     End While
                 End Using
             End Using
-        Else
-            Debug.Print("prov2 value is not valid")
         End If
 
         If resultList.Count >= 2 Then
@@ -153,32 +140,24 @@ xc:
     End Function
 
     Function CreateAccount(ByRef username As String, ByRef Password As String, Optional ByRef errmsg As String = "") As Boolean
+        On Error GoTo XC
 
         System.Windows.Forms.Application.DoEvents()
         If prov2 = "sqloledb" Then
-            Try
-                con.Execute("USE [master]" & vbCrLf & "Create LOGIN [" & username & "] WITH PASSWORD = N'" & Password & "',DEFAULT_Database=[master],CHECK_EXPIRATION=OFF,CHECK_POLICY = OFF" & vbCrLf & "EXEC master..sp_addsrvrolemember @loginame = N'" & username & "', @rolename = N'sysadmin'")
-                CreateAccount = True
-            Catch ex As Exception
-            End Try
+            con.Execute("USE [master]" & vbCrLf & "Create LOGIN [" & username & "] WITH PASSWORD = N'" & Password & "',DEFAULT_Database=[master],CHECK_EXPIRATION=OFF,CHECK_POLICY = OFF" & vbCrLf & "EXEC master..sp_addsrvrolemember @loginame = N'" & username & "', @rolename = N'sysadmin'")
         Else
-            Try
-                Using connection As New SqlConnection(frmmain.strlogin)
-                    connection.Open()
+            Using connection As New SqlConnection(frmmain.strlogin)
+                connection.Open()
 
-                    Using cmd As New SqlCommand("USE [master]" & vbCrLf & "Create LOGIN [" & username & "] WITH PASSWORD = N'" & Password & "',DEFAULT_Database=[master],CHECK_EXPIRATION=OFF,CHECK_POLICY = OFF" & vbCrLf & "EXEC master..sp_addsrvrolemember @loginame = N'" & username & "', @rolename = N'sysadmin'", connection)
-                        cmd.ExecuteNonQuery()
-                    End Using
+                Using cmd As New SqlCommand("USE [master]" & vbCrLf & "Create LOGIN [" & username & "] WITH PASSWORD = N'" & Password & "',DEFAULT_Database=[master],CHECK_EXPIRATION=OFF,CHECK_POLICY = OFF" & vbCrLf & "EXEC master..sp_addsrvrolemember @loginame = N'" & username & "', @rolename = N'sysadmin'", connection)
+                    cmd.ExecuteNonQuery()
                 End Using
-
-                Return True
-            Catch ex As Exception
-                MsgBox(ex.Message)
-                Return False
-            End Try
+            End Using
         End If
-
+        Return True
         Exit Function
+
+XC:
         errmsg = Err.Description
         CreateAccount = False
     End Function
@@ -278,8 +257,6 @@ xc:
                     cmd.ExecuteNonQuery()
                 End Using
             End Using
-        Else
-            Debug.Print("prov2 value is not valid")
         End If
 
         RestoreDatabase2 = True
@@ -310,8 +287,6 @@ xc:
                     cmd.ExecuteNonQuery()
                 End Using
             End Using
-        Else
-            Debug.Print("prov2 value is not valid")
         End If
 
         RestoreDatabase = True
@@ -360,8 +335,6 @@ xc:
                     End While
                 End Using
             End Using
-        Else
-            Debug.Print("prov2 value is not valid")
         End If
 
         Return col
@@ -404,8 +377,6 @@ xc:
                     End While
                 End Using
             End Using
-        Else
-            Debug.Print("prov2 value is not valid")
         End If
 
         Return col
@@ -426,8 +397,6 @@ xc:
                     cmd.ExecuteNonQuery()
                 End Using
             End Using
-        Else
-            Debug.Print("prov2 value is not valid")
         End If
 
         ChangePwd = True
@@ -453,8 +422,6 @@ xc:
                     cmd.ExecuteNonQuery()
                 End Using
             End Using
-        Else
-            Debug.Print("prov2 value is not valid")
         End If
 
         DeleteAccount = True
@@ -493,8 +460,6 @@ xc:
                         End Using
                     End Using
                 End Using
-            Else
-                Debug.Print("prov2 value is not valid")
             End If
         Catch ex As Exception
             MsgBox(ex.Message, MsgBoxStyle.Exclamation, "")
@@ -533,8 +498,6 @@ xc:
                     cmd.ExecuteNonQuery()
                 End Using
             End Using
-        Else
-            Debug.Print("prov2 value is not valid")
         End If
 
         Debug.Print(str_Renamed)
@@ -573,8 +536,6 @@ xc:
                     cmd.ExecuteNonQuery()
                 End Using
             End Using
-        Else
-            Debug.Print("prov2 value is not valid")
         End If
 
         DeleteDatabase = True
@@ -614,8 +575,6 @@ ErrorHandler:
                     cmd.ExecuteNonQuery()
                 End Using
             End Using
-        Else
-            Debug.Print("prov2 value is not valid")
         End If
 
         BackupDatabase = True
@@ -677,8 +636,6 @@ xc:
                     End If
                 End Using
             End Using
-        Else
-            Debug.Print("prov2 value is not valid")
         End If
 
         GuestAllowed = tmp
@@ -724,8 +681,6 @@ xc:
                     cmd.ExecuteNonQuery()
                 End Using
             End Using
-        Else
-            Debug.Print("prov2 value is not valid")
         End If
 
     End Sub
@@ -758,8 +713,6 @@ xc:
                     End If
                 End Using
             End Using
-        Else
-            Debug.Print("prov2 value is not valid")
         End If
 
         Return tmp
@@ -796,8 +749,6 @@ xc:
                 End Using
 
             End Using
-        Else
-            Debug.Print("prov2 value is not valid")
         End If
 
         Return True
@@ -818,10 +769,6 @@ xc:
         ElseIf prov2.ToLower() = "integrated" Then
             defaultmdf = newDataPath
             result = True
-
-        Else
-            Debug.Print("prov2 value is not valid")
-            result = False
         End If
 
         Return result
@@ -836,9 +783,6 @@ xc:
         ElseIf prov2.ToLower() = "integrated" Then
             defaultldf = newLogPath
             result = True
-        Else
-            Debug.Print("prov2 value is not valid")
-            result = False
         End If
 
         Return result
@@ -879,8 +823,6 @@ xc:
                         Debug.Print("Error obtaining default data/log locations: " & ex.Message)
                     End Try
                 End Using
-            Else
-                Debug.Print("prov2 value is not valid")
             End If
         End If
 
@@ -985,8 +927,6 @@ xc:
                     cmd.ExecuteNonQuery()
                 End Using
             End Using
-        Else
-            Debug.Print("prov2 value is not valid")
         End If
 
         If pMode = pShrinkMode.pReleaseUnused Then
@@ -1031,8 +971,6 @@ xc:
                     dbid = CInt(cmd.ExecuteScalar())
                 End Using
             End Using
-        Else
-            Debug.Print("prov2 value is not valid")
         End If
 
         If dbid = 0 Then
@@ -1126,8 +1064,6 @@ xc:
                     cmd.ExecuteNonQuery()
                 End Using
             End Using
-        Else
-            Debug.Print("prov2 value is not valid")
         End If
 
         DetachDatabase = True
@@ -1193,8 +1129,6 @@ xc:
                     cmd.ExecuteNonQuery()
                 End Using
             End Using
-        Else
-            Debug.Print("prov2 value is not valid")
         End If
 
         KillConnections = True
@@ -1252,8 +1186,6 @@ xc:
                     Debug.Print("Error in GetTableNames (Integrated): " & ex.Message)
                     Return New List(Of String)()
                 End Try
-            Else
-                Debug.Print("prov2 value is not valid")
             End If
 
             ' Sort the list alphabetically
@@ -1315,8 +1247,6 @@ xc:
                     Debug.Print("Error in GetRows (Integrated): " & ex.Message)
                     Return New DataTable()
                 End Try
-            Else
-                Debug.Print("prov2 value is not valid")
             End If
 
             Return resultTable
