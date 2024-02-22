@@ -27,7 +27,6 @@
 	'Do not modify it using the code editor.
 	<System.Diagnostics.DebuggerStepThrough()> Private Sub InitializeComponent()
         Me.components = New System.ComponentModel.Container()
-        Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(frmdialog))
         Me.ToolTip1 = New System.Windows.Forms.ToolTip(Me.components)
         Me.optfast = New System.Windows.Forms.RadioButton()
         Me.optforce = New System.Windows.Forms.RadioButton()
@@ -119,7 +118,6 @@
         Me.Controls.Add(Me.OKButton)
         Me.Cursor = System.Windows.Forms.Cursors.Default
         Me.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog
-        Me.Icon = CType(resources.GetObject("$this.Icon"), System.Drawing.Icon)
         Me.Location = New System.Drawing.Point(184, 250)
         Me.MaximizeBox = False
         Me.MinimizeBox = False

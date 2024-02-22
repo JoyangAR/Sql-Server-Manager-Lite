@@ -22,7 +22,6 @@ Partial Class frmfilespath
     ' Do not modify it with the code editor.
     <System.Diagnostics.DebuggerStepThrough()> _
     Private Sub InitializeComponent()
-        Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(frmfilespath))
         Me.TxtMDF = New System.Windows.Forms.TextBox()
         Me.TxtLDF = New System.Windows.Forms.TextBox()
         Me.cmdmdfpath = New System.Windows.Forms.Button()
@@ -104,7 +103,6 @@ Partial Class frmfilespath
         Me.Controls.Add(Me.TxtLDF)
         Me.Controls.Add(Me.TxtMDF)
         Me.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Fixed3D
-        Me.Icon = CType(resources.GetObject("$this.Icon"), System.Drawing.Icon)
         Me.MaximizeBox = False
         Me.MinimizeBox = False
         Me.Name = "frmfilespath"

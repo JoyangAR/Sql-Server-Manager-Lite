@@ -28,7 +28,6 @@
 	'Do not modify it using the code editor.
 	<System.Diagnostics.DebuggerStepThrough()> Private Sub InitializeComponent()
         Me.components = New System.ComponentModel.Container()
-        Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(frmpwd))
         Me.ToolTip1 = New System.Windows.Forms.ToolTip(Me.components)
         Me.txtrepeat = New System.Windows.Forms.TextBox()
         Me.Command2 = New System.Windows.Forms.Button()
@@ -50,7 +49,7 @@
         Me.txtrepeat.Name = "txtrepeat"
         Me.txtrepeat.PasswordChar = Global.Microsoft.VisualBasic.ChrW(42)
         Me.txtrepeat.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.txtrepeat.Size = New System.Drawing.Size(185, 25)
+        Me.txtrepeat.Size = New System.Drawing.Size(185, 20)
         Me.txtrepeat.TabIndex = 4
         '
         'Command2
@@ -91,7 +90,7 @@
         Me.txtpwd.Name = "txtpwd"
         Me.txtpwd.PasswordChar = Global.Microsoft.VisualBasic.ChrW(42)
         Me.txtpwd.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.txtpwd.Size = New System.Drawing.Size(185, 25)
+        Me.txtpwd.Size = New System.Drawing.Size(185, 20)
         Me.txtpwd.TabIndex = 0
         '
         'Label1
@@ -133,7 +132,6 @@
         Me.Controls.Add(Me.Label3)
         Me.Cursor = System.Windows.Forms.Cursors.Default
         Me.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog
-        Me.Icon = CType(resources.GetObject("$this.Icon"), System.Drawing.Icon)
         Me.Location = New System.Drawing.Point(184, 250)
         Me.MaximizeBox = False
         Me.MinimizeBox = False
@@ -143,6 +141,7 @@
         Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
         Me.Text = "Change password"
         Me.ResumeLayout(False)
+        Me.PerformLayout()
 
     End Sub
 #End Region

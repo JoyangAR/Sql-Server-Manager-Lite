@@ -28,7 +28,6 @@
 	'Do not modify it using the code editor.
 	<System.Diagnostics.DebuggerStepThrough()> Private Sub InitializeComponent()
         Me.components = New System.ComponentModel.Container()
-        Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(frmadduser))
         Me.ToolTip1 = New System.Windows.Forms.ToolTip(Me.components)
         Me.txtpwd = New System.Windows.Forms.TextBox()
         Me.txtname = New System.Windows.Forms.TextBox()
@@ -50,7 +49,7 @@
         Me.txtpwd.Name = "txtpwd"
         Me.txtpwd.PasswordChar = Global.Microsoft.VisualBasic.ChrW(42)
         Me.txtpwd.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.txtpwd.Size = New System.Drawing.Size(209, 25)
+        Me.txtpwd.Size = New System.Drawing.Size(209, 20)
         Me.txtpwd.TabIndex = 1
         '
         'txtname
@@ -63,7 +62,7 @@
         Me.txtname.MaxLength = 0
         Me.txtname.Name = "txtname"
         Me.txtname.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.txtname.Size = New System.Drawing.Size(209, 25)
+        Me.txtname.Size = New System.Drawing.Size(209, 20)
         Me.txtname.TabIndex = 0
         '
         'CancelButton_Renamed
@@ -131,7 +130,6 @@
         Me.Controls.Add(Me.Label2)
         Me.Cursor = System.Windows.Forms.Cursors.Default
         Me.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog
-        Me.Icon = CType(resources.GetObject("$this.Icon"), System.Drawing.Icon)
         Me.Location = New System.Drawing.Point(184, 250)
         Me.MaximizeBox = False
         Me.MinimizeBox = False
@@ -141,6 +139,7 @@
         Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
         Me.Text = "Add user"
         Me.ResumeLayout(False)
+        Me.PerformLayout()
 
     End Sub
 #End Region
