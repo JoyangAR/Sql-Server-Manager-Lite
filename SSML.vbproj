@@ -109,6 +109,7 @@
     <Import Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AssemblyInfo.vb" />
     <Compile Include="frmbakdir.Designer.vb">
       <DependentUpon>frmbakdir.vb</DependentUpon>
     </Compile>
