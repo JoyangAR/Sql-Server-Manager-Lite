@@ -613,7 +613,11 @@ xc:
         LoadUser()
         LoadDatabase()
         windrive = System.IO.Path.GetPathRoot(System.Environment.SystemDirectory)
-        dbpath = GetDatabasePath()
+        If Not islocaldb Then
+            dbpath = GetDefaultDataAndLogLocations()
+        Else
+            dbpath = GetDatabasePath()
+        End If
 
         'Check If port 1433 Is open
         If Not islocaldb Then chkfirewall.CheckState = IsPortOpen(1433)
@@ -699,17 +703,17 @@ xc:
     End Sub
 
     Sub ProcessUpload(ByRef bakfile As String)
-        Dim newpath As String
-        Dim err1 As String
+        Dim newpath As String ' Temporal .bak path
+        Dim err1 As String ' Where error messages will be store
         Dim msg1 As String
-        Dim dbfile As String
-        Dim dbname As String
-        Dim logfile As String
-        Dim mdfo As Boolean
-        Dim mvf As Boolean
+        Dim dbfile As String ' Database mdf file name
+        Dim dbname As String ' Database name
+        Dim logfile As String ' Database ldf file name
+        Dim datapath As String ' Database mdf path
+        Dim logpath As String ' Database ldf path
+        Dim mdfo As Boolean ' MDF Only
+        Dim mvf As Boolean = False
         Dim mdfid As Integer
-
-        mvf = False
 
         If Not Directory.Exists(windrive) Then
             MsgBox("Admin access required", MsgBoxStyle.Exclamation, "Error!")
@@ -720,51 +724,83 @@ xc:
         System.Windows.Forms.Application.DoEvents()
 
         If PathDepth(bakfile) > 1 Then
-            ' Ask the user if they want to restore the database to the default location
-            If MsgBox("Do you want to restore the database in the default location?", MsgBoxStyle.Question + MsgBoxStyle.YesNo, "Notice") = MsgBoxResult.Yes Then
-                ' Declare variables to store the default data and log paths
-                Dim defaultDataPath As String = ""
-                Dim defaultLogPath As String = ""
-
-                ' Get the default data and log locations
-                GetDefaultDataAndLogLocations(defaultDataPath, defaultLogPath)
-
-                ' Use the default location for restoration
-                dbfile = Path.Combine(defaultDataPath, Path.GetFileNameWithoutExtension(bakfile) & ".mdf")
-                logfile = Path.Combine(defaultLogPath, Path.GetFileNameWithoutExtension(bakfile) & ".ldf")
-
-                ' Keep the path of the .bak file for deletion later
-                newpath = bakfile
-            Else
-                newpath = Path.Combine(windrive, Path.GetFileName(bakfile))
-                System.IO.File.Copy(bakfile, newpath)
-                mvf = True
-            End If
+            newpath = Path.Combine(windrive, Path.GetFileName(bakfile))
+            System.IO.File.Copy(bakfile, newpath)
+            mvf = True
         Else
             newpath = bakfile
             mvf = False
         End If
 
-        Logg("Tabulating database...")
-        Dim tmp1 As String
+        Dim restoreOptionsForm As New frmbakdir()
+            If restoreOptionsForm.ShowDialog() = DialogResult.OK Then
+                ' Check which option was selected and proceed accordingly
+                If restoreOptionsForm.optPrevious.Checked Then
+                ' Use the paths from TabulateDatabase for restoration
+                Logg("Tabulating database...")
+                If Not TabulateDatabase(newpath, dbfile, logfile, err1, datapath, logpath) Then
+                    Logg($"Error Tabulating:{err1}")
+                Else
+                End If
+            ElseIf restoreOptionsForm.optDefault.Checked Then
+                    ' Use the default locations
+                    Dim defaultDataPath As String = ""
+                    Dim defaultLogPath As String = ""
+                    GetDefaultDataAndLogLocations(defaultDataPath, defaultLogPath)
+                datapath = defaultDataPath
+                logpath = defaultLogPath
+
+            ElseIf restoreOptionsForm.optNew.Checked Then
+                    ' Ask if the user wants to select MDF and LDF locations separately (if needed)
+                    ' And then open a FolderBrowserDialog(s) to choose the new location(s)
+                    If MessageBox.Show("Do you want to select MDF and LDF locations separately?", "Select Location", MessageBoxButtons.YesNo, MessageBoxIcon.Question) = DialogResult.Yes Then
+                        ' Prompt for MDF file location
+                        Using fbdMdf As New FolderBrowserDialog()
+                            fbdMdf.Description = "Select the location for the MDF file"
+                            If fbdMdf.ShowDialog() = DialogResult.OK Then
+                                Dim mdfPathSelected = fbdMdf.SelectedPath
+                            Else
+                                ' User cancelled the selection
+                                MessageBox.Show("You did not select a location for the MDF file. Operation cancelled.", "Cancelled", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                                Return
+                            End If
+                        End Using
+
+                        ' Prompt for LDF file location
+                        Using fbdLdf As New FolderBrowserDialog()
+                            fbdLdf.Description = "Select the location for the LDF file"
+                            If fbdLdf.ShowDialog() = DialogResult.OK Then
+                                Dim ldfPathSelected = fbdLdf.SelectedPath
+                            Else
+                                ' User cancelled the selection
+                                MessageBox.Show("You did not select a location for the LDF file. Operation cancelled.", "Cancelled", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                                Return
+                            End If
+                        End Using
+                    Else
+                        ' Logic for single selection (both MDF and LDF in the same location)
+                        Using fbd As New FolderBrowserDialog()
+                            If fbd.ShowDialog() = DialogResult.OK Then
+                                ' Use the selected path for both MDF and LDF
+                                datapath = fbd.SelectedPath
+                                logpath = fbd.SelectedPath
+                            End If
+                        End Using
+                    End If
+                End If
+            Else
+                ' Handle the case where the user cancels the form
+                MessageBox.Show("Operation cancelled by the user.", "Cancelled", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                Return
+            End If
+
         If Not TabulateDatabase(newpath, dbfile, logfile, err1) Then
             Logg($"Error Tabulating:{err1}")
         Else
-            Debug.Print("dbfile: " & dbfile)
 
             dbname = CorrectDBname(dbfile)
-
-            Debug.Print("db Name:" & dbname)
-
-            If String.IsNullOrEmpty(dbpath) Then
-                tmp1 = Path.Combine(windrive, "SysData\")
-                If Not Directory.Exists(tmp1) Then
-                    Logg("Creating database directory...")
-                    Directory.CreateDirectory(tmp1)
-                End If
-            Else
-                tmp1 = dbpath
-            End If
+            datapath = OnlyDirPath(datapath)
+            logpath = OnlyDirPath(logpath)
 
             If DatabaseExists(dbname) Then
                 Logg("Cannot upload database: Database already exists")
@@ -778,7 +814,7 @@ xc:
                         mdfo = True
                     End If
                     Debug.Print(newpath)
-                    If RestoreDatabase2(newpath, tmp1, dbfile, logfile, err1) Then
+                    If RestoreDatabase2(newpath, datapath, logpath, dbfile, logfile, err1) Then
                         'SetGuest(dbname, True)
                         'con.Execute($"USE {dbname} GRANT CONNECT TO GUEST")
                         'con.Execute("USE master")
@@ -807,51 +843,69 @@ xc:
     Sub ProcessUpload2(ByRef mdffile As String)
         Dim newpath As String
         Dim err1 As String
-        Dim msg1 As String
-        Dim dbfile As String
         Dim dbname As String
         Dim flname As String
-        Dim logfile As String
-        Dim dbfname As String
-
-        newpath = Path.Combine(dbpath, Path.GetFileName(mdffile))
 
         If Not Directory.Exists(windrive) Then
             MsgBox("Admin access required", MsgBoxStyle.Exclamation, "Error!")
             Exit Sub
         End If
 
+        ' Define the file name and database name
+        flname = Path.GetFileName(mdffile)
+        dbname = CorrectDBname(Path.GetFileNameWithoutExtension(mdffile))
+
+        If DatabaseExists(dbname) Then
+            Logg("Cannot upload database: Database already exists")
+            Exit Sub
+        End If
+
         Logg("Copying files...")
         System.Windows.Forms.Application.DoEvents()
-        File.Copy(mdffile, newpath)
-        Dim tmp1 As String
-        If MsgBox("Uploading mdf file means that the log file is missing. Are you sure?", MsgBoxStyle.Exclamation + MsgBoxStyle.YesNo, "Warning!") = MsgBoxResult.No Then
+
+        ' Ask the user about the location to attach the database
+        Dim userChoice As MsgBoxResult = MsgBox("Do you want to attach the database using the default location or the location of the MDF file?" & vbCrLf & "Yes: Default Location" & vbCrLf & "No: Location of the MDF file", MsgBoxStyle.Question + MsgBoxStyle.YesNoCancel, "Select Location")
+
+        ' Cancel if the user chooses Cancel
+        If userChoice = MsgBoxResult.Cancel Then
             Logg("Upload database cancelled")
             Exit Sub
-        Else
-            dbfname = Path.GetFileNameWithoutExtension(mdffile)
-            dbname = CorrectDBname(dbfname)
-            flname = Path.GetFileName(mdffile)
-
-            If DatabaseExists(dbname) Then
-                Logg("Cannot upload database: Database already exists")
-            Else
-                If MsgBox("You will now upload this database. Proceed?" & vbCrLf & vbCrLf & "Database name: " & dbname, MsgBoxStyle.Question + MsgBoxStyle.YesNo, "Notice") = MsgBoxResult.Yes Then
-                    Logg("Uploading database...")
-                    If AttachData(dbname, newpath, err1) Then
-                        con.Execute($"USE {dbname} GRANT CONNECT TO GUEST")
-                        con.Execute("USE master")
-                        Logg($"Database {dbname} is now uploaded")
-                    Else
-                        Logg($"Database upload of {dbname} failed: {err1}")
-                    End If
-                Else
-                    Logg("Upload database cancelled")
-                End If
-            End If
-
-            LoadDatabase()
         End If
+
+        ' Logic to determine the new path based on the user's choice
+        If userChoice = MsgBoxResult.Yes Then
+            ' Retrieve and use the default location
+            Dim defaultDataPath As String = ""
+            Dim defaultLogPath As String = ""
+            GetDefaultDataAndLogLocations(defaultDataPath, defaultLogPath, err1)
+            If String.IsNullOrEmpty(err1) AndAlso Not String.IsNullOrEmpty(defaultDataPath) Then
+                newpath = Path.Combine(defaultDataPath, flname)
+                ' Ensure copying the file to the default location
+                If Not String.Equals(mdffile, newpath, StringComparison.OrdinalIgnoreCase) Then
+                    File.Copy(mdffile, newpath, True)
+                End If
+            Else
+                Logg($"Failed to retrieve default locations: {err1}")
+                Exit Sub
+            End If
+        Else
+            ' Use the MDF file's location for attaching
+            newpath = mdffile ' No need to copy, use it directly as it's already in the desired location
+        End If
+
+        ' Confirm upload after ensuring the file is not in use
+        If MsgBox("You will now upload this database. Proceed?" & vbCrLf & vbCrLf & "Database name: " & dbname, MsgBoxStyle.Question + MsgBoxStyle.YesNo, "Notice") = MsgBoxResult.Yes Then
+            Logg("Uploading database...")
+            If AttachData(dbname, newpath, err1) Then
+                Logg($"Database {dbname} is now uploaded")
+            Else
+                Logg($"Database upload of {dbname} failed: {err1}")
+            End If
+        Else
+            Logg("Upload database cancelled")
+        End If
+
+        LoadDatabase()
     End Sub
 
 
