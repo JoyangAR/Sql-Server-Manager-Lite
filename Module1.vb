@@ -64,7 +64,7 @@ Module Module1
     End Function
 
     Function AttachData(ByRef DatabaseName As String, ByRef path As String, Optional ByRef errmsg As String = "") As Boolean
-        On Error GoTo xc
+        On Error GoTo ErrorHandler
 
         System.Windows.Forms.Application.DoEvents()
         If prov2 = "sqloledb" Then
@@ -81,13 +81,13 @@ Module Module1
         End If
         Return True
         Exit Function
-xc:
+ErrorHandler:
         errmsg = Err.Description
         Return False
     End Function
 
-    Function TabulateDatabase(ByRef bakPath As String, Optional ByRef dbname As String = "", Optional ByRef LogName As String = "", Optional ByRef errmsg As String = "", Optional ByRef mdfid As Integer = 0) As Boolean
-        On Error GoTo xc
+    Function TabulateDatabase(ByRef bakPath As String, Optional ByRef dbname As String = "", Optional ByRef LogName As String = "", Optional ByRef errmsg As String = "", Optional ByRef datapath As String = "", Optional ByRef logpath As String = "", Optional ByRef mdfid As Integer = 0) As Boolean
+        On Error GoTo ErrorHandler
         Dim resultList As New List(Of String)()
         Dim rs As SqlDataReader
 
@@ -102,23 +102,29 @@ xc:
                     rs = cmd.ExecuteReader()
 
                     While rs.Read()
-                        resultList.Add(rs.GetString(0))
+                        Dim fileType As String = rs("Type").ToString().Trim().ToLower()
+                        If fileType = "d" Then ' "d" for Data
+                            dbname = rs("LogicalName").ToString() ' Logical name of the MDF file
+                            datapath = rs("PhysicalName").ToString() ' Physical location of the MDF file
+                        ElseIf fileType = "l" Then ' "l" for Log
+                            LogName = rs("LogicalName").ToString() ' Logical name of the LDF file
+                            logpath = rs("PhysicalName").ToString() ' Physical location of the LDF file
+                        End If
                     End While
                 End Using
             End Using
         End If
 
-        If resultList.Count >= 2 Then
-            dbname = resultList(0)
-            LogName = resultList(1)
+        If Not String.IsNullOrEmpty(datapath) And Not String.IsNullOrEmpty(logpath) Then
             TabulateDatabase = True
         Else
+            errmsg = "Failed to retrieve complete backup file information."
             TabulateDatabase = False
         End If
 
         Exit Function
 
-xc:
+ErrorHandler:
         errmsg = Err.Description
         TabulateDatabase = False
     End Function
@@ -139,8 +145,14 @@ xc:
         CorrectDBname = tmp
     End Function
 
+    Function OnlyDirPath(ByVal fullpath As String) As String
+        Dim dirPath As String = System.IO.Path.GetDirectoryName(fullpath)
+        dirPath = EnsureTrailingBackslash(dirPath)
+        Return dirPath
+    End Function
+
     Function CreateAccount(ByRef username As String, ByRef Password As String, Optional ByRef errmsg As String = "") As Boolean
-        On Error GoTo XC
+        On Error GoTo ErrorHandler
 
         System.Windows.Forms.Application.DoEvents()
         If prov2 = "sqloledb" Then
@@ -157,7 +169,7 @@ xc:
         Return True
         Exit Function
 
-XC:
+ErrorHandler:
         errmsg = Err.Description
         CreateAccount = False
     End Function
@@ -210,8 +222,8 @@ XC:
         DatabaseExists = False
     End Function
 
-    Public Function RestoreDatabase2(ByRef bckpath As String, ByRef NewDBpath As String, ByRef dbfile As String, ByRef logfile As String, Optional ByRef errmsg As String = "", Optional ByRef MDF_Only As Boolean = False, Optional ByRef MDF_ID As Integer = 0) As Boolean
-        On Error GoTo xc
+    Public Function RestoreDatabase2(ByRef bckpath As String, ByRef NewDBDatapath As String, ByRef NewDBLogpath As String, ByRef dbfile As String, ByRef logfile As String, Optional ByRef errmsg As String = "", Optional ByRef MDF_Only As Boolean = False, Optional ByRef MDF_ID As Integer = 0) As Boolean
+        On Error GoTo ErrorHandler
 
         Dim db1 As String
         Dim str_Renamed As String
@@ -223,11 +235,10 @@ XC:
             System.Windows.Forms.Application.DoEvents()
 
             If Not MDF_Only Then
-                str_Renamed = $"RESTORE DATABASE {db1} FROM DISK='{bckpath}' WITH MOVE '{dbfile}' TO '{NewDBpath}{db1}.mdf', MOVE '{logfile}' TO '{NewDBpath}{db1}_log.ldf'"
+                str_Renamed = $"RESTORE DATABASE {db1} FROM DISK='{bckpath}' WITH MOVE '{dbfile}' TO '{NewDBDatapath}{db1}.mdf', MOVE '{logfile}' TO '{NewDBLogpath}{db1}_log.ldf'"
             Else
-                str_Renamed = $"RESTORE DATABASE {db1} FROM DISK='{bckpath}' WITH FILE=1, RECOVERY, MOVE '{dbfile}' TO '{NewDBpath}{db1}.mdf', MOVE '{logfile}' TO '{NewDBpath}{db1}_log.ldf'"
+                str_Renamed = $"RESTORE DATABASE {db1} FROM DISK='{bckpath}' WITH FILE=1, RECOVERY, MOVE '{dbfile}' TO '{NewDBDatapath}{db1}.mdf', MOVE '{logfile}' TO '{NewDBLogpath}{db1}_log.ldf'"
             End If
-
             con.Execute(str_Renamed)
 
             ' Alter the database to set to single-user mode and back to multi-user mode
@@ -240,11 +251,10 @@ XC:
                 Dim commandText As String
 
                 If Not MDF_Only Then
-                    commandText = $"RESTORE DATABASE [{db1}] FROM DISK='{bckpath}' WITH MOVE '{dbfile}' TO '{NewDBpath}{db1}.mdf', MOVE '{logfile}' TO '{NewDBpath}{db1}_log.ldf'"
+                    commandText = $"RESTORE DATABASE [{db1}] FROM DISK='{bckpath}' WITH MOVE '{dbfile}' TO '{NewDBDatapath}{db1}.mdf', MOVE '{logfile}' TO '{NewDBLogpath}{db1}_log.ldf'"
                 Else
-                    commandText = $"RESTORE DATABASE [{db1}] FROM DISK='{bckpath}' WITH FILE=1, RECOVERY, MOVE '{dbfile}' TO '{NewDBpath}{db1}.mdf', MOVE '{logfile}' TO '{NewDBpath}{db1}_log.ldf'"
+                    commandText = $"RESTORE DATABASE [{db1}] FROM DISK='{bckpath}' WITH FILE=1, RECOVERY, MOVE '{dbfile}' TO '{NewDBDatapath}{db1}.mdf', MOVE '{logfile}' TO '{NewDBLogpath}{db1}_log.ldf'"
                 End If
-
                 Using cmd As New SqlCommand(commandText, connnection)
                     cmd.ExecuteNonQuery()
                 End Using
@@ -262,7 +272,7 @@ XC:
         RestoreDatabase2 = True
         Exit Function
 
-xc:
+ErrorHandler:
         Debug.Print(str_Renamed)
         errmsg = Err.Description
         RestoreDatabase2 = False
@@ -273,7 +283,7 @@ xc:
     End Function
 
     Function RestoreDatabase(ByRef bckfile As String, ByRef dbname As String, Optional ByRef errmsg As String = "") As Boolean
-        On Error GoTo xc
+        On Error GoTo ErrorHandler
 
         If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
             con.Execute($"RESTORE DATABASE {dbname} FROM DISK = '{bckfile}' WITH REPLACE")
@@ -292,7 +302,7 @@ xc:
         RestoreDatabase = True
         Exit Function
 
-xc:
+ErrorHandler:
         Debug.Print($"RESTORE DATABASE {dbname} FROM DISK = '{bckfile}' WITH REPLACE")
 
         errmsg = Err.Description
@@ -383,7 +393,7 @@ xc:
     End Function
 
     Function ChangePwd(ByRef username As String, ByRef pwd As String, Optional ByRef errmsg As String = "") As Boolean
-        On Error GoTo xc
+        On Error GoTo ErrorHandler
 
         If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
             con.Execute($"ALTER LOGIN [{username}] WITH PASSWORD=N'{pwd}'")
@@ -402,13 +412,13 @@ xc:
         ChangePwd = True
         Exit Function
 
-xc:
+ErrorHandler:
         errmsg = Err.Description
         ChangePwd = False
     End Function
 
     Function DeleteAccount(ByRef username As String, Optional ByRef errmsg As String = "") As Boolean
-        On Error GoTo xc
+        On Error GoTo ErrorHandler
 
         If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
             con.Execute($"DROP LOGIN [{username}]")
@@ -427,7 +437,7 @@ xc:
         DeleteAccount = True
         Exit Function
 
-xc:
+ErrorHandler:
         errmsg = Err.Description
         DeleteAccount = False
     End Function
@@ -471,7 +481,7 @@ xc:
     Function RepairDB(ByRef dbname As String, Optional ByRef forced As pRepairMode = pRepairMode.pStandard, Optional ByRef errmsg As String = "", Optional ByRef rs As ADODB.Recordset = Nothing) As Boolean
         Dim str_Renamed As String
 
-        On Error GoTo xc
+        On Error GoTo ErrorHandler
 
         If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
             If forced = pRepairMode.pForced Then
@@ -505,7 +515,7 @@ xc:
         RepairDB = True
         Exit Function
 
-xc:
+ErrorHandler:
         Dim errLoop As SqlError
 
         ' Loop through each Error object in Errors collection.
@@ -522,7 +532,7 @@ xc:
     End Function
 
     Function DeleteDatabase(ByRef dbname As String, Optional ByRef errmsg As String = "") As Boolean
-        On Error GoTo xc
+        On Error GoTo ErrorHandler
 
         If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
             con.Execute("DROP DATABASE " & dbname)
@@ -541,7 +551,7 @@ xc:
         DeleteDatabase = True
         Exit Function
 
-xc:
+ErrorHandler:
         errmsg = Err.Description
         DeleteDatabase = False
     End Function
@@ -557,7 +567,7 @@ ErrorHandler:
     Function BackupDatabase(ByRef dbname1 As String, ByRef ipath As String, ByRef bckfile As String, Optional ByRef errmsg As String = "") As Boolean
         Dim newbck As String = ""
 
-        On Error GoTo xc
+        On Error GoTo ErrorHandler
 
         newbck = $"{dbname1}_{Today:MM-dd-yyyy}_{Now:hhmmss}.bak"
         bckfile = newbck
@@ -580,7 +590,7 @@ ErrorHandler:
         BackupDatabase = True
         Exit Function
 
-xc:
+ErrorHandler:
         errmsg = Err.Description
         BackupDatabase = False
     End Function
@@ -600,7 +610,7 @@ xc:
     Function GuestAllowed(ByRef dbname As String) As Boolean
         System.Windows.Forms.Application.DoEvents()
 
-        On Error GoTo xc
+        On Error GoTo ErrorHandler
 
         Dim tmp As Boolean
 
@@ -646,7 +656,7 @@ xc:
 
         Exit Function
 
-xc:
+ErrorHandler:
         GuestAllowed = False
     End Function
 
@@ -689,6 +699,7 @@ xc:
 
         Dim tmp As String
 
+
         If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
             Dim rs1 As New ADODB.Recordset
             con.Execute("use master")
@@ -715,13 +726,14 @@ xc:
             End Using
         End If
 
+
         Return tmp
 
     End Function
 
     Function GetInstanceVersion(ByRef version As String, ByRef errmsg As String)
 
-        On Error GoTo xc
+        On Error GoTo ErrorHandler
 
         If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
             Dim rs As New ADODB.Recordset
@@ -755,7 +767,7 @@ xc:
         Return version
         Exit Function
 
-xc:
+ErrorHandler:
         errmsg = Err.Description
         Return False
     End Function
@@ -788,46 +800,62 @@ xc:
         Return result
     End Function
 
-    Function GetDefaultDataAndLogLocations(ByRef DefaultDataPath As String, ByRef DefaultLogPath As String)
+    Function GetDefaultDataAndLogLocations(Optional ByRef DefaultDataPath As String = "", Optional ByRef DefaultLogPath As String = "", Optional ByRef errmsg As String = "") As Boolean
+
+        On Error GoTo ErrorHandler
         ' Check if default data and log paths are already set
         If Not String.IsNullOrEmpty(defaultmdf) Or Not String.IsNullOrEmpty(defaultldf) Then
             ' If default values are already set, return them
-            DefaultDataPath = defaultmdf
-            DefaultLogPath = defaultldf
+            DefaultDataPath = EnsureTrailingBackslash(defaultmdf)
+            DefaultLogPath = EnsureTrailingBackslash(defaultldf)
         Else
-            ' If default values are not set, retrieve them based on the provider type
-            If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
-                ' Get the default data and log locations from the registry for SQL Server instance
-                Using regKey As Microsoft.Win32.RegistryKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey($"Software\Microsoft\Microsoft SQL Server\{frmlogin.instance}")
-                    If regKey IsNot Nothing Then
-                        DefaultDataPath = CStr(regKey.GetValue("DefaultData"))
-                        DefaultLogPath = CStr(regKey.GetValue("DefaultLog"))
-                    End If
-                End Using
-            ElseIf prov2.ToLower() = "integrated" Then
-                ' Try to obtain the default data and log locations from SQL Server instance properties
-                Using con As New SqlConnection(frmmain.strlogin)
-                    Try
+            If Not frmmain.islocaldb Then
+                ' If default values are not set, retrieve them based on the provider type
+                If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
+                    ' Get the default data and log locations from the registry for SQL Server instance
+                    Using regKey As Microsoft.Win32.RegistryKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey($"Software\Microsoft\Microsoft SQL Server\{frmlogin.instance}")
+                        If regKey IsNot Nothing Then
+                            DefaultDataPath = EnsureTrailingBackslash(CStr(regKey.GetValue("DefaultData")))
+                            DefaultLogPath = EnsureTrailingBackslash(CStr(regKey.GetValue("DefaultLog")))
+                        End If
+                    End Using
+                ElseIf prov2.ToLower() = "integrated" Then
+                    ' Try to obtain the default data and log locations from SQL Server instance properties
+                    Using con As New SqlConnection(frmmain.strlogin)
+
                         con.Open()
                         Using cmd As New SqlCommand("SELECT SERVERPROPERTY('InstanceDefaultDataPath') AS DefaultDataPath, SERVERPROPERTY('InstanceDefaultLogPath') AS DefaultLogPath", con)
                             Dim reader As SqlDataReader = cmd.ExecuteReader()
                             If reader.Read() Then
-                                DefaultDataPath = If(IsDBNull(reader("DefaultDataPath")), String.Empty, reader("DefaultDataPath").ToString())
-                                Debug.Print(DefaultDataPath)
-                                DefaultLogPath = If(IsDBNull(reader("DefaultLogPath")), String.Empty, reader("DefaultLogPath").ToString())
-                                Debug.Print(DefaultLogPath)
+                                DefaultDataPath = EnsureTrailingBackslash(If(IsDBNull(reader("DefaultDataPath")), String.Empty, reader("DefaultDataPath").ToString()))
+                                DefaultLogPath = EnsureTrailingBackslash(If(IsDBNull(reader("DefaultLogPath")), String.Empty, reader("DefaultLogPath").ToString()))
                                 Return True
                             End If
                         End Using
-                    Catch ex As Exception
-                        Debug.Print("Error obtaining default data/log locations: " & ex.Message)
-                    End Try
-                End Using
+
+                    End Using
+                End If
+            Else
+                DefaultDataPath = EnsureTrailingBackslash(GetDatabasePath())
+                DefaultLogPath = EnsureTrailingBackslash(GetDatabasePath())
             End If
+
         End If
 
         Return True
+
+ErrorHandler:
+        errmsg = Err.Description
+        Return False
     End Function
+
+    Private Function EnsureTrailingBackslash(path As String) As String
+        If Not path.EndsWith(System.IO.Path.DirectorySeparatorChar) Then
+            path += System.IO.Path.DirectorySeparatorChar
+        End If
+        Return path
+    End Function
+
 
     Sub WriteXML(ByRef username As String, ByRef password As String, ByRef instance As String, ByRef provider As String, ByRef driver As String, ByRef trusted As CheckState, ByRef localdb As CheckState, ByRef autologin As CheckState, mdfpath As String, ByRef ldfpath As String)
         Try
@@ -914,7 +942,7 @@ xc:
     Function ShrinkLog(ByRef dbname As String, Optional ByRef pMode As pShrinkMode = 0, Optional ByRef ShrinkSize As Integer = 1, Optional ByRef errmsg As String = "") As Boolean
         Dim str_Renamed As String
 
-        On Error GoTo xc
+        On Error GoTo ErrorHandler
 
         If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
             con.Execute($"USE {dbname}")
@@ -942,7 +970,7 @@ xc:
         ShrinkLog = True
         Exit Function
 
-xc:
+ErrorHandler:
         errmsg = Err.Description
         ShrinkLog = False
 
@@ -1050,7 +1078,7 @@ xc:
     End Function
 
     Function DetachDatabase(ByRef dbname As String, Optional ByRef errmsg As String = "") As Boolean
-        On Error GoTo xc
+        On Error GoTo ErrorHandler
 
         If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
             con.Execute("sp_detach_db " & dbname)
@@ -1069,7 +1097,7 @@ xc:
         DetachDatabase = True
         Exit Function
 
-xc:
+ErrorHandler:
         errmsg = Err.Description
         DetachDatabase = False
     End Function
@@ -1110,7 +1138,7 @@ xc:
     End Sub
 
     Function KillConnections(ByVal dbName As String, ByRef errmsg As String) As Boolean
-        On Error GoTo xc
+        On Error GoTo ErrorHandler
 
         If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
             ' Not supported for sqloledb provider
@@ -1134,7 +1162,7 @@ xc:
         KillConnections = True
         Exit Function
 
-xc:
+ErrorHandler:
         Dim errLoop As SqlError
 
         ' Loop through each Error object in Errors collection.
