@@ -63,22 +63,48 @@ Module Module1
         Return principal.IsInRole(WindowsBuiltInRole.Administrator)
     End Function
 
-    Function AttachData(ByRef DatabaseName As String, ByRef path As String, Optional ByRef errmsg As String = "") As Boolean
+    Function AttachData(ByRef DatabaseName As String, ByRef mdfPath As String, ByRef MDFOnly As Boolean, Optional ByRef errmsg As String = "") As Boolean
         On Error GoTo ErrorHandler
-
+        Debug.Print(MDFOnly)
         System.Windows.Forms.Application.DoEvents()
+
+        ' Attempt to determine the LDF file path based on common naming conventions
+        Dim baseLogPath As String = System.IO.Path.ChangeExtension(mdfPath, ".ldf")
+        Dim alternativeLogPath As String = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(mdfPath), System.IO.Path.GetFileNameWithoutExtension(mdfPath) & "_log.ldf")
+
+        ' Determine if the LDF file exists with either name
+        Dim actualLogPath As String = If(System.IO.File.Exists(baseLogPath), baseLogPath, If(System.IO.File.Exists(alternativeLogPath), alternativeLogPath, String.Empty))
+        Debug.Print(actualLogPath)
+
+        ' Delete the LDF file if MDFOnly is True and an LDF file exists
+        If MDFOnly AndAlso Not String.IsNullOrEmpty(actualLogPath) Then
+            System.IO.File.Delete(actualLogPath)
+        End If
+
+        ' Construct the SQL statement to attach the database
+        Dim sql As String
+        If MDFOnly OrElse String.IsNullOrEmpty(actualLogPath) Then
+            ' Only MDF or no LDF exists: Rebuild LDF
+            sql = $"CREATE DATABASE [{DatabaseName}] ON (FILENAME = '{mdfPath}') FOR ATTACH_REBUILD_LOG;"
+            Debug.Print("Rebuilding log...")
+        Else
+            ' Use existing MDF and LDF
+            sql = $"CREATE DATABASE [{DatabaseName}] ON (FILENAME = '{mdfPath}'), (FILENAME = '{actualLogPath}') FOR ATTACH;"
+            Debug.Print("Using existing log...")
+        End If
+
+        ' Execute the SQL statement
         If prov2 = "sqloledb" Then
-            con.Execute("CREATE DATABASE [" & DatabaseName & "] ON (FILENAME = '" & path & "') FOR ATTACH_REBUILD_LOG;")
+            con.Execute(sql)
         Else
             Using connection As New SqlConnection(frmmain.strlogin)
                 connection.Open()
-
-                Using cmd As New SqlCommand("CREATE DATABASE [" & DatabaseName & "] ON (FILENAME = '" & path & "') FOR ATTACH_REBUILD_LOG;", connection)
+                Using cmd As New SqlCommand(sql, connection)
                     cmd.ExecuteNonQuery()
                 End Using
             End Using
-
         End If
+
         Return True
         Exit Function
 ErrorHandler:

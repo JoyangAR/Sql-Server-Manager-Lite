@@ -219,25 +219,25 @@ Friend Class frmmain
 
 
     Private Sub cmdadd_Click(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles cmdadd.Click
-        Dim str_Renamed As String
+        Dim SelectedFile As String
 
         Try
             dlgOpen.Title = "Select backup file"
             dlgOpen.Filter = "SQL Server Database Back-up File (*.bak)|*.bak|SQL Server Database File (*.mdf)|*.mdf"
             dlgOpen.ShowDialog()
 
-            str_Renamed = dlgOpen.FileName
+            SelectedFile = dlgOpen.FileName
 
-            If str_Renamed = "" Then
+            If SelectedFile = "" Then
                 Exit Sub
             End If
 
             Wait(True)
 
-            If LCase(IO.Path.GetExtension(str_Renamed)) = ".bak" Then
-                ProcessUpload(str_Renamed)
-            ElseIf LCase(IO.Path.GetExtension(str_Renamed)) = ".mdf" Then
-                ProcessUpload2(str_Renamed)
+            If LCase(IO.Path.GetExtension(SelectedFile)) = ".bak" Then
+                ProcessUpload(SelectedFile)
+            ElseIf LCase(IO.Path.GetExtension(SelectedFile)) = ".mdf" Then
+                ProcessUpload2(SelectedFile)
             End If
 
             Wait(False)
@@ -845,6 +845,7 @@ xc:
         Dim err1 As String
         Dim dbname As String
         Dim flname As String
+        Dim mdfo As Boolean = False ' MDF Only
 
         If Not Directory.Exists(windrive) Then
             MsgBox("Admin access required", MsgBoxStyle.Exclamation, "Error!")
@@ -896,7 +897,7 @@ xc:
         ' Confirm upload after ensuring the file is not in use
         If MsgBox("You will now upload this database. Proceed?" & vbCrLf & vbCrLf & "Database name: " & dbname, MsgBoxStyle.Question + MsgBoxStyle.YesNo, "Notice") = MsgBoxResult.Yes Then
             Logg("Uploading database...")
-            If AttachData(dbname, newpath, err1) Then
+            If AttachData(dbname, newpath, mdfo, err1) Then
                 Logg($"Database {dbname} is now uploaded")
             Else
                 Logg($"Database upload of {dbname} failed: {err1}")
@@ -1085,7 +1086,7 @@ xc:
         Dim ldf As String
         Dim err3 As String
         Dim err1 As String
-
+        Dim mdfo As Boolean = True ' MDF Only
         mdf = GetDBFile(dbname, ldf)
 
         Debug.Print(ldf)
@@ -1110,7 +1111,7 @@ xc:
 
         Logg($"Reattaching {dbname}...")
 
-        If AttachData(dbname, mdf, err3) Then
+        If AttachData(dbname, mdf, mdfo, err3) Then
             Logg($"Log file for {dbname} cleared")
         Else
             Logg($"Attach Failed: {err3}")
