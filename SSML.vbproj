@@ -109,7 +109,12 @@
     <Import Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AssemblyInfo.vb" />
+    <Compile Include="frmbakdir.Designer.vb">
+      <DependentUpon>frmbakdir.vb</DependentUpon>
+    </Compile>
+    <Compile Include="frmbakdir.vb">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="frmdialog.Designer.vb">
       <SubType>Code</SubType>
       <DependentUpon>frmdialog.vb</DependentUpon>
@@ -160,6 +165,9 @@
     <Compile Include="frmpwd.vb">
       <SubType>Form</SubType>
     </Compile>
+    <EmbeddedResource Include="frmbakdir.resx">
+      <DependentUpon>frmbakdir.vb</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="frmdialog.resX">
       <DependentUpon>frmdialog.vb</DependentUpon>
     </EmbeddedResource>
