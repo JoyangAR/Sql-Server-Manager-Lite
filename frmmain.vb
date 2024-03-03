@@ -215,6 +215,7 @@ Friend Class frmmain
                 Return False
             End Try
         End If
+        Return True
     End Function
 
 
@@ -287,7 +288,7 @@ Friend Class frmmain
 
     Private Sub cmddelete_Click(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles cmddelete.Click
 
-        Dim err1 As String
+        Dim err1 As String = ""
 
         If lstdb.SelectedIndex = -1 Then
             MsgBox("Select database", MsgBoxStyle.Exclamation, "")
@@ -331,7 +332,7 @@ Friend Class frmmain
     End Sub
 
     Private Sub cmddeleteuser_Click(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles cmddeleteuser.Click
-        Dim err1 As String
+        Dim err1 As String = ""
 
         If lstuser.SelectedIndex = -1 Then
             MsgBox("Select user", MsgBoxStyle.Exclamation, "")
@@ -378,7 +379,7 @@ Friend Class frmmain
     End Sub
 
     Private Sub cmdgetsize_Click(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles cmdgetsize.Click
-        Dim ldf As String
+        Dim ldf As String = ""
         Dim mdf As String
         Dim str_Renamed As String
         Dim mdfsize As Long
@@ -517,7 +518,7 @@ xc:
 
     Private Sub cmddetach_Click(sender As Object, e As EventArgs) Handles cmddetach.Click
 
-        Dim err1 As String
+        Dim err1 As String = ""
 
         If lstdb.SelectedIndex = -1 Then
             MsgBox("Select database", MsgBoxStyle.Exclamation, "")
@@ -557,7 +558,7 @@ xc:
 
     Private Sub cmdkillconn_Click(sender As Object, e As EventArgs) Handles cmdkillconn.Click
 
-        Dim err1 As String
+        Dim err1 As String = ""
 
         If lstdb.SelectedIndex = -1 Then
             MsgBox("Select database", MsgBoxStyle.Exclamation, "")
@@ -606,6 +607,7 @@ xc:
 
         ' Show frmtables
         tablesForm.Text = lstdb.SelectedItem
+        tablesForm.Icon = Me.Icon
         tablesForm.Show()
     End Sub
 
@@ -631,8 +633,8 @@ xc:
             Dim serviceController As New ServiceController(serviceName)
             chksqlbrowser.CheckState = If(serviceController.Status = ServiceControllerStatus.Running, CheckState.Checked, CheckState.Unchecked)
         End If
-        Dim errmsg As String
-        Dim version As String
+        Dim errmsg As String = ""
+        Dim version As String = ""
         If GetInstanceVersion(version, errmsg) Then
             'Display SQL Server version
             Logg($"SQL Server version: {version}")
@@ -703,17 +705,15 @@ xc:
     End Sub
 
     Sub ProcessUpload(ByRef bakfile As String)
-        Dim newpath As String ' Temporal .bak path
-        Dim err1 As String ' Where error messages will be store
-        Dim msg1 As String
-        Dim dbfile As String ' Database mdf file name
+        Dim newpath As String = "" ' Temporal .bak path
+        Dim err1 As String = "" ' Where error messages will be store
+        Dim dbfile As String = "" ' Database mdf file name
         Dim dbname As String ' Database name
-        Dim logfile As String ' Database ldf file name
-        Dim datapath As String ' Database mdf path
-        Dim logpath As String ' Database ldf path
+        Dim logfile As String = "" ' Database ldf file name
+        Dim datapath As String = "" ' Database mdf path
+        Dim logpath As String = "" ' Database ldf path
         Dim mdfo As Boolean ' MDF Only
         Dim mvf As Boolean = False
-        Dim mdfid As Integer
 
         If Not Directory.Exists(windrive) Then
             MsgBox("Admin access required", MsgBoxStyle.Exclamation, "Error!")
@@ -842,7 +842,7 @@ xc:
 
     Sub ProcessUpload2(ByRef mdffile As String)
         Dim newpath As String
-        Dim err1 As String
+        Dim err1 As String = ""
         Dim dbname As String
         Dim flname As String
         Dim mdfo As Boolean = False ' MDF Only
@@ -936,8 +936,8 @@ xc:
         System.Windows.Forms.Application.DoEvents()
 
         Dim tmp12 As String
-        Dim newbck As String
-        Dim err1 As String
+        Dim newbck As String = ""
+        Dim err1 As String = ""
 
         tmp12 = windrive & "SysDataBackup"
 
@@ -963,7 +963,7 @@ xc:
     End Sub
 
     Sub ProcessRestore(ByRef bckfile As String, ByRef dbname As String)
-        Dim err1 As String
+        Dim err1 As String = ""
         Dim mvf As Boolean
         Dim bfile As String
 
@@ -996,9 +996,8 @@ xc:
     End Sub
 
     Sub ProcessRepair(ByRef dbname As String, ByVal forced As Module1.pRepairMode)
-        Dim err1 As String
-        Dim mode1 As String
-        Dim rmode As Module1.pRepairMode
+        Dim err1 As String = ""
+        Dim mode1 As String = ""
 
         Wait(True)
 
@@ -1083,9 +1082,9 @@ xc:
 
     Sub RebuildLog(ByRef dbname As String)
         Dim mdf As String
-        Dim ldf As String
-        Dim err3 As String
-        Dim err1 As String
+        Dim ldf As String = ""
+        Dim err3 As String = ""
+        Dim err1 As String = ""
         Dim mdfo As Boolean = True ' MDF Only
         mdf = GetDBFile(dbname, ldf)
 
@@ -1132,5 +1131,11 @@ xc:
             frmfilespath.TxtLDF.Text = defaultLogPath
             frmfilespath.ShowDialog()
         End If
+    End Sub
+
+    Private Sub cmdQueryEditor_Click(sender As Object, e As EventArgs) Handles cmdQueryEditor.Click
+        frmqueryeditor.Icon = Me.Icon
+        frmqueryeditor.Text = "New Query"
+        frmqueryeditor.Show()
     End Sub
 End Class

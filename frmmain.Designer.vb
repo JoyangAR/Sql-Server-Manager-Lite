@@ -59,6 +59,7 @@
         Me.cmdrepairdb = New System.Windows.Forms.Button()
         Me.cmdtables = New System.Windows.Forms.Button()
         Me.cmddataloc = New System.Windows.Forms.Button()
+        Me.cmdQueryEditor = New System.Windows.Forms.Button()
         Me.Frame3 = New System.Windows.Forms.GroupBox()
         Me.cmdclear = New System.Windows.Forms.Button()
         Me.txtlog = New System.Windows.Forms.TextBox()
@@ -253,13 +254,27 @@
         Me.ToolTip1.SetToolTip(Me.cmddataloc, "Get/Set default Database files locations")
         Me.cmddataloc.UseVisualStyleBackColor = False
         '
+        'cmdQueryEditor
+        '
+        Me.cmdQueryEditor.BackColor = System.Drawing.SystemColors.Control
+        Me.cmdQueryEditor.Cursor = System.Windows.Forms.Cursors.Default
+        Me.cmdQueryEditor.ForeColor = System.Drawing.SystemColors.ControlText
+        Me.cmdQueryEditor.Location = New System.Drawing.Point(176, 213)
+        Me.cmdQueryEditor.Name = "cmdQueryEditor"
+        Me.cmdQueryEditor.RightToLeft = System.Windows.Forms.RightToLeft.No
+        Me.cmdQueryEditor.Size = New System.Drawing.Size(81, 25)
+        Me.cmdQueryEditor.TabIndex = 24
+        Me.cmdQueryEditor.Text = "Query Editor"
+        Me.ToolTip1.SetToolTip(Me.cmdQueryEditor, "Edit/Execute queries")
+        Me.cmdQueryEditor.UseVisualStyleBackColor = False
+        '
         'Frame3
         '
         Me.Frame3.BackColor = System.Drawing.SystemColors.Control
         Me.Frame3.Controls.Add(Me.cmdclear)
         Me.Frame3.Controls.Add(Me.txtlog)
         Me.Frame3.ForeColor = System.Drawing.SystemColors.ControlText
-        Me.Frame3.Location = New System.Drawing.Point(8, 240)
+        Me.Frame3.Location = New System.Drawing.Point(8, 261)
         Me.Frame3.Name = "Frame3"
         Me.Frame3.Padding = New System.Windows.Forms.Padding(0)
         Me.Frame3.RightToLeft = System.Windows.Forms.RightToLeft.No
@@ -301,6 +316,7 @@
         'Frame2
         '
         Me.Frame2.BackColor = System.Drawing.SystemColors.Control
+        Me.Frame2.Controls.Add(Me.cmdQueryEditor)
         Me.Frame2.Controls.Add(Me.cmddataloc)
         Me.Frame2.Controls.Add(Me.cmdtables)
         Me.Frame2.Controls.Add(Me.cmdkillconn)
@@ -318,7 +334,7 @@
         Me.Frame2.Name = "Frame2"
         Me.Frame2.Padding = New System.Windows.Forms.Padding(0)
         Me.Frame2.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.Frame2.Size = New System.Drawing.Size(353, 226)
+        Me.Frame2.Size = New System.Drawing.Size(353, 247)
         Me.Frame2.TabIndex = 4
         Me.Frame2.TabStop = False
         Me.Frame2.Text = "Database"
@@ -331,7 +347,7 @@
         Me.lstdb.Location = New System.Drawing.Point(8, 24)
         Me.lstdb.Name = "lstdb"
         Me.lstdb.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.lstdb.Size = New System.Drawing.Size(161, 186)
+        Me.lstdb.Size = New System.Drawing.Size(161, 212)
         Me.lstdb.TabIndex = 5
         '
         'Frame1
@@ -346,7 +362,7 @@
         Me.Frame1.Name = "Frame1"
         Me.Frame1.Padding = New System.Windows.Forms.Padding(0)
         Me.Frame1.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.Frame1.Size = New System.Drawing.Size(281, 155)
+        Me.Frame1.Size = New System.Drawing.Size(281, 176)
         Me.Frame1.TabIndex = 0
         Me.Frame1.TabStop = False
         Me.Frame1.Text = "Users"
@@ -398,7 +414,7 @@
         Me.lstuser.Location = New System.Drawing.Point(8, 24)
         Me.lstuser.Name = "lstuser"
         Me.lstuser.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.lstuser.Size = New System.Drawing.Size(169, 121)
+        Me.lstuser.Size = New System.Drawing.Size(169, 134)
         Me.lstuser.TabIndex = 1
         '
         'Frame4
@@ -408,7 +424,7 @@
         Me.Frame4.Controls.Add(Me.chkfirewall)
         Me.Frame4.Controls.Add(Me.chksqlbrowser)
         Me.Frame4.ForeColor = System.Drawing.SystemColors.ControlText
-        Me.Frame4.Location = New System.Drawing.Point(368, 169)
+        Me.Frame4.Location = New System.Drawing.Point(368, 190)
         Me.Frame4.Name = "Frame4"
         Me.Frame4.Padding = New System.Windows.Forms.Padding(0)
         Me.Frame4.RightToLeft = System.Windows.Forms.RightToLeft.No
@@ -462,7 +478,7 @@
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.BackColor = System.Drawing.SystemColors.Control
-        Me.ClientSize = New System.Drawing.Size(657, 469)
+        Me.ClientSize = New System.Drawing.Size(657, 489)
         Me.Controls.Add(Me.cmdgetsize)
         Me.Controls.Add(Me.Frame3)
         Me.Controls.Add(Me.Frame2)
@@ -490,5 +506,6 @@
     Public WithEvents cmdkillconn As Button
     Public WithEvents cmdtables As Button
     Public WithEvents cmddataloc As Button
+    Public WithEvents cmdQueryEditor As Button
 #End Region
 End Class
