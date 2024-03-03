@@ -30,8 +30,8 @@ Friend Class frmlogin
 
     Sub Connect()
         Cursor = System.Windows.Forms.Cursors.WaitCursor
-        Dim prov As String
-        Dim connectionString As String
+        Dim prov As String = ""
+        Dim connectionString As String = ""
         Dim serverName As String
         If chklocaldb.Checked Then
             serverName = "(localdb)\MSSQLLocalDB"

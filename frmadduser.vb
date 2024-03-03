@@ -14,9 +14,9 @@ Friend Class frmadduser
 			MsgBox("Fill-up the empty fields", MsgBoxStyle.Exclamation, "")
 			Exit Sub
 		End If
-		
-		Dim err1 As String
-		
+
+		Dim err1 As String = ""
+
 		Me.Hide()
 		
 		frmmain.Wait(True)

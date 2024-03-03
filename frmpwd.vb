@@ -21,9 +21,9 @@ Friend Class frmpwd
 		End If
 		
 		Me.Hide()
-		
-		Dim err1 As String
-		
+
+		Dim err1 As String = ""
+
 		frmmain.Wait(True)
 
 		' Ensure that there is a selected item in the ListBox and the password is not empty
