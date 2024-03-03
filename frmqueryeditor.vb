@@ -206,6 +206,8 @@ Public Class frmqueryeditor
             acceptButton.Location = New Point(120, 70)
             acceptButton.DialogResult = DialogResult.OK
 
+            replacementForm.ShowIcon = False
+            replacementForm.FormBorderStyle = FormBorderStyle.Fixed3D
             replacementForm.Controls.AddRange(New Control() {searchLabel, searchTextBox, replaceLabel, replaceTextBox, acceptButton})
 
             ' Displays the dialog box
