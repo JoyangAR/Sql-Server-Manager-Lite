@@ -29,4 +29,8 @@ Public Class frmtableview
         Dim dataTable As DataTable = GetRows(selectedDatabase, selectedTable, numRows)
         dtgridtable.DataSource = dataTable
     End Sub
+
+    Private Sub CmdRefresh_Click(sender As Object, e As EventArgs) Handles CmdRefresh.Click
+        lsttables_SelectedIndexChanged(sender, e)
+    End Sub
 End Class

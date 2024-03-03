@@ -22,63 +22,79 @@ Partial Class frmtableview
     ' Do not modify it with the code editor.
     <System.Diagnostics.DebuggerStepThrough()> _
     Private Sub InitializeComponent()
-        Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(frmtableview))
+        Me.components = New System.ComponentModel.Container()
         Me.dtgridtable = New System.Windows.Forms.DataGridView()
         Me.lsttables = New System.Windows.Forms.ListBox()
         Me.txtrows = New System.Windows.Forms.TextBox()
         Me.Label1 = New System.Windows.Forms.Label()
+        Me.CmdRefresh = New System.Windows.Forms.Button()
+        Me.ToolTip1 = New System.Windows.Forms.ToolTip(Me.components)
         CType(Me.dtgridtable, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.SuspendLayout()
         '
         'dtgridtable
         '
+        Me.dtgridtable.Anchor = CType((((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom) _
+            Or System.Windows.Forms.AnchorStyles.Left) _
+            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.dtgridtable.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize
-        Me.dtgridtable.Location = New System.Drawing.Point(165, 12)
+        Me.dtgridtable.Location = New System.Drawing.Point(242, 12)
         Me.dtgridtable.Name = "dtgridtable"
-        Me.dtgridtable.Size = New System.Drawing.Size(623, 433)
+        Me.dtgridtable.Size = New System.Drawing.Size(650, 464)
         Me.dtgridtable.TabIndex = 1
         '
         'lsttables
         '
+        Me.lsttables.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom) _
+            Or System.Windows.Forms.AnchorStyles.Left), System.Windows.Forms.AnchorStyles)
         Me.lsttables.FormattingEnabled = True
         Me.lsttables.Location = New System.Drawing.Point(12, 12)
         Me.lsttables.Name = "lsttables"
-        Me.lsttables.Size = New System.Drawing.Size(147, 407)
+        Me.lsttables.Size = New System.Drawing.Size(228, 433)
         Me.lsttables.TabIndex = 2
         '
         'txtrows
         '
-        Me.txtrows.Location = New System.Drawing.Point(98, 425)
+        Me.txtrows.Anchor = CType((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Left), System.Windows.Forms.AnchorStyles)
+        Me.txtrows.Location = New System.Drawing.Point(134, 451)
         Me.txtrows.Name = "txtrows"
-        Me.txtrows.Size = New System.Drawing.Size(61, 20)
+        Me.txtrows.Size = New System.Drawing.Size(65, 20)
         Me.txtrows.TabIndex = 3
         Me.txtrows.Text = "1000"
         '
         'Label1
         '
+        Me.Label1.Anchor = CType((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Left), System.Windows.Forms.AnchorStyles)
         Me.Label1.AutoSize = True
-        Me.Label1.Location = New System.Drawing.Point(12, 428)
+        Me.Label1.Location = New System.Drawing.Point(8, 454)
         Me.Label1.Name = "Label1"
-        Me.Label1.Size = New System.Drawing.Size(80, 13)
+        Me.Label1.Size = New System.Drawing.Size(120, 13)
         Me.Label1.TabIndex = 4
-        Me.Label1.Text = "Amount of rows"
+        Me.Label1.Text = "Amount of rows to show"
+        '
+        'CmdRefresh
+        '
+        Me.CmdRefresh.Anchor = CType((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Left), System.Windows.Forms.AnchorStyles)
+        Me.CmdRefresh.Location = New System.Drawing.Point(205, 448)
+        Me.CmdRefresh.Name = "CmdRefresh"
+        Me.CmdRefresh.Size = New System.Drawing.Size(28, 25)
+        Me.CmdRefresh.TabIndex = 5
+        Me.CmdRefresh.Text = "↺"
+        Me.ToolTip1.SetToolTip(Me.CmdRefresh, "Refresh")
+        Me.CmdRefresh.UseVisualStyleBackColor = True
         '
         'frmtableview
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(800, 455)
+        Me.ClientSize = New System.Drawing.Size(904, 486)
+        Me.Controls.Add(Me.CmdRefresh)
         Me.Controls.Add(Me.Label1)
         Me.Controls.Add(Me.txtrows)
         Me.Controls.Add(Me.lsttables)
         Me.Controls.Add(Me.dtgridtable)
-        Me.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Fixed3D
-        Me.Icon = CType(resources.GetObject("$this.Icon"), System.Drawing.Icon)
-        Me.MaximizeBox = False
-        Me.MaximumSize = New System.Drawing.Size(820, 498)
         Me.MinimumSize = New System.Drawing.Size(820, 498)
         Me.Name = "frmtableview"
-        Me.ShowIcon = False
         Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
         Me.Text = "Table View"
         CType(Me.dtgridtable, System.ComponentModel.ISupportInitialize).EndInit()
@@ -90,4 +106,6 @@ Partial Class frmtableview
     Friend WithEvents lsttables As ListBox
     Friend WithEvents txtrows As TextBox
     Friend WithEvents Label1 As Label
+    Friend WithEvents CmdRefresh As Button
+    Friend WithEvents ToolTip1 As ToolTip
 End Class
