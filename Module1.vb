@@ -5,6 +5,7 @@ Imports System.Collections.Generic
 Imports System.Data.SqlClient
 Imports System.Net.NetworkInformation
 Imports System.Security.Principal
+Imports System.Text
 Imports System.Xml
 Imports Microsoft.VisualBasic.Compatibility.VB6
 Imports Microsoft.Win32
@@ -156,7 +157,7 @@ ErrorHandler:
     End Function
 
     Function CorrectDBname(ByRef dbname As String) As String
-        Dim tmp As String
+        Dim tmp As String = ""
 
         If LCase(dbname).Contains("_dat") Or LCase(dbname).Contains("_data") Then
             If LCase(dbname).EndsWith("_dat") Then
@@ -417,6 +418,110 @@ ErrorHandler:
 
         Return col
     End Function
+    Function ExecuteQuery(ByRef queryText As String, ByRef queryResult As String, Optional ByRef errorMessage As String = "") As Boolean
+        On Error GoTo ErrorHandler
+
+        ' Split the query text into individual queries using the SplitQueries function
+        Dim queries As List(Of String) = SplitQueries(queryText)
+        If queries Is Nothing OrElse queries.Count = 0 Then
+            errorMessage = "No valid queries provided."
+            Return False
+        End If
+
+        Dim totalRowsAffected As Integer = 0
+
+        If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
+            ' Open the connection if it is not already open
+            If con.State <> ConnectionState.Open Then con.Open()
+
+            For Each query As String In queries
+                ' Execute each query
+                Dim cmd = con.CreateCommand()
+                cmd.CommandText = query
+                Dim rowsAffected As Integer = cmd.ExecuteNonQuery()
+
+                ' Handle the execution result
+                If rowsAffected >= 0 Then totalRowsAffected += rowsAffected
+            Next
+
+        ElseIf prov2.ToLower() = "integrated" Then
+            Using con As New SqlConnection(frmmain.strlogin)
+                con.Open()
+
+                For Each query As String In queries
+                    Using cmd As New SqlCommand(query, con)
+                        ' Execute the query
+                        Dim rowsAffected As Integer = cmd.ExecuteNonQuery()
+                        ' Handle the execution result
+                        If rowsAffected >= 0 Then totalRowsAffected += rowsAffected
+                    End Using
+                Next
+            End Using
+        End If
+
+        ' Close the connection if necessary
+        If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
+            If con.State = ConnectionState.Open Then con.Close()
+        End If
+
+        ' Set the query result
+        queryResult = $"Total rows affected: {totalRowsAffected}"
+
+        Return True
+
+ErrorHandler:
+        errorMessage = "Error executing query: " & Err.Description
+        ' Make sure to close the connection here if necessary, similar to the logic above
+        Return False
+    End Function
+
+
+    Private Function SplitQueries(queryText As String) As List(Of String) ' Function to split query text into separate queries using "GO" as a delimiter
+        Dim queries As New List(Of String)()
+        Dim currentQuery As New StringBuilder()
+        Dim lines As String() = queryText.Split(New String() {vbCrLf, vbLf, vbCr}, StringSplitOptions.None)
+        Dim insideComment As Boolean = False
+
+        For Each line As String In lines
+            If insideComment Then
+                ' If we are inside a comment, check if it contains "*/" to exit the comment
+                If line.Contains("*/") Then
+                    insideComment = False
+                    line = line.Substring(line.IndexOf("*/") + 2)
+                Else
+                    Continue For
+                End If
+            Else
+                ' Check if the line contains "/*" to enter a comment
+                If line.Contains("/*") Then
+                    insideComment = True
+                    ' If it also contains "*/", handle it here to remove the single-line comment
+                    If line.Contains("*/") Then
+                        line = line.Remove(line.IndexOf("/*"), line.IndexOf("*/") - line.IndexOf("/*") + 2)
+                    Else
+                        line = line.Substring(0, line.IndexOf("/*"))
+                    End If
+                End If
+            End If
+
+            line = line.Trim()
+
+            ' If the line ends with "GO", we consider it the end of a query
+            If line.EndsWith("GO", StringComparison.OrdinalIgnoreCase) Then
+                queries.Add(currentQuery.ToString())
+                currentQuery.Clear()
+            Else
+                currentQuery.AppendLine(line)
+            End If
+        Next
+
+        ' Add the last query if it does not end with "GO"
+        If currentQuery.Length > 0 Then
+            queries.Add(currentQuery.ToString())
+        End If
+
+        Return queries
+    End Function
 
     Function ChangePwd(ByRef username As String, ByRef pwd As String, Optional ByRef errmsg As String = "") As Boolean
         On Error GoTo ErrorHandler
@@ -505,7 +610,7 @@ ErrorHandler:
     End Function
 
     Function RepairDB(ByRef dbname As String, Optional ByRef forced As pRepairMode = pRepairMode.pStandard, Optional ByRef errmsg As String = "", Optional ByRef rs As ADODB.Recordset = Nothing) As Boolean
-        Dim str_Renamed As String
+        Dim str_Renamed As String = ""
 
         On Error GoTo ErrorHandler
 
@@ -521,7 +626,7 @@ ErrorHandler:
             Using con As New SqlConnection(frmmain.strlogin)
                 con.Open()
 
-                Dim commandText As String
+                Dim commandText As String = ""
                 If forced = pRepairMode.pForced Then
                     commandText = $"ALTER DATABASE [{dbname}] SET EMERGENCY; ALTER DATABASE [{dbname}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DBCC CHECKDB ({dbname}, REPAIR_ALLOW_DATA_LOSS); ALTER DATABASE [{dbname}] SET MULTI_USER"
                 ElseIf forced = pRepairMode.pStandard Then
@@ -723,7 +828,7 @@ ErrorHandler:
 
     Function GetDatabasePath() As String
 
-        Dim tmp As String
+        Dim tmp As String = ""
 
 
         If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
@@ -966,7 +1071,7 @@ ErrorHandler:
     End Function
 
     Function ShrinkLog(ByRef dbname As String, Optional ByRef pMode As pShrinkMode = 0, Optional ByRef ShrinkSize As Integer = 1, Optional ByRef errmsg As String = "") As Boolean
-        Dim str_Renamed As String
+        Dim str_Renamed As String = ""
 
         On Error GoTo ErrorHandler
 
@@ -1086,7 +1191,7 @@ ErrorHandler:
     End Function
 
     Function PathDepth(ByVal path As String) As Integer
-        Dim tmp As String
+        Dim tmp As String = ""
 
         If path.StartsWith("\\") Then
             tmp = path.Replace("\\", "\")
