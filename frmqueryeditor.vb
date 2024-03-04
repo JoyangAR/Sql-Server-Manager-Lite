@@ -332,9 +332,9 @@ Public Class frmqueryeditor
         Else
             TxtResult.Text = errMessage
         End If
-
+        Const adjustmentHeight As Integer = 96 ' The height to adjust TxtQueryBox by
         TxtResult.Visible = True
-        TxtQueryBox.Size = New Size(1099, 500)
+        TxtQueryBox.Height -= adjustmentHeight
     End Sub
 
     Private Sub QueryEditor_Load(sender As Object, e As EventArgs) Handles MyBase.Load
@@ -366,13 +366,18 @@ Public Class frmqueryeditor
     End Sub
 
     Private Sub CmdShowHideResult() Handles ResultBoxMS.Click
-        If TxtResult.Visible = True Then
+        Const adjustmentHeight As Integer = 96 ' The height to adjust TxtQueryBox by
+
+        If TxtResult.Visible Then
+            ' If TxtResult is visible, hide it and increase the height of TxtQueryBox
             TxtResult.Visible = False
-            TxtQueryBox.Size = New Size(1099, 596)
+            TxtQueryBox.Height += adjustmentHeight
         Else
+            ' If TxtResult is hidden, show it and decrease the height of TxtQueryBox
             TxtResult.Visible = True
-            TxtQueryBox.Size = New Size(1099, 500)
+            TxtQueryBox.Height -= adjustmentHeight
         End If
     End Sub
+
 
 End Class
