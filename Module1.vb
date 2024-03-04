@@ -1190,6 +1190,48 @@ ErrorHandler:
 
     End Function
 
+    Function GetDBFilesLocation(ByVal dbName As String, ByRef dataFileLocation As String, ByRef logFileLocation As String, Optional ByRef errmsg As String = "") As String
+
+        On Error GoTo ErrorHandler
+
+        If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
+            ' Assuming con.Execute is a method that executes SQL and returns a SqlDataReader
+            Using rs As SqlDataReader = con.Execute($"SELECT physical_name, type_desc FROM sys.master_files WHERE database_id = DB_ID('{dbName}')").ExecuteReader()
+                While rs.Read()
+                    Dim typeDesc As String = rs("type_desc").ToString()
+                    If typeDesc = "ROWS" Then
+                        dataFileLocation = rs("physical_name").ToString()
+                    ElseIf typeDesc = "LOG" Then
+                        logFileLocation = rs("physical_name").ToString()
+                    End If
+                End While
+            End Using
+        ElseIf prov2.ToLower() = "integrated" Then
+            ' Use a new connection for integrated scenarios
+            Using conIntegrated As New SqlConnection(frmmain.strlogin)
+                conIntegrated.Open()
+                Using cmd As New SqlCommand($"SELECT physical_name, type_desc FROM sys.master_files WHERE database_id = DB_ID('{dbName}')", conIntegrated)
+                    Using rs As SqlDataReader = cmd.ExecuteReader()
+                        While rs.Read()
+                            Dim typeDesc As String = rs("type_desc").ToString()
+                            If typeDesc = "ROWS" Then
+                                dataFileLocation = rs("physical_name").ToString()
+                            ElseIf typeDesc = "LOG" Then
+                                logFileLocation = rs("physical_name").ToString()
+                            End If
+                        End While
+                    End Using
+                End Using
+            End Using
+        End If
+
+ErrorHandler:
+        errmsg = Err.Description
+        Exit Function
+
+    End Function
+
+
     Function PathDepth(ByVal path As String) As Integer
         Dim tmp As String = ""
 
