@@ -6,15 +6,6 @@ Imports System.Xml
 
 Friend Class frmlogin
     Inherits System.Windows.Forms.Form
-    Public username As String = ""
-    Public password As String = ""
-    Public instance As String = ""
-    Public connectMode As String = ""
-    Public provider As String = ""
-    Public driver As String = ""
-    Public trusted As Boolean = False
-    Public localdb As Boolean = False
-    Public autologin As Boolean = False
 
     Private Sub chktrust_CheckStateChanged(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles chktrust.CheckStateChanged
         InputMode(Not chktrust.Checked)
@@ -30,7 +21,6 @@ Friend Class frmlogin
 
     Sub Connect()
         Cursor = System.Windows.Forms.Cursors.WaitCursor
-        Dim prov As String = ""
         Dim connectionString As String = ""
         Dim serverName As String
         If chklocaldb.Checked Then
@@ -60,7 +50,7 @@ Friend Class frmlogin
                 connectionString = $"Data Source={serverName};Initial Catalog=master;User ID={txtname.Text};Password={txtpwd.Text};"
             End If
         End If
-        If ConnectDB(connectionString, prov) Then
+        If ConnectDB(connectionString) Then
             cUser = txtname.Text
             cPwd = txtpwd.Text
             instance = txtsvr.Text
@@ -69,11 +59,11 @@ Friend Class frmlogin
             trusted = chktrust.CheckState
             localdb = chklocaldb.CheckState
             autologin = chkautologin.CheckState
-            WriteXML(cUser, cPwd, instance, provider, driver, trusted, localdb, autologin, defaultmdf, defaultldf)
+            WriteXML()
             frmmain.islocaldb = chklocaldb.Checked
             frmmain.Loadstr(connectionString)
             frmmain.Show()
-
+            Debug.Print(logtofile)
             Me.Cursor = System.Windows.Forms.Cursors.Default
 
             Me.Hide()
@@ -89,7 +79,7 @@ Friend Class frmlogin
     End Sub
 
     Private Sub frmlogin_Load(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles MyBase.Load
-
+        Me.Enabled = False
         Try
             ' Check if the XML configuration file exists
             If System.IO.File.Exists(configFilePath) Then
@@ -101,10 +91,10 @@ Friend Class frmlogin
                             Select Case reader.Name
                                 Case "Username"
                                     reader.Read()
-                                    username = reader.Value
+                                    cUser = reader.Value
                                 Case "Password"
                                     reader.Read()
-                                    password = reader.Value
+                                    cPwd = reader.Value
                                 Case "ConnectMode"
                                     reader.Read()
                                     connectMode = reader.Value
@@ -126,19 +116,25 @@ Friend Class frmlogin
                                 Case "AutoLogin"
                                     reader.Read()
                                     autologin = (reader.Value = "1")
+                                Case "LogToFile"
+                                    reader.Read()
+                                    logtofile = (reader.Value = "1")
+                                Case "ColourQE"
+                                    reader.Read()
+                                    colourQE = (reader.Value = "1")
                                 Case "DefaultMDFPath"
                                     reader.Read()
-                                    defaultmdf = reader.Value
+                                    mdfpath = reader.Value
                                 Case "DefaultLDFPath"
                                     reader.Read()
-                                    defaultldf = reader.Value
+                                    ldfpath = reader.Value
                             End Select
                         End If
                     End While
 
                     ' Apply the configuration
-                    txtname.Text = username
-                    txtpwd.Text = password
+                    txtname.Text = cUser
+                    txtpwd.Text = cPwd
                     txtsvr.Text = instance
                     chklocaldb.Checked = localdb
                     chktrust.Checked = trusted
@@ -156,9 +152,8 @@ Friend Class frmlogin
                 ' You can handle this according to your needs
             End If
             RefreshObjects()
-            If chkautologin.Checked Then
-                Timerstart()
-            End If
+            If chkautologin.Checked Then Timerstart()
+
         Catch ex As Exception
             ' Handle exceptions as needed
         End Try
@@ -196,6 +191,7 @@ Friend Class frmlogin
         Me.txtdriver.Enabled = Me.optodbc.Checked
         chklocaldb.Enabled = optintegrated.Checked
         txtsvr.Enabled = optintegrated.Checked
+        If Not chkautologin.Checked Then Me.Enabled = True
     End Sub
 
     Private Sub optintegrated_CheckedChanged(sender As Object, e As EventArgs) Handles optintegrated.CheckedChanged

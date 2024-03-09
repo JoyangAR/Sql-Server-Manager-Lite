@@ -52,11 +52,13 @@
 
     Private Sub cmdapply_Click(sender As Object, e As EventArgs) Handles cmdapply.Click
         If Not String.IsNullOrEmpty(newmdfpath) Then
-            WriteXML(frmlogin.username, frmlogin.password, frmlogin.instance, frmlogin.provider, frmlogin.driver, frmlogin.trusted, frmlogin.localdb, frmlogin.autologin, newmdfpath, defaultldf)
+            mdfpath = newmdfpath
+            WriteXML()
             frmmain.Logg("Default MDF path set to: " & newmdfpath)
         End If
         If Not String.IsNullOrEmpty(newldfpath) Then
-            WriteXML(frmlogin.username, frmlogin.password, frmlogin.instance, frmlogin.provider, frmlogin.driver, frmlogin.trusted, frmlogin.localdb, frmlogin.autologin, defaultmdf, newldfpath)
+            ldfpath = newldfpath
+            WriteXML()
             frmmain.Logg("Default LDF path set to: " & newldfpath)
         End If
         Me.Close()

@@ -17,17 +17,23 @@ Module Module1
     ' Path to the configuration XML file in the application directory
     Public configFileName As String = "SSMLConf.xml"
     Public configFilePath As String = System.IO.Path.Combine(Application.StartupPath, configFileName)
-    Public defaultmdf As String
-    Public defaultldf As String
+    Public mdfpath As String
+    Public ldfpath As String
     ' Other variables to replace objects from the Std Framework
-    Public prov2 As String
+    Public prov As String
 
-    Public inf As Object ' Replace with the appropriate data type
-    Public reg1 As Object ' Replace with the appropriate data type
     Public cUser As String
     Public cPwd As String
-    Public srv1 As Object ' Replace with the appropriate data type
-    Public srvc As Object ' Replace with the appropriate data type
+    Public instance As String
+    Public connectMode As String
+    Public provider As String
+    Public driver As String
+    Public trusted As CheckState
+    Public localdb As CheckState
+    Public autologin As CheckState
+    Public logtofile As Boolean
+    Public colourQE As Boolean = True
+
 
     Enum pShrinkMode
         pReleaseUnused = 0
@@ -95,7 +101,7 @@ Module Module1
         End If
 
         ' Execute the SQL statement
-        If prov2 = "sqloledb" Then
+        If prov = "sqloledb" Then
             con.Execute(sql)
         Else
             Using connection As New SqlConnection(frmmain.strlogin)
@@ -118,9 +124,9 @@ ErrorHandler:
         Dim resultList As New List(Of String)()
         Dim rs As SqlDataReader
 
-        If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
+        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             rs = con.Execute($"RESTORE FILELISTONLY FROM DISK = '{bakPath}'").ExecuteReader()
-        ElseIf prov2.ToLower() = "integrated" Then
+        ElseIf prov.ToLower() = "integrated" Then
             Using con As New SqlConnection(frmmain.strlogin)
                 con.Open()
 
@@ -182,7 +188,7 @@ ErrorHandler:
         On Error GoTo ErrorHandler
 
         System.Windows.Forms.Application.DoEvents()
-        If prov2 = "sqloledb" Then
+        If prov = "sqloledb" Then
             con.Execute("USE [master]" & vbCrLf & "Create LOGIN [" & username & "] WITH PASSWORD = N'" & Password & "',DEFAULT_Database=[master],CHECK_EXPIRATION=OFF,CHECK_POLICY = OFF" & vbCrLf & "EXEC master..sp_addsrvrolemember @loginame = N'" & username & "', @rolename = N'sysadmin'")
         Else
             Using connection As New SqlConnection(frmmain.strlogin)
@@ -201,16 +207,15 @@ ErrorHandler:
         CreateAccount = False
     End Function
 
-    Function ConnectDB(ByRef str_Renamed As String, ByRef prov1 As String) As Boolean
-        prov2 = prov1
+    Function ConnectDB(ByRef str_Renamed As String) As Boolean
         Try
 
             Debug.Print(str_Renamed)
-            If prov1 = "sqloledb" Then
+            If prov = "sqloledb" Then
                 con.CommandTimeout = 0
                 con.CursorLocation = ADODB.CursorLocationEnum.adUseServer
                 con.Open(str_Renamed)
-            ElseIf prov1 = "integrated" Then
+            ElseIf prov = "integrated" Then
                 connection.ConnectionString = str_Renamed
                 connection.Open()
             End If
@@ -226,7 +231,7 @@ ErrorHandler:
 
     Function DatabaseExists(ByRef dbname As String) As Boolean
 
-        If prov2 = "sqloledb" Then
+        If prov = "sqloledb" Then
             con.Execute("use " & dbname & "")
             DatabaseExists = True
         Else
@@ -257,7 +262,7 @@ ErrorHandler:
 
         db1 = CorrectDBname(dbfile)
 
-        If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
+        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             con.Execute("USE master")
             System.Windows.Forms.Application.DoEvents()
 
@@ -271,7 +276,7 @@ ErrorHandler:
             ' Alter the database to set to single-user mode and back to multi-user mode
             con.Execute($"ALTER DATABASE {db1} SET SINGLE_USER WITH ROLLBACK IMMEDIATE")
             con.Execute($"ALTER DATABASE {db1} SET MULTI_USER")
-        ElseIf prov2.ToLower() = "integrated" Then
+        ElseIf prov.ToLower() = "integrated" Then
             Using connnection As New SqlConnection(frmmain.strlogin)
                 connnection.Open()
 
@@ -312,9 +317,9 @@ ErrorHandler:
     Function RestoreDatabase(ByRef bckfile As String, ByRef dbname As String, Optional ByRef errmsg As String = "") As Boolean
         On Error GoTo ErrorHandler
 
-        If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
+        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             con.Execute($"RESTORE DATABASE {dbname} FROM DISK = '{bckfile}' WITH REPLACE")
-        ElseIf prov2.ToLower() = "integrated" Then
+        ElseIf prov.ToLower() = "integrated" Then
             Using con As New SqlConnection(frmmain.strlogin)
                 con.Open()
 
@@ -344,7 +349,7 @@ ErrorHandler:
         Dim col As New Collection
         Dim tmp As String
 
-        If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
+        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             Dim rs1 As New ADODB.Recordset
             rs1.Open("SELECT * FROM sys.server_principals where type='S' and name<>'sa' and name not like '##MS_%'", con, ADODB.CursorTypeEnum.adOpenStatic, ADODB.LockTypeEnum.adLockOptimistic)
 
@@ -356,7 +361,7 @@ ErrorHandler:
             Loop
 
             rs1.Close()
-        ElseIf prov2.ToLower() = "integrated" Then
+        ElseIf prov.ToLower() = "integrated" Then
             ' New code with System.Data.SqlClient
             Using con As New SqlConnection(frmmain.strlogin)
                 con.Open()
@@ -382,7 +387,7 @@ ErrorHandler:
         Dim col As New Collection
         Dim tmp As String
 
-        If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
+        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             Dim rs1 As New ADODB.Recordset
             rs1 = con.Execute("sp_databases")
 
@@ -398,7 +403,7 @@ ErrorHandler:
             Loop
 
             rs1.Close()
-        ElseIf prov2.ToLower() = "integrated" Then
+        ElseIf prov.ToLower() = "integrated" Then
             ' New code with System.Data.SqlClient
             Using con As New SqlConnection(frmmain.strlogin)
                 con.Open()
@@ -430,7 +435,7 @@ ErrorHandler:
 
         Dim totalRowsAffected As Integer = 0
 
-        If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
+        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             ' Open the connection if it is not already open
             If con.State <> ConnectionState.Open Then con.Open()
 
@@ -444,7 +449,7 @@ ErrorHandler:
                 If rowsAffected >= 0 Then totalRowsAffected += rowsAffected
             Next
 
-        ElseIf prov2.ToLower() = "integrated" Then
+        ElseIf prov.ToLower() = "integrated" Then
             Using con As New SqlConnection(frmmain.strlogin)
                 con.Open()
 
@@ -460,7 +465,7 @@ ErrorHandler:
         End If
 
         ' Close the connection if necessary
-        If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
+        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             If con.State = ConnectionState.Open Then con.Close()
         End If
 
@@ -526,9 +531,9 @@ ErrorHandler:
     Function ChangePwd(ByRef username As String, ByRef pwd As String, Optional ByRef errmsg As String = "") As Boolean
         On Error GoTo ErrorHandler
 
-        If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
+        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             con.Execute($"ALTER LOGIN [{username}] WITH PASSWORD=N'{pwd}'")
-        ElseIf prov2.ToLower() = "integrated" Then
+        ElseIf prov.ToLower() = "integrated" Then
             Using con As New SqlConnection(frmmain.strlogin)
                 con.Open()
 
@@ -551,9 +556,9 @@ ErrorHandler:
     Function DeleteAccount(ByRef username As String, Optional ByRef errmsg As String = "") As Boolean
         On Error GoTo ErrorHandler
 
-        If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
+        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             con.Execute($"DROP LOGIN [{username}]")
-        ElseIf prov2.ToLower() = "integrated" Then
+        ElseIf prov.ToLower() = "integrated" Then
             Using con As New SqlConnection(frmmain.strlogin)
                 con.Open()
 
@@ -577,7 +582,7 @@ ErrorHandler:
         Dim tmp As Boolean = False
 
         Try
-            If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
+            If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
                 Dim rs1 As New ADODB.Recordset
                 rs1.Open($"SELECT * FROM sys.server_principals WHERE name='{username}' AND type='S'", con, ADODB.CursorTypeEnum.adOpenStatic, ADODB.LockTypeEnum.adLockOptimistic)
 
@@ -587,7 +592,7 @@ ErrorHandler:
                 End If
 
                 rs1.Close()
-            ElseIf prov2.ToLower() = "integrated" Then
+            ElseIf prov.ToLower() = "integrated" Then
                 Using con As New SqlConnection(frmmain.strlogin)
                     con.Open()
 
@@ -614,7 +619,7 @@ ErrorHandler:
 
         On Error GoTo ErrorHandler
 
-        If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
+        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             If forced = pRepairMode.pForced Then
                 str_Renamed = $"ALTER DATABASE {dbname} SET EMERGENCY; ALTER DATABASE {dbname} SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DBCC CHECKDB ({dbname}, REPAIR_ALLOW_DATA_LOSS); ALTER DATABASE {dbname} SET MULTI_USER"
             ElseIf forced = pRepairMode.pStandard Then
@@ -622,7 +627,7 @@ ErrorHandler:
             ElseIf forced = pRepairMode.pFast Then
                 str_Renamed = $"ALTER DATABASE {dbname} SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DBCC CHECKDB ({dbname}, REPAIR_FAST); ALTER DATABASE {dbname} SET MULTI_USER"
             End If
-        ElseIf prov2.ToLower() = "integrated" Then
+        ElseIf prov.ToLower() = "integrated" Then
             Using con As New SqlConnection(frmmain.strlogin)
                 con.Open()
 
@@ -665,9 +670,9 @@ ErrorHandler:
     Function DeleteDatabase(ByRef dbname As String, Optional ByRef errmsg As String = "") As Boolean
         On Error GoTo ErrorHandler
 
-        If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
+        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             con.Execute("DROP DATABASE " & dbname)
-        ElseIf prov2.ToLower() = "integrated" Then
+        ElseIf prov.ToLower() = "integrated" Then
             Using con As New SqlConnection(frmmain.strlogin)
                 con.Open()
 
@@ -704,9 +709,9 @@ ErrorHandler:
         bckfile = newbck
         System.Windows.Forms.Application.DoEvents()
 
-        If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
+        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             con.Execute($"BACKUP DATABASE [{dbname1}] TO DISK = N'{ipath}{newbck}' WITH NOFORMAT, INIT, NAME = N'{dbname1}-Full Database Backup', SKIP, NOREWIND, NOUNLOAD")
-        ElseIf prov2.ToLower() = "integrated" Then
+        ElseIf prov.ToLower() = "integrated" Then
             Using con As New SqlConnection(frmmain.strlogin)
                 con.Open()
 
@@ -745,7 +750,7 @@ ErrorHandler:
 
         Dim tmp As Boolean
 
-        If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
+        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             Dim rs1 As New ADODB.Recordset
             con.Execute("use " & dbname)
             rs1.Open("SELECT name, hasdbaccess From sys.sysusers WHERE name = 'guest'", con, ADODB.CursorTypeEnum.adOpenStatic, ADODB.LockTypeEnum.adLockOptimistic)
@@ -761,7 +766,7 @@ ErrorHandler:
             End If
 
             rs1.Close()
-        ElseIf prov2.ToLower() = "integrated" Then
+        ElseIf prov.ToLower() = "integrated" Then
             Using con As New SqlConnection(frmmain.strlogin)
                 con.Open()
 
@@ -781,7 +786,7 @@ ErrorHandler:
 
         GuestAllowed = tmp
 
-        If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
+        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             con.Execute("use master")
         End If
 
@@ -795,7 +800,7 @@ ErrorHandler:
 
         Dim str_Renamed As String
 
-        If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
+        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             If Grant Then
                 str_Renamed = "GRANT CONNECT TO GUEST"
             Else
@@ -807,7 +812,7 @@ ErrorHandler:
             str_Renamed = LCase(str_Renamed)
             con.Execute("use " & dbname & " " & str_Renamed)
 
-        ElseIf prov2.ToLower() = "integrated" Then
+        ElseIf prov.ToLower() = "integrated" Then
             Using connection As New SqlConnection(frmmain.strlogin)
                 connection.Open()
 
@@ -831,14 +836,14 @@ ErrorHandler:
         Dim tmp As String = ""
 
 
-        If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
+        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             Dim rs1 As New ADODB.Recordset
             con.Execute("use master")
             rs1.Open("SELECT name, physical_name FROM master.sys.master_files where name='master'", con, ADODB.CursorTypeEnum.adOpenStatic, ADODB.LockTypeEnum.adLockReadOnly)
             tmp = rs1.Fields("physical_name").Value
             tmp = Replace(tmp, "master.mdf", "")
             rs1.Close()
-        ElseIf prov2.ToLower() = "integrated" Then
+        ElseIf prov.ToLower() = "integrated" Then
             Using con As New SqlConnection(frmmain.strlogin)
                 con.Open()
 
@@ -866,7 +871,7 @@ ErrorHandler:
 
         On Error GoTo ErrorHandler
 
-        If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
+        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             Dim rs As New ADODB.Recordset
 
             rs.Open("SELECT @@VERSION AS version", con, ADODB.CursorTypeEnum.adOpenStatic, ADODB.LockTypeEnum.adLockReadOnly)
@@ -875,7 +880,7 @@ ErrorHandler:
             End If
             rs.Close()
 
-        ElseIf prov2.ToLower() = "integrated" Then
+        ElseIf prov.ToLower() = "integrated" Then
             Using con As New SqlConnection(frmmain.strlogin)
 
                 con.Open()
@@ -906,11 +911,11 @@ ErrorHandler:
     Function ChangeDefaultDataLocation(ByRef newDataPath As String) As Boolean
         Dim result As Boolean = False
 
-        If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
-            defaultmdf = newDataPath
+        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
+            mdfpath = newDataPath
             result = True
-        ElseIf prov2.ToLower() = "integrated" Then
-            defaultmdf = newDataPath
+        ElseIf prov.ToLower() = "integrated" Then
+            mdfpath = newDataPath
             result = True
         End If
 
@@ -920,11 +925,11 @@ ErrorHandler:
     Function ChangeDefaultLogLocation(ByRef newLogPath As String) As Boolean
         Dim result As Boolean = False
 
-        If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
-            defaultldf = newLogPath
+        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
+            ldfpath = newLogPath
             result = True
-        ElseIf prov2.ToLower() = "integrated" Then
-            defaultldf = newLogPath
+        ElseIf prov.ToLower() = "integrated" Then
+            mdfpath = newLogPath
             result = True
         End If
 
@@ -935,22 +940,22 @@ ErrorHandler:
 
         On Error GoTo ErrorHandler
         ' Check if default data and log paths are already set
-        If Not String.IsNullOrEmpty(defaultmdf) Or Not String.IsNullOrEmpty(defaultldf) Then
+        If Not String.IsNullOrEmpty(mdfpath) Or Not String.IsNullOrEmpty(ldfpath) Then
             ' If default values are already set, return them
-            DefaultDataPath = EnsureTrailingBackslash(defaultmdf)
-            DefaultLogPath = EnsureTrailingBackslash(defaultldf)
+            DefaultDataPath = EnsureTrailingBackslash(mdfpath)
+            DefaultLogPath = EnsureTrailingBackslash(ldfpath)
         Else
             If Not frmmain.islocaldb Then
                 ' If default values are not set, retrieve them based on the provider type
-                If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
+                If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
                     ' Get the default data and log locations from the registry for SQL Server instance
-                    Using regKey As Microsoft.Win32.RegistryKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey($"Software\Microsoft\Microsoft SQL Server\{frmlogin.instance}")
+                    Using regKey As Microsoft.Win32.RegistryKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey($"Software\Microsoft\Microsoft SQL Server\{instance}")
                         If regKey IsNot Nothing Then
                             DefaultDataPath = EnsureTrailingBackslash(CStr(regKey.GetValue("DefaultData")))
                             DefaultLogPath = EnsureTrailingBackslash(CStr(regKey.GetValue("DefaultLog")))
                         End If
                     End Using
-                ElseIf prov2.ToLower() = "integrated" Then
+                ElseIf prov.ToLower() = "integrated" Then
                     ' Try to obtain the default data and log locations from SQL Server instance properties
                     Using con As New SqlConnection(frmmain.strlogin)
 
@@ -988,7 +993,7 @@ ErrorHandler:
     End Function
 
 
-    Sub WriteXML(ByRef username As String, ByRef password As String, ByRef instance As String, ByRef provider As String, ByRef driver As String, ByRef trusted As CheckState, ByRef localdb As CheckState, ByRef autologin As CheckState, mdfpath As String, ByRef ldfpath As String)
+    Sub WriteXML()
         Try
             ' Create a new XML configuration file
             Using writer As New XmlTextWriter(configFilePath, Nothing)
@@ -999,25 +1004,27 @@ ErrorHandler:
                 writer.WriteStartElement("Configuration")
 
                 ' Elements within <Configuration>
-                writer.WriteElementString("Username", username)
-                writer.WriteElementString("Password", password)
+                writer.WriteElementString("Username", cUser)
+                writer.WriteElementString("Password", cPwd)
                 ' If Len(cPwd) > 0 Then
                 '     writer.WriteElementString("Password", Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(cPwd)))
                 ' End If
-                If prov2.ToLower() = "sqloledb" Then
+                If prov.ToLower() = "sqloledb" Then
                     writer.WriteElementString("ConnectMode", "OLEDB")
                     writer.WriteElementString("Provider", provider)
-                ElseIf prov2.ToLower() = "odbc" Then
+                ElseIf prov.ToLower() = "odbc" Then
                     writer.WriteElementString("ConnectMode", "ODBC")
                     writer.WriteElementString("Driver", driver)
-                ElseIf prov2.ToLower() = "integrated" Then
+                ElseIf prov.ToLower() = "integrated" Then
                     writer.WriteElementString("ConnectMode", "Integrated")
                     writer.WriteElementString("Instance", instance)
                 End If
 
-                writer.WriteElementString("Trusted", If(trusted = -1, "1", "0"))
-                writer.WriteElementString("LocalDB", If(localdb = -1, "1", "0"))
-                writer.WriteElementString("AutoLogin", If(autologin = -1, "1", "0"))
+                writer.WriteElementString("Trusted", If(trusted = 1, "1", "0"))
+                writer.WriteElementString("LocalDB", If(localdb = 1, "1", "0"))
+                writer.WriteElementString("AutoLogin", If(autologin = 1, "1", "0"))
+                writer.WriteElementString("LogToFile", If(logtofile = True, "1", "0"))
+                writer.WriteElementString("ColourQE", If(colourQE = True, "1", "0"))
                 writer.WriteElementString("DefaultMDFPath", mdfpath)
                 writer.WriteElementString("DefaultLDFPath", ldfpath)
 
@@ -1075,9 +1082,9 @@ ErrorHandler:
 
         On Error GoTo ErrorHandler
 
-        If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
+        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             con.Execute($"USE {dbname}")
-        ElseIf prov2.ToLower() = "integrated" Then
+        ElseIf prov.ToLower() = "integrated" Then
             Using con As New SqlConnection(frmmain.strlogin)
                 con.Open()
 
@@ -1114,14 +1121,14 @@ ErrorHandler:
 
         On Error Resume Next ' Handle errors
 
-        If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
+        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             Using rs As SqlDataReader = con.Execute($"SELECT DB_ID('{dbname}')").ExecuteReader()
                 If rs.HasRows Then
                     rs.Read()
                     dbid = rs.GetInt32(0)
                 End If
             End Using
-        ElseIf prov2.ToLower() = "integrated" Then
+        ElseIf prov.ToLower() = "integrated" Then
             ' Use a new connection for integrated
             Using conIntegrated As New SqlConnection(frmmain.strlogin)
                 conIntegrated.Open()
@@ -1137,14 +1144,14 @@ ErrorHandler:
             Exit Function
         End If
 
-        If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
+        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             Using rs As SqlDataReader = con.Execute($"SELECT database_id, type_desc, physical_name FROM sys.master_files WHERE database_id = {dbid} AND type_desc = 'ROWS'").ExecuteReader()
                 If rs.HasRows Then
                     rs.Read()
                     dbfile = rs.GetString(2)
                 End If
             End Using
-        ElseIf prov2.ToLower() = "integrated" Then
+        ElseIf prov.ToLower() = "integrated" Then
             ' Use a new connection for integrated
             Using conIntegrated As New SqlConnection(frmmain.strlogin)
                 conIntegrated.Open()
@@ -1160,7 +1167,7 @@ ErrorHandler:
             End Using
         End If
 
-        If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
+        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             Using rs As SqlDataReader = con.Execute($"SELECT database_id, type_desc, physical_name FROM sys.master_files WHERE database_id = {dbid} AND type_desc = 'LOG'").ExecuteReader()
                 If rs.HasRows Then
                     rs.Read()
@@ -1168,7 +1175,7 @@ ErrorHandler:
                     logfilename = logfile
                 End If
             End Using
-        ElseIf prov2.ToLower() = "integrated" Then
+        ElseIf prov.ToLower() = "integrated" Then
             ' Use a new connection for integrated
             Using conIntegrated As New SqlConnection(frmmain.strlogin)
                 conIntegrated.Open()
@@ -1194,7 +1201,7 @@ ErrorHandler:
 
         On Error GoTo ErrorHandler
 
-        If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
+        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             ' Assuming con.Execute is a method that executes SQL and returns a SqlDataReader
             Using rs As SqlDataReader = con.Execute($"SELECT physical_name, type_desc FROM sys.master_files WHERE database_id = DB_ID('{dbName}')").ExecuteReader()
                 While rs.Read()
@@ -1206,7 +1213,7 @@ ErrorHandler:
                     End If
                 End While
             End Using
-        ElseIf prov2.ToLower() = "integrated" Then
+        ElseIf prov.ToLower() = "integrated" Then
             ' Use a new connection for integrated scenarios
             Using conIntegrated As New SqlConnection(frmmain.strlogin)
                 conIntegrated.Open()
@@ -1253,9 +1260,9 @@ ErrorHandler:
     Function DetachDatabase(ByRef dbname As String, Optional ByRef errmsg As String = "") As Boolean
         On Error GoTo ErrorHandler
 
-        If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
+        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             con.Execute("sp_detach_db " & dbname)
-        ElseIf prov2.ToLower() = "integrated" Then
+        ElseIf prov.ToLower() = "integrated" Then
             Using con As New SqlConnection(frmmain.strlogin)
                 con.Open()
 
@@ -1313,10 +1320,10 @@ ErrorHandler:
     Function KillConnections(ByVal dbName As String, ByRef errmsg As String) As Boolean
         On Error GoTo ErrorHandler
 
-        If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
+        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             ' Not supported for sqloledb provider
             Throw New Exception("KillConnections is not supported for sqloledb provider.")
-        ElseIf prov2.ToLower() = "integrated" Then
+        ElseIf prov.ToLower() = "integrated" Then
             Using con As New SqlConnection(frmmain.strlogin)
                 con.Open()
 
@@ -1355,7 +1362,7 @@ ErrorHandler:
         Dim tableNames As New List(Of String)
 
         Try
-            If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
+            If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
                 ' Logic to get table names using ADODB for SQL Server
                 ' You can adapt the logic according to your needs
                 Dim rsTables As New ADODB.Recordset
@@ -1369,7 +1376,7 @@ ErrorHandler:
                     rsTables.MoveNext()
                 Loop
                 rsTables.Close()
-            ElseIf prov2.ToLower() = "integrated" Then
+            ElseIf prov.ToLower() = "integrated" Then
                 ' Logic to get table names using SqlConnection for SQL Server
                 ' You can adapt the logic according to your needs
                 Try
@@ -1412,7 +1419,7 @@ ErrorHandler:
             ' Form the SQL query with the obtained schema
             Dim query As String = String.Format("SELECT TOP {0} * FROM [{1}].[{2}].[{3}]", selectedRows, SelectedDatabase, schemaName, selectedTable)
 
-            If prov2.ToLower() = "sqloledb" Or prov2.ToLower() = "odbc" Then
+            If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
                 ' Logic to get rows using ADODB for SQL Server
                 Dim rsRows As New ADODB.Recordset
                 con.Execute(query, , 1024) ' 1024 is the value of adExecuteNoRecords
@@ -1433,7 +1440,7 @@ ErrorHandler:
                 Loop
 
                 rsRows.Close()
-            ElseIf prov2.ToLower() = "integrated" Then
+            ElseIf prov.ToLower() = "integrated" Then
                 ' Logic to get rows using SqlConnection for SQL Server
                 Try
                     Using sqlCon As New SqlConnection(frmmain.strlogin)
