@@ -338,12 +338,14 @@ Public Class frmqueryeditor
                 TxtResult.Text = ""
             End If
             TxtResult.Text = queryResult
+            If logtofile Then frmmain.Logg(queryResult)
         Else
             TxtResult.Text = errMessage
+            If logtofile Then frmmain.Logg(errMessage)
         End If
         Const adjustmentHeight As Integer = 96 ' The height to adjust TxtQueryBox by
+        If Not TxtResult.Visible = True Then TxtQueryBox.Height -= adjustmentHeight
         TxtResult.Visible = True
-        TxtQueryBox.Height -= adjustmentHeight
     End Sub
 
     Private Sub QueryEditor_Load(sender As Object, e As EventArgs) Handles MyBase.Load
