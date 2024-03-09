@@ -24,31 +24,32 @@ Public Class frmqueryeditor
 
     Private Sub ColourLoadedText()
         suspended = True
+        If colourQE = True Then
+            ' Saves the current cursor position
+            Dim originalSelectionStart As Integer = TxtQueryBox.SelectionStart
+            Dim originalSelectionLength As Integer = TxtQueryBox.SelectionLength
 
-        ' Saves the current cursor position
-        Dim originalSelectionStart As Integer = TxtQueryBox.SelectionStart
-        Dim originalSelectionLength As Integer = TxtQueryBox.SelectionLength
+            ' Applies a default style to all text
+            TxtQueryBox.SelectAll()
+            TxtQueryBox.SelectionColor = TxtQueryBox.ForeColor ' Sets the default color
 
-        ' Applies a default style to all text
-        TxtQueryBox.SelectAll()
-        TxtQueryBox.SelectionColor = TxtQueryBox.ForeColor ' Sets the default color
+            ' Iterates through each group of keywords and applies highlighting
+            For Each kvp As KeyValuePair(Of String, Color) In sqlKeywordsPatterns
+                Dim regex As New Regex(kvp.Key, RegexOptions.IgnoreCase)
+                Dim matches As MatchCollection = regex.Matches(TxtQueryBox.Text)
 
-        ' Iterates through each group of keywords and applies highlighting
-        For Each kvp As KeyValuePair(Of String, Color) In sqlKeywordsPatterns
-            Dim regex As New Regex(kvp.Key, RegexOptions.IgnoreCase)
-            Dim matches As MatchCollection = regex.Matches(TxtQueryBox.Text)
-
-            For Each match As Match In matches
-                TxtQueryBox.Select(match.Index, match.Length)
-                TxtQueryBox.SelectionColor = kvp.Value
+                For Each match As Match In matches
+                    TxtQueryBox.Select(match.Index, match.Length)
+                    TxtQueryBox.SelectionColor = kvp.Value
+                Next
             Next
-        Next
 
-        ' Restores the original cursor position and selection
-        TxtQueryBox.Select(originalSelectionStart, originalSelectionLength)
-        TxtQueryBox.SelectionColor = TxtQueryBox.ForeColor
+            ' Restores the original cursor position and selection
+            TxtQueryBox.Select(originalSelectionStart, originalSelectionLength)
+            TxtQueryBox.SelectionColor = TxtQueryBox.ForeColor
 
-        suspended = False
+            suspended = False
+        End If
     End Sub
 
     Private Sub TxtQueryBox_TextChanged(sender As Object, e As EventArgs) Handles TxtQueryBox.TextChanged
@@ -65,21 +66,29 @@ Public Class frmqueryeditor
             Dim endRange As Integer = Math.Min(TxtQueryBox.TextLength, originalSelectionStart + HighlightRange + 1) ' +1 to include the last character
             Dim textRange As String = TxtQueryBox.Text.Substring(startRange, endRange - startRange)
 
-            ' Iterates through each group of keywords and applies highlighting
+            ' First, reset the color of the changed range to the default color to avoid unintentional coloring
+            TxtQueryBox.Select(startRange, textRange.Length)
+            TxtQueryBox.SelectionColor = Color.Black ' Or any default color of your choice
+
+            ' Iterates through each group of keywords and comments to apply highlighting
             For Each kvp As KeyValuePair(Of String, Color) In sqlKeywordsPatterns
                 Dim regex As New Regex(kvp.Key, RegexOptions.IgnoreCase)
                 Dim matches As MatchCollection = regex.Matches(textRange)
 
                 For Each match As Match In matches
+                    ' Select and color only the matching text
                     TxtQueryBox.Select(startRange + match.Index, match.Length)
                     TxtQueryBox.SelectionColor = kvp.Value
                 Next
             Next
 
-            ' Restores the original cursor position and selection without changing the text color
+            ' Restore the original cursor position and selection without changing the text color
             TxtQueryBox.Select(originalSelectionStart, originalSelectionLength)
+            TxtQueryBox.SelectionColor = Color.Black
+
         End If
     End Sub
+
 
     Private Sub CmdFont(sender As Object, e As EventArgs) Handles FontMS.Click
         ' Gets the current font size
