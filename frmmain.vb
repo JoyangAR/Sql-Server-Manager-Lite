@@ -381,9 +381,11 @@ Friend Class frmmain
     Private Sub cmdgetsize_Click(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles cmdgetsize.Click
         Dim ldf As String = ""
         Dim mdf As String
-        Dim str_Renamed As String
+        Dim msg1 As String
         Dim mdfsize As Long
         Dim ldfsize As Long
+        Dim mdfloc As String = ""
+        Dim ldfloc As String = ""
         Dim strmdf As String
         Dim strldf As String
 
@@ -395,6 +397,8 @@ Friend Class frmmain
         mdf = GetDBFile(lstdb.Items(lstdb.SelectedIndex).ToString(), ldf)
         mdfsize = New System.IO.FileInfo(mdf).Length
         ldfsize = New System.IO.FileInfo(ldf).Length
+
+        GetDBFilesLocation(lstdb.Items(lstdb.SelectedIndex).ToString(), mdfloc, ldfloc)
 
         Debug.Print(mdfsize & "|" & ldfsize)
 
@@ -422,9 +426,8 @@ Friend Class frmmain
             strldf = System.Math.Round(ldfsize, 3) & " B"
         End If
 
-        str_Renamed = "DB Name: " & lstdb.Items(lstdb.SelectedIndex).ToString() & vbCrLf & "DB Filesize: " & strmdf & vbCrLf & "Log Filesize: " & strldf
-
-        Logg(str_Renamed)
+        msg1 = "DB Name: " & lstdb.Items(lstdb.SelectedIndex).ToString() & vbCrLf & "DB Filesize: " & strmdf & vbCrLf & "Log Filesize: " & strldf & vbCrLf & "DB Data: " & mdfloc & vbCrLf & "DB Log: " & ldfloc
+        Logg(msg1)
     End Sub
 
 
@@ -490,21 +493,21 @@ Friend Class frmmain
             Exit Sub
         End If
 
-        Dim str_Renamed As String
+        Dim RstFile As String
 
         On Error GoTo xc
 
         dlgOpen.Title = "Select backup file"
         dlgOpen.Filter = "SQL Server Database Back-up File (*.bak)|*.bak"
         dlgOpen.ShowDialog()
-        str_Renamed = dlgOpen.FileName
+        RstFile = dlgOpen.FileName
 
-        If str_Renamed = "" Then
+        If RstFile = "" Then
             Exit Sub
         End If
 
         Wait(True)
-        ProcessRestore(str_Renamed, lstdb.SelectedItem.ToString())
+        ProcessRestore(RstFile, lstdb.SelectedItem.ToString())
         Wait(False)
 
         Exit Sub
@@ -910,24 +913,49 @@ xc:
     End Sub
 
 
-    Sub Logg(ByRef str_Renamed As String)
-
+    Sub Logg(ByRef msgtw As String)
         System.Windows.Forms.Application.DoEvents()
 
+        ' Clear the log text if it exceeds a certain size to prevent overflow
         If Len(txtlog.Text) > 200000000 Then
             txtlog.Text = ""
         End If
 
+        ' Add the new log entry to the text box, with double line breaks for readability
         If txtlog.Text = "" Then
-            Me.txtlog.Text = str_Renamed & vbCrLf & vbCrLf
+            Me.txtlog.Text = msgtw & vbCrLf & vbCrLf
         Else
-            Me.txtlog.Text = Me.txtlog.Text & str_Renamed & vbCrLf & vbCrLf
+            Me.txtlog.Text = Me.txtlog.Text & msgtw & vbCrLf & vbCrLf
         End If
 
+        ' Ensure the latest log entry is visible in the text box
         txtlog.SelectionStart = txtlog.TextLength
         txtlog.ScrollToCaret()
 
+        ' If logging to a file is enabled, write the log entry to the appropriate log file
+        If logtofile Then
+            Try
+                ' Construct the log file name using the current date
+                Dim logFileName As String = $"SSML_{DateTime.Now:yyyy-MM-dd}.log"
+                ' Build the path to the "SSML Logs" folder within the application directory
+                Dim logFolderPath As String = Path.Combine(Application.StartupPath, "SSML Logs")
+                ' Ensure the folder exists
+                If Not Directory.Exists(logFolderPath) Then
+                    Directory.CreateDirectory(logFolderPath)
+                End If
+                ' Construct the full path to the log file
+                Dim logFilePath As String = Path.Combine(logFolderPath, logFileName)
+                ' Use StreamWriter to append text to the log file; the second parameter as True means we're appending to the existing file
+                Using writer As New StreamWriter(logFilePath, True)
+                    writer.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {msgtw}")
+                End Using
+            Catch ex As Exception
+                ' Optional error handling, e.g., you might want to log the error elsewhere or simply ignore it
+                MessageBox.Show("Error writing to log file: " & ex.Message)
+            End Try
+        End If
     End Sub
+
 
 
     Sub ProcessBackup(ByRef dbname As String)
@@ -1039,11 +1067,11 @@ xc:
         Me.cmddelete.Enabled = d
         Me.cmdrepairdb.Enabled = d
         Me.cmdrestore.Enabled = d
-        If Not prov2 = "integrated" Then Me.cmdguest.Enabled = d
+        If Not prov = "integrated" Then Me.cmdguest.Enabled = d
         Me.cmdpurge.Enabled = d
         Me.cmdgetsize.Enabled = d
         Me.cmddetach.Enabled = d
-        If Not prov2 = "sqloledb" Then Me.cmdkillconn.Enabled = d
+        If Not prov = "sqloledb" Then Me.cmdkillconn.Enabled = d
         Me.cmdtables.Enabled = d
     End Sub
 
@@ -1054,14 +1082,14 @@ xc:
 
     Private Sub lstdb_SelectedIndexChanged(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles lstdb.SelectedIndexChanged
 
-        If Not prov2 = "integrated" Then cmdguest.BackColor = System.Drawing.ColorTranslator.FromOle(vGray)
-        If Not prov2 = "integrated" Then cmdguest.Enabled = True
+        If Not prov = "integrated" Then cmdguest.BackColor = System.Drawing.ColorTranslator.FromOle(vGray)
+        If Not prov = "integrated" Then cmdguest.Enabled = True
         ' Ensure that there is a selected item in the ListBox
         If lstdb.SelectedIndex <> -1 Then
             Dim selectedDatabase As String = lstdb.SelectedItem.ToString()
 
             ' Call the LookGuest function if islocaldb is False
-            If Not prov2 = "integrated" Then LookGuest(selectedDatabase)
+            If Not prov = "integrated" Then LookGuest(selectedDatabase)
         End If
 
 
@@ -1123,19 +1151,14 @@ xc:
         End If
     End Sub
 
-    Private Sub cmddataloc_Click(sender As Object, e As EventArgs) Handles cmddataloc.Click
-        Dim defaultDataPath As String = String.Empty
-        Dim defaultLogPath As String = String.Empty
-        If GetDefaultDataAndLogLocations(defaultDataPath, defaultLogPath) Then
-            frmfilespath.TxtMDF.Text = defaultDataPath
-            frmfilespath.TxtLDF.Text = defaultLogPath
-            frmfilespath.ShowDialog()
-        End If
-    End Sub
-
     Private Sub cmdQueryEditor_Click(sender As Object, e As EventArgs) Handles cmdQueryEditor.Click
         frmqueryeditor.Icon = Me.Icon
         frmqueryeditor.Text = "New Query"
         frmqueryeditor.Show()
+    End Sub
+
+    Private Sub cmdConfig_Click(sender As Object, e As EventArgs) Handles cmdConfig.Click
+        frmconfig.Icon = Me.Icon
+        frmconfig.ShowDialog()
     End Sub
 End Class

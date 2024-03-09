@@ -58,8 +58,8 @@
         Me.cmddelete = New System.Windows.Forms.Button()
         Me.cmdrepairdb = New System.Windows.Forms.Button()
         Me.cmdtables = New System.Windows.Forms.Button()
-        Me.cmddataloc = New System.Windows.Forms.Button()
         Me.cmdQueryEditor = New System.Windows.Forms.Button()
+        Me.cmdConfig = New System.Windows.Forms.Button()
         Me.Frame3 = New System.Windows.Forms.GroupBox()
         Me.cmdclear = New System.Windows.Forms.Button()
         Me.txtlog = New System.Windows.Forms.TextBox()
@@ -240,26 +240,12 @@
         Me.ToolTip1.SetToolTip(Me.cmdtables, "Show tables of selected Database")
         Me.cmdtables.UseVisualStyleBackColor = False
         '
-        'cmddataloc
-        '
-        Me.cmddataloc.BackColor = System.Drawing.SystemColors.Control
-        Me.cmddataloc.Cursor = System.Windows.Forms.Cursors.Default
-        Me.cmddataloc.ForeColor = System.Drawing.SystemColors.ControlText
-        Me.cmddataloc.Location = New System.Drawing.Point(264, 182)
-        Me.cmddataloc.Name = "cmddataloc"
-        Me.cmddataloc.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.cmddataloc.Size = New System.Drawing.Size(81, 25)
-        Me.cmddataloc.TabIndex = 23
-        Me.cmddataloc.Text = "Data location"
-        Me.ToolTip1.SetToolTip(Me.cmddataloc, "Get/Set default Database files locations")
-        Me.cmddataloc.UseVisualStyleBackColor = False
-        '
         'cmdQueryEditor
         '
         Me.cmdQueryEditor.BackColor = System.Drawing.SystemColors.Control
         Me.cmdQueryEditor.Cursor = System.Windows.Forms.Cursors.Default
         Me.cmdQueryEditor.ForeColor = System.Drawing.SystemColors.ControlText
-        Me.cmdQueryEditor.Location = New System.Drawing.Point(176, 213)
+        Me.cmdQueryEditor.Location = New System.Drawing.Point(264, 182)
         Me.cmdQueryEditor.Name = "cmdQueryEditor"
         Me.cmdQueryEditor.RightToLeft = System.Windows.Forms.RightToLeft.No
         Me.cmdQueryEditor.Size = New System.Drawing.Size(81, 25)
@@ -267,6 +253,20 @@
         Me.cmdQueryEditor.Text = "Query Editor"
         Me.ToolTip1.SetToolTip(Me.cmdQueryEditor, "Edit/Execute queries")
         Me.cmdQueryEditor.UseVisualStyleBackColor = False
+        '
+        'cmdConfig
+        '
+        Me.cmdConfig.BackColor = System.Drawing.SystemColors.Control
+        Me.cmdConfig.Cursor = System.Windows.Forms.Cursors.Default
+        Me.cmdConfig.ForeColor = System.Drawing.SystemColors.ControlText
+        Me.cmdConfig.Location = New System.Drawing.Point(176, 211)
+        Me.cmdConfig.Name = "cmdConfig"
+        Me.cmdConfig.RightToLeft = System.Windows.Forms.RightToLeft.No
+        Me.cmdConfig.Size = New System.Drawing.Size(81, 25)
+        Me.cmdConfig.TabIndex = 25
+        Me.cmdConfig.Text = "Configuration"
+        Me.ToolTip1.SetToolTip(Me.cmdConfig, "Edit SSML config")
+        Me.cmdConfig.UseVisualStyleBackColor = False
         '
         'Frame3
         '
@@ -316,8 +316,8 @@
         'Frame2
         '
         Me.Frame2.BackColor = System.Drawing.SystemColors.Control
+        Me.Frame2.Controls.Add(Me.cmdConfig)
         Me.Frame2.Controls.Add(Me.cmdQueryEditor)
-        Me.Frame2.Controls.Add(Me.cmddataloc)
         Me.Frame2.Controls.Add(Me.cmdtables)
         Me.Frame2.Controls.Add(Me.cmdkillconn)
         Me.Frame2.Controls.Add(Me.cmddetach)
@@ -505,7 +505,7 @@
     Public WithEvents cmddetach As Button
     Public WithEvents cmdkillconn As Button
     Public WithEvents cmdtables As Button
-    Public WithEvents cmddataloc As Button
     Public WithEvents cmdQueryEditor As Button
+    Public WithEvents cmdConfig As Button
 #End Region
 End Class
