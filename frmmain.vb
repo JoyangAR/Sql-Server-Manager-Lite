@@ -295,37 +295,26 @@ Friend Class frmmain
             Exit Sub
         End If
 
-        Dim x1 As String
-        Dim d1 As String
         If MsgBox("Are you sure do you want to delete the database?", MsgBoxStyle.Exclamation + MsgBoxStyle.YesNo, "") = MsgBoxResult.Yes Then
 
+            If RNDSecurity("Delete database") Then
+                System.Windows.Forms.Application.DoEvents()
 
+                ' Ensure that there is a selected item in the ListBox
+                If lstdb.SelectedIndex <> -1 Then
+                    Dim selectedDatabase As String = lstdb.Items(lstdb.SelectedIndex).ToString()
 
-            Randomize()
-
-            d1 = Format(Int(Rnd() * 999999), "000000")
-
-            x1 = InputBox("Type this code to continue: " & d1, "Delete database")
-
-            If x1 = "" Or x1 <> d1 Then
-                Exit Sub
-            End If
-
-            System.Windows.Forms.Application.DoEvents()
-
-            ' Ensure that there is a selected item in the ListBox
-            If lstdb.SelectedIndex <> -1 Then
-                Dim selectedDatabase As String = lstdb.Items(lstdb.SelectedIndex).ToString()
-
-                ' Call the DeleteDatabase function and handle the result
-                If DeleteDatabase(selectedDatabase, err1) Then
-                    Logg("Database " & selectedDatabase & " deleted!")
-                    LoadDatabase()
-                Else
-                    Logg("Cannot delete database: " & err1)
+                    ' Call the DeleteDatabase function and handle the result
+                    If DeleteDatabase(selectedDatabase, err1) Then
+                        Logg("Database " & selectedDatabase & " deleted!")
+                        LoadDatabase()
+                    Else
+                        Logg("Cannot delete database: " & err1)
+                    End If
                 End If
+            Else
+                Logg("Random check not passed")
             End If
-
 
         End If
 
@@ -339,40 +328,31 @@ Friend Class frmmain
             Exit Sub
         End If
 
-        Dim x1 As String
-        Dim d1 As String
         If MsgBox("Are you sure do you want to delete the user?", MsgBoxStyle.Exclamation + MsgBoxStyle.YesNo, "") = MsgBoxResult.Yes Then
 
+            If RNDSecurity("Delete user") Then
+                Wait(True)
 
-            Randomize()
+                System.Windows.Forms.Application.DoEvents()
 
-            d1 = Format(Int(Rnd() * 999999), "000000")
+                ' Ensure that there is a selected item in the ListBox
+                If lstuser.SelectedIndex <> -1 Then
+                    Dim selectedUser As String = lstuser.Items(lstuser.SelectedIndex).ToString()
 
-            x1 = InputBox("Type this code to continue: " & d1, "Delete user")
-
-            If x1 = "" Or x1 <> d1 Then
-                Exit Sub
-            End If
-
-            Wait(True)
-
-            System.Windows.Forms.Application.DoEvents()
-
-            ' Ensure that there is a selected item in the ListBox
-            If lstuser.SelectedIndex <> -1 Then
-                Dim selectedUser As String = lstuser.Items(lstuser.SelectedIndex).ToString()
-
-                ' Call the DeleteAccount function and handle the result
-                If DeleteAccount(selectedUser, err1) Then
-                    Logg("User " & selectedUser & " deleted!")
-                    LoadUser()
-                Else
-                    Logg("Cannot delete user: " & err1)
+                    ' Call the DeleteAccount function and handle the result
+                    If DeleteAccount(selectedUser, err1) Then
+                        Logg("User " & selectedUser & " deleted!")
+                        LoadUser()
+                    Else
+                        Logg("Cannot delete user: " & err1)
+                    End If
                 End If
+
+
+                Wait(False)
+            Else
+                Logg("Random check not passed")
             End If
-
-
-            Wait(False)
 
         End If
 
@@ -528,31 +508,21 @@ xc:
             Exit Sub
         End If
 
-        Dim x1 As String
-        Dim d1 As String
         If MsgBox("Are you sure do you want to detach the database?", MsgBoxStyle.Exclamation + MsgBoxStyle.YesNo, "") = MsgBoxResult.Yes Then
 
+            If RNDSecurity("Detach database") = True Then
+                System.Windows.Forms.Application.DoEvents()
 
+                Dim selectedDatabase As String = If(lstdb.SelectedIndex <> -1, lstdb.SelectedItem.ToString(), String.Empty)
 
-            Randomize()
-
-            d1 = Format(Int(Rnd() * 999999), "000000")
-
-            x1 = InputBox("Type this code to continue: " & d1, "Detach database")
-
-            If x1 = "" Or x1 <> d1 Then
-                Exit Sub
-            End If
-
-            System.Windows.Forms.Application.DoEvents()
-
-            Dim selectedDatabase As String = If(lstdb.SelectedIndex <> -1, lstdb.SelectedItem.ToString(), String.Empty)
-
-            If DetachDatabase(selectedDatabase, err1) Then
-                Logg("Database " & selectedDatabase & " detached!")
-                Me.LoadDatabase()
+                If DetachDatabase(selectedDatabase, err1) Then
+                    Logg("Database " & selectedDatabase & " detached!")
+                    Me.LoadDatabase()
+                Else
+                    Logg("Cannot detach database: " & err1)
+                End If
             Else
-                Logg("Cannot detach database: " & err1)
+                Logg("Random check not passed")
             End If
 
         End If
@@ -568,31 +538,20 @@ xc:
             Exit Sub
         End If
 
-        Dim x1 As String
-        Dim d1 As String
         If MsgBox("Are you sure do you want to kill all connections with the database?", MsgBoxStyle.Exclamation + MsgBoxStyle.YesNo, "") = MsgBoxResult.Yes Then
 
+            If RNDSecurity("Kill connections") = True Then
+                System.Windows.Forms.Application.DoEvents()
+                Dim selectedDatabase As String = If(lstdb.SelectedIndex <> -1, lstdb.SelectedItem.ToString(), String.Empty)
 
 
-            Randomize()
-
-            d1 = Format(Int(Rnd() * 999999), "000000")
-
-            x1 = InputBox("Type this code to continue: " & d1, "Detach database")
-
-            If x1 = "" Or x1 <> d1 Then
-                Exit Sub
-            End If
-
-            System.Windows.Forms.Application.DoEvents()
-
-            Dim selectedDatabase As String = If(lstdb.SelectedIndex <> -1, lstdb.SelectedItem.ToString(), String.Empty)
-
-
-            If KillConnections(selectedDatabase, err1) Then
-                Logg("Existing connections to the database " & selectedDatabase & " killed!")
+                If KillConnections(selectedDatabase, err1) Then
+                    Logg("Existing connections to the database " & selectedDatabase & " killed!")
+                Else
+                    Logg("Cannot kill connections to the database: " & err1)
+                End If
             Else
-                Logg("Cannot kill connections to the database: " & err1)
+                Logg("Random check not passed")
             End If
 
         End If
@@ -912,7 +871,6 @@ xc:
         LoadDatabase()
     End Sub
 
-
     Sub Logg(ByRef msgtw As String)
         System.Windows.Forms.Application.DoEvents()
 
@@ -955,8 +913,6 @@ xc:
             End Try
         End If
     End Sub
-
-
 
     Sub ProcessBackup(ByRef dbname As String)
         Logg("Full database backup started...")

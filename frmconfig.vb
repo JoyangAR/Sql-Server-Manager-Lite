@@ -13,6 +13,7 @@
         autologin = chkautologin.CheckState
         logtofile = chklogtofile.Checked
         colourQE = chkcolourQE.Checked
+        disableRND = chkdisablerandom.Checked
         WriteXML()
     End Sub
 
@@ -20,5 +21,6 @@
         chkautologin.Checked = autologin
         chklogtofile.Checked = logtofile
         chkcolourQE.Checked = colourQE
+        chkdisablerandom.Checked = disableRND
     End Sub
 End Class

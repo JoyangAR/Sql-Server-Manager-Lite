@@ -63,13 +63,10 @@ Friend Class frmlogin
             frmmain.islocaldb = chklocaldb.Checked
             frmmain.Loadstr(connectionString)
             frmmain.Show()
-            Debug.Print(logtofile)
             Me.Cursor = System.Windows.Forms.Cursors.Default
-
             Me.Hide()
-
         End If
-
+        Me.Enabled = True
         Me.Cursor = System.Windows.Forms.Cursors.Default
     End Sub
 
@@ -94,7 +91,7 @@ Friend Class frmlogin
                                     cUser = reader.Value
                                 Case "Password"
                                     reader.Read()
-                                    cPwd = reader.Value
+                                    cPwd = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(reader.Value))
                                 Case "ConnectMode"
                                     reader.Read()
                                     connectMode = reader.Value
@@ -122,6 +119,9 @@ Friend Class frmlogin
                                 Case "ColourQE"
                                     reader.Read()
                                     colourQE = (reader.Value = "1")
+                                Case "DisableRND"
+                                    reader.Read()
+                                    disableRND = (reader.Value = "1")
                                 Case "DefaultMDFPath"
                                     reader.Read()
                                     mdfpath = reader.Value
@@ -139,12 +139,12 @@ Friend Class frmlogin
                     chklocaldb.Checked = localdb
                     chktrust.Checked = trusted
                     chkautologin.Checked = autologin
-                    If connectMode = "OLEDB" Then
-                        optoledb.Checked = True
+                    If connectMode = "Integrated" Then
+                        optintegrated.Checked = True
                     ElseIf connectMode = "ODBC" Then
                         optodbc.Checked = True
-                    ElseIf connectMode = "Integrated" Then
-                        optintegrated.Checked = True
+                    ElseIf connectMode = "OLEDB" Then
+                        optoledb.Checked = True
                     End If
                 End Using
             Else
@@ -161,7 +161,7 @@ Friend Class frmlogin
 
     Private Sub Timerstart()
         ' Configure the timer
-        Timer1.Interval = 1000 ' 1 second = 1000 milliseconds
+        Timer1.Interval = 100 ' 1 second = 1000 milliseconds
         AddHandler Timer1.Tick, AddressOf Timer1_Tick
         Timer1.Enabled = True ' Start the timer
     End Sub

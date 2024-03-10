@@ -33,6 +33,7 @@ Module Module1
     Public autologin As CheckState
     Public logtofile As Boolean
     Public colourQE As Boolean = True
+    Public disableRND As Boolean
 
 
     Enum pShrinkMode
@@ -992,7 +993,6 @@ ErrorHandler:
         Return path
     End Function
 
-
     Sub WriteXML()
         Try
             ' Create a new XML configuration file
@@ -1005,10 +1005,8 @@ ErrorHandler:
 
                 ' Elements within <Configuration>
                 writer.WriteElementString("Username", cUser)
-                writer.WriteElementString("Password", cPwd)
-                ' If Len(cPwd) > 0 Then
-                '     writer.WriteElementString("Password", Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(cPwd)))
-                ' End If
+                'writer.WriteElementString("Password", cPwd)
+                writer.WriteElementString("Password", Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(cPwd)))
                 If prov.ToLower() = "sqloledb" Then
                     writer.WriteElementString("ConnectMode", "OLEDB")
                     writer.WriteElementString("Provider", provider)
@@ -1025,6 +1023,7 @@ ErrorHandler:
                 writer.WriteElementString("AutoLogin", If(autologin = 1, "1", "0"))
                 writer.WriteElementString("LogToFile", If(logtofile = True, "1", "0"))
                 writer.WriteElementString("ColourQE", If(colourQE = True, "1", "0"))
+                writer.WriteElementString("DisableRND", If(disableRND = True, "1", "0"))
                 writer.WriteElementString("DefaultMDFPath", mdfpath)
                 writer.WriteElementString("DefaultLDFPath", ldfpath)
 
@@ -1037,6 +1036,7 @@ ErrorHandler:
         Catch ex As Exception
         End Try
     End Sub
+
     Function GetBackupPath() As String
         Dim rs1 As ADODB.Recordset
         Dim tmp As String
@@ -1255,6 +1255,28 @@ ErrorHandler:
         Dim t() As String = tmp.Split("\"c)
 
         Return UBound(t)
+    End Function
+
+    Function RNDSecurity(ByRef title As String) As Boolean
+        ' Check if random number dialog is disabled; if so, bypass security check
+        If disableRND Then Return True
+
+        ' Use System.Random for robust random number generation
+        Dim randomizer As New System.Random()
+        ' Generate a 6-digit random number and format it as a string
+        Dim d1 As String = randomizer.Next(0, 1000000).ToString("D6")
+
+        ' Prompt the user to enter the generated code using an input box
+        Dim x1 As String = InputBox("Type this code to continue: " & d1, title)
+
+        ' Check if the user input matches the generated code or if the input is empty
+        ' Return False if the input is empty or does not match, indicating a failed security check
+        If x1 = "" OrElse x1 <> d1 Then
+            Return False
+        Else
+            ' If the input matches the generated code, return True, indicating a passed security check
+            Return True
+        End If
     End Function
 
     Function DetachDatabase(ByRef dbname As String, Optional ByRef errmsg As String = "") As Boolean
