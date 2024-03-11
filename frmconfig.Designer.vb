@@ -26,6 +26,7 @@ Partial Class frmconfig
         Me.CmdApply = New System.Windows.Forms.Button()
         Me.chklogtofile = New System.Windows.Forms.CheckBox()
         Me.chkcolourQE = New System.Windows.Forms.CheckBox()
+        Me.chkdisablerandom = New System.Windows.Forms.CheckBox()
         Me.SuspendLayout()
         '
         'chkautologin
@@ -57,7 +58,7 @@ Partial Class frmconfig
         Me.CmdApply.Cursor = System.Windows.Forms.Cursors.Default
         Me.CmdApply.DialogResult = System.Windows.Forms.DialogResult.OK
         Me.CmdApply.ForeColor = System.Drawing.SystemColors.ControlText
-        Me.CmdApply.Location = New System.Drawing.Point(51, 91)
+        Me.CmdApply.Location = New System.Drawing.Point(51, 114)
         Me.CmdApply.Name = "CmdApply"
         Me.CmdApply.RightToLeft = System.Windows.Forms.RightToLeft.No
         Me.CmdApply.Size = New System.Drawing.Size(81, 25)
@@ -85,11 +86,22 @@ Partial Class frmconfig
         Me.chkcolourQE.Text = "Colour text in QE"
         Me.chkcolourQE.UseVisualStyleBackColor = True
         '
+        'chkdisablerandom
+        '
+        Me.chkdisablerandom.AutoSize = True
+        Me.chkdisablerandom.Location = New System.Drawing.Point(12, 81)
+        Me.chkdisablerandom.Name = "chkdisablerandom"
+        Me.chkdisablerandom.Size = New System.Drawing.Size(127, 17)
+        Me.chkdisablerandom.TabIndex = 28
+        Me.chkdisablerandom.Text = "Disable RND security"
+        Me.chkdisablerandom.UseVisualStyleBackColor = True
+        '
         'frmconfig
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(189, 128)
+        Me.ClientSize = New System.Drawing.Size(189, 146)
+        Me.Controls.Add(Me.chkdisablerandom)
         Me.Controls.Add(Me.chkcolourQE)
         Me.Controls.Add(Me.chklogtofile)
         Me.Controls.Add(Me.CmdApply)
@@ -111,4 +123,5 @@ Partial Class frmconfig
     Public WithEvents CmdApply As Button
     Friend WithEvents chklogtofile As CheckBox
     Friend WithEvents chkcolourQE As CheckBox
+    Friend WithEvents chkdisablerandom As CheckBox
 End Class
