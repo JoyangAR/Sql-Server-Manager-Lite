@@ -122,6 +122,9 @@ Friend Class frmlogin
                                 Case "DisableRND"
                                     reader.Read()
                                     disableRND = (reader.Value = "1")
+                                Case "AutoCheckforUpd"
+                                    reader.Read()
+                                    UpdCheck = (reader.Value = "1")
                                 Case "DefaultMDFPath"
                                     reader.Read()
                                     mdfpath = reader.Value
@@ -152,6 +155,7 @@ Friend Class frmlogin
                 ' You can handle this according to your needs
             End If
             RefreshObjects()
+            If UpdCheck Then CheckForUpdates()
             If chkautologin.Checked Then Timerstart()
 
         Catch ex As Exception

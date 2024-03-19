@@ -360,7 +360,7 @@ Friend Class frmmain
 
     Private Sub cmdgetsize_Click(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles cmdgetsize.Click
         Dim ldf As String = ""
-        Dim mdf As String
+        Dim mdf As String = ""
         Dim msg1 As String
         Dim mdfsize As Long
         Dim ldfsize As Long
@@ -374,7 +374,7 @@ Friend Class frmmain
             Exit Sub
         End If
 
-        mdf = GetDBFile(lstdb.Items(lstdb.SelectedIndex).ToString(), ldf)
+        GetDBFilesLocation(lstdb.Items(lstdb.SelectedIndex).ToString(), mdf, ldf)
         mdfsize = New System.IO.FileInfo(mdf).Length
         ldfsize = New System.IO.FileInfo(ldf).Length
 
@@ -1065,12 +1065,12 @@ xc:
     End Sub
 
     Sub RebuildLog(ByRef dbname As String)
-        Dim mdf As String
+        Dim mdf As String = ""
         Dim ldf As String = ""
         Dim err3 As String = ""
         Dim err1 As String = ""
         Dim mdfo As Boolean = True ' MDF Only
-        mdf = GetDBFile(dbname, ldf)
+        GetDBFilesLocation(dbname, mdf, ldf)
 
         Debug.Print(ldf)
 
@@ -1083,7 +1083,7 @@ xc:
 
         If DetachDatabase(dbname, err1) Then
         Else
-            Logg($"Detach Failed Failed: {err1}")
+            Logg($"Detach database Failed: {err1}")
         End If
 
 

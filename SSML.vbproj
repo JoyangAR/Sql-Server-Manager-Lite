@@ -14,7 +14,7 @@
     <AssemblyMinorVersion>0</AssemblyMinorVersion>
     <AssemblyRevisionNumber>3</AssemblyRevisionNumber>
     <GenerateRevisionNumber>True</GenerateRevisionNumber>
-    <AssemblyCompanyName>Martin P. Rizal</AssemblyCompanyName>
+    <AssemblyCompanyName>JoyangAR</AssemblyCompanyName>
     <StartWithIE>False</StartWithIE>
     <ApplicationIcon>Project1.ico</ApplicationIcon>
     <RootNamespace>SqlServerManagerLite</RootNamespace>
@@ -52,6 +52,10 @@
     </Reference>
     <Reference Include="Microsoft.VisualBasic.Compatibility.Data">
       <Name>Microsoft.VisualBasic.Compatibility.Data</Name>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>packages\Newtonsoft.Json.13.0.3\lib\net40\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System">
       <Name>System</Name>
@@ -116,6 +120,12 @@
     <Compile Include="frmbakdir.vb">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="frmconfig.Designer.vb">
+      <DependentUpon>frmconfig.vb</DependentUpon>
+    </Compile>
+    <Compile Include="frmconfig.vb">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="frmdialog.Designer.vb">
       <SubType>Code</SubType>
       <DependentUpon>frmdialog.vb</DependentUpon>
@@ -175,6 +185,9 @@
     <EmbeddedResource Include="frmbakdir.resx">
       <DependentUpon>frmbakdir.vb</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="frmconfig.resx">
+      <DependentUpon>frmconfig.vb</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="frmdialog.resX">
       <DependentUpon>frmdialog.vb</DependentUpon>
     </EmbeddedResource>
@@ -200,6 +213,7 @@
     <EmbeddedResource Include="frmtableview.resx">
       <DependentUpon>frmtableview.vb</DependentUpon>
     </EmbeddedResource>
+    <None Include="packages.config" />
     <None Include="_UpgradeReport.htm">
       <SubType>Preview</SubType>
     </None>

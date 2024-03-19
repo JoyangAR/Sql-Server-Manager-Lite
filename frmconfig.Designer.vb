@@ -27,6 +27,8 @@ Partial Class frmconfig
         Me.chklogtofile = New System.Windows.Forms.CheckBox()
         Me.chkcolourQE = New System.Windows.Forms.CheckBox()
         Me.chkdisablerandom = New System.Windows.Forms.CheckBox()
+        Me.chkUpdates = New System.Windows.Forms.CheckBox()
+        Me.cmdCheckUpd = New System.Windows.Forms.Button()
         Me.SuspendLayout()
         '
         'chkautologin
@@ -44,7 +46,7 @@ Partial Class frmconfig
         Me.cmddataloc.BackColor = System.Drawing.SystemColors.Control
         Me.cmddataloc.Cursor = System.Windows.Forms.Cursors.Default
         Me.cmddataloc.ForeColor = System.Drawing.SystemColors.ControlText
-        Me.cmddataloc.Location = New System.Drawing.Point(96, 7)
+        Me.cmddataloc.Location = New System.Drawing.Point(135, 7)
         Me.cmddataloc.Name = "cmddataloc"
         Me.cmddataloc.RightToLeft = System.Windows.Forms.RightToLeft.No
         Me.cmddataloc.Size = New System.Drawing.Size(81, 25)
@@ -58,7 +60,7 @@ Partial Class frmconfig
         Me.CmdApply.Cursor = System.Windows.Forms.Cursors.Default
         Me.CmdApply.DialogResult = System.Windows.Forms.DialogResult.OK
         Me.CmdApply.ForeColor = System.Drawing.SystemColors.ControlText
-        Me.CmdApply.Location = New System.Drawing.Point(51, 114)
+        Me.CmdApply.Location = New System.Drawing.Point(86, 143)
         Me.CmdApply.Name = "CmdApply"
         Me.CmdApply.RightToLeft = System.Windows.Forms.RightToLeft.No
         Me.CmdApply.Size = New System.Drawing.Size(81, 25)
@@ -96,11 +98,36 @@ Partial Class frmconfig
         Me.chkdisablerandom.Text = "Disable RND security"
         Me.chkdisablerandom.UseVisualStyleBackColor = True
         '
+        'chkUpdates
+        '
+        Me.chkUpdates.AutoSize = True
+        Me.chkUpdates.Location = New System.Drawing.Point(12, 104)
+        Me.chkUpdates.Name = "chkUpdates"
+        Me.chkUpdates.Size = New System.Drawing.Size(148, 17)
+        Me.chkUpdates.TabIndex = 29
+        Me.chkUpdates.Text = "Check for updates at start"
+        Me.chkUpdates.UseVisualStyleBackColor = True
+        '
+        'cmdCheckUpd
+        '
+        Me.cmdCheckUpd.BackColor = System.Drawing.SystemColors.Control
+        Me.cmdCheckUpd.Cursor = System.Windows.Forms.Cursors.Default
+        Me.cmdCheckUpd.ForeColor = System.Drawing.SystemColors.ControlText
+        Me.cmdCheckUpd.Location = New System.Drawing.Point(166, 99)
+        Me.cmdCheckUpd.Name = "cmdCheckUpd"
+        Me.cmdCheckUpd.RightToLeft = System.Windows.Forms.RightToLeft.No
+        Me.cmdCheckUpd.Size = New System.Drawing.Size(71, 25)
+        Me.cmdCheckUpd.TabIndex = 30
+        Me.cmdCheckUpd.Text = "Check now"
+        Me.cmdCheckUpd.UseVisualStyleBackColor = False
+        '
         'frmconfig
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(189, 146)
+        Me.ClientSize = New System.Drawing.Size(249, 170)
+        Me.Controls.Add(Me.cmdCheckUpd)
+        Me.Controls.Add(Me.chkUpdates)
         Me.Controls.Add(Me.chkdisablerandom)
         Me.Controls.Add(Me.chkcolourQE)
         Me.Controls.Add(Me.chklogtofile)
@@ -124,4 +151,6 @@ Partial Class frmconfig
     Friend WithEvents chklogtofile As CheckBox
     Friend WithEvents chkcolourQE As CheckBox
     Friend WithEvents chkdisablerandom As CheckBox
+    Friend WithEvents chkUpdates As CheckBox
+    Public WithEvents cmdCheckUpd As Button
 End Class

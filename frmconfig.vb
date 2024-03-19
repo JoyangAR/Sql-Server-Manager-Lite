@@ -14,6 +14,7 @@
         logtofile = chklogtofile.Checked
         colourQE = chkcolourQE.Checked
         disableRND = chkdisablerandom.Checked
+        UpdCheck = chkUpdates.Checked
         WriteXML()
     End Sub
 
@@ -22,5 +23,10 @@
         chklogtofile.Checked = logtofile
         chkcolourQE.Checked = colourQE
         chkdisablerandom.Checked = disableRND
+        chkUpdates.Checked = UpdCheck
+    End Sub
+
+    Private Sub cmdCheckUpd_Click(sender As Object, e As EventArgs) Handles cmdCheckUpd.Click
+        CheckForUpdates()
     End Sub
 End Class

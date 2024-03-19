@@ -3,12 +3,16 @@ Option Explicit On
 
 Imports System.Collections.Generic
 Imports System.Data.SqlClient
+Imports System.Net
 Imports System.Net.NetworkInformation
 Imports System.Security.Principal
 Imports System.Text
 Imports System.Xml
 Imports Microsoft.VisualBasic.Compatibility.VB6
 Imports Microsoft.Win32
+Imports Newtonsoft.Json
+Imports Newtonsoft.Json.Linq
+
 
 Module Module1
     Public con As New ADODB.Connection
@@ -19,9 +23,8 @@ Module Module1
     Public configFilePath As String = System.IO.Path.Combine(Application.StartupPath, configFileName)
     Public mdfpath As String
     Public ldfpath As String
-    ' Other variables to replace objects from the Std Framework
-    Public prov As String
 
+    Public prov As String
     Public cUser As String
     Public cPwd As String
     Public instance As String
@@ -34,6 +37,7 @@ Module Module1
     Public logtofile As Boolean
     Public colourQE As Boolean = True
     Public disableRND As Boolean
+    Public UpdCheck As Boolean
 
 
     Enum pShrinkMode
@@ -50,16 +54,12 @@ Module Module1
 
     'UPGRADE_WARNING: Application will terminate when Sub Main() finishes. Click for more: 'ms-help://MS.VSCC.v90/dv_commoner/local/redirect.htm?keyword="E08DDC71-66BA-424F-A612-80AF11498FF8"'
     Public Sub Main()
+        System.Net.ServicePointManager.SecurityProtocol = CType(3072, SecurityProtocolType)
 
         If Not IsUserAdministrator() Then
             MsgBox("Please run this program as administrator", MsgBoxStyle.Exclamation, "")
             Exit Sub
         End If
-
-        'If App.PrevInstance = True Then
-        '    MsgBox(My.Application.Info.Title & " is alredy running", MsgBoxStyle.Exclamation, "")
-        '    End
-        'End If
 
         frmlogin.Show()
 
@@ -1024,6 +1024,7 @@ ErrorHandler:
                 writer.WriteElementString("LogToFile", If(logtofile = True, "1", "0"))
                 writer.WriteElementString("ColourQE", If(colourQE = True, "1", "0"))
                 writer.WriteElementString("DisableRND", If(disableRND = True, "1", "0"))
+                writer.WriteElementString("AutoCheckforUpd", If(UpdCheck = True, "1", "0"))
                 writer.WriteElementString("DefaultMDFPath", mdfpath)
                 writer.WriteElementString("DefaultLDFPath", ldfpath)
 
@@ -1114,90 +1115,7 @@ ErrorHandler:
 
     End Function
 
-    Function GetDBFile(ByRef dbname As String, Optional ByRef logfilename As String = "") As String
-        Dim dbid As Integer
-        Dim dbfile As String = ""
-        Dim logfile As String = ""
-
-        On Error Resume Next ' Handle errors
-
-        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
-            Using rs As SqlDataReader = con.Execute($"SELECT DB_ID('{dbname}')").ExecuteReader()
-                If rs.HasRows Then
-                    rs.Read()
-                    dbid = rs.GetInt32(0)
-                End If
-            End Using
-        ElseIf prov.ToLower() = "integrated" Then
-            ' Use a new connection for integrated
-            Using conIntegrated As New SqlConnection(frmmain.strlogin)
-                conIntegrated.Open()
-
-                Using cmd As New SqlCommand($"SELECT DB_ID('{dbname}')", conIntegrated)
-                    dbid = CInt(cmd.ExecuteScalar())
-                End Using
-            End Using
-        End If
-
-        If dbid = 0 Then
-            GetDBFile = ""
-            Exit Function
-        End If
-
-        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
-            Using rs As SqlDataReader = con.Execute($"SELECT database_id, type_desc, physical_name FROM sys.master_files WHERE database_id = {dbid} AND type_desc = 'ROWS'").ExecuteReader()
-                If rs.HasRows Then
-                    rs.Read()
-                    dbfile = rs.GetString(2)
-                End If
-            End Using
-        ElseIf prov.ToLower() = "integrated" Then
-            ' Use a new connection for integrated
-            Using conIntegrated As New SqlConnection(frmmain.strlogin)
-                conIntegrated.Open()
-
-                Using cmd As New SqlCommand($"SELECT database_id, type_desc, physical_name FROM sys.master_files WHERE database_id = {dbid} AND type_desc = 'ROWS'", conIntegrated)
-                    Using rs As SqlDataReader = cmd.ExecuteReader()
-                        If rs.HasRows Then
-                            rs.Read()
-                            dbfile = rs.GetString(2)
-                        End If
-                    End Using
-                End Using
-            End Using
-        End If
-
-        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
-            Using rs As SqlDataReader = con.Execute($"SELECT database_id, type_desc, physical_name FROM sys.master_files WHERE database_id = {dbid} AND type_desc = 'LOG'").ExecuteReader()
-                If rs.HasRows Then
-                    rs.Read()
-                    logfile = rs.GetString(2)
-                    logfilename = logfile
-                End If
-            End Using
-        ElseIf prov.ToLower() = "integrated" Then
-            ' Use a new connection for integrated
-            Using conIntegrated As New SqlConnection(frmmain.strlogin)
-                conIntegrated.Open()
-
-                Using cmd As New SqlCommand($"SELECT database_id, type_desc, physical_name FROM sys.master_files WHERE database_id = {dbid} AND type_desc = 'LOG'", conIntegrated)
-                    Using rs As SqlDataReader = cmd.ExecuteReader()
-                        If rs.HasRows Then
-                            rs.Read()
-                            logfile = rs.GetString(2)
-                            logfilename = logfile
-                        End If
-                    End Using
-                End Using
-            End Using
-        End If
-
-        GetDBFile = dbfile
-        Exit Function
-
-    End Function
-
-    Function GetDBFilesLocation(ByVal dbName As String, ByRef dataFileLocation As String, ByRef logFileLocation As String, Optional ByRef errmsg As String = "") As String
+    Function GetDBFilesLocation(ByVal dbName As String, Optional ByRef dataFileLocation As String = "", Optional ByRef logFileLocation As String = "", Optional ByRef errmsg As String = "") As String
 
         On Error GoTo ErrorHandler
 
@@ -1378,6 +1296,77 @@ ErrorHandler:
         End If
 
         KillConnections = False
+    End Function
+
+
+    Private ReadOnly apiUrl As String = "https://api.github.com/repos/JoyangAR/Sql-Server-Manager-Lite/releases/latest"
+
+    Sub CheckForUpdates()
+        ' Check for update
+        Dim updUrl As String = GetUpdateLink()
+
+        ' If update is available
+        If Not String.IsNullOrEmpty(updUrl) Then
+            ' Show message box informing user about the update
+            Dim result As DialogResult = MessageBox.Show("A new update is available. Do you want to download it?", "Update Available", MessageBoxButtons.OKCancel, MessageBoxIcon.Information)
+
+            ' If user clicks OK
+            If result = DialogResult.OK Then
+                ' Open the download link in default browser
+                Process.Start(updUrl)
+            End If
+        Else
+            ' If no update is available, show informational message
+            MessageBox.Show("There are no updates available at this time.", "No Updates Available", MessageBoxButtons.OK, MessageBoxIcon.Information)
+        End If
+    End Sub
+
+    Public Function GetUpdateLink() As String
+        Try
+            Dim latestReleaseInfo As String = GetLatestReleaseInfo()
+            If latestReleaseInfo IsNot Nothing Then
+                Dim downloadUrl As String = GetDownloadUrl(latestReleaseInfo)
+                If Not String.IsNullOrEmpty(downloadUrl) Then
+                    Debug.Print(downloadUrl)
+                    Return downloadUrl
+                End If
+            End If
+        Catch ex As Exception
+            ' Handle Errors
+            Console.WriteLine("Error al verificar actualizaciones: " & ex.Message)
+        End Try
+
+        Return Nothing
+    End Function
+
+    Private Function GetLatestReleaseInfo() As String
+        System.Net.ServicePointManager.SecurityProtocol = CType(3072, SecurityProtocolType)
+        Dim request As HttpWebRequest = WebRequest.Create(apiUrl)
+        request.UserAgent = "SSML" 
+        request.Method = "GET"
+
+        Using response As HttpWebResponse = CType(request.GetResponse(), HttpWebResponse)
+            Using reader As New System.IO.StreamReader(response.GetResponseStream())
+                Return reader.ReadToEnd()
+            End Using
+        End Using
+    End Function
+
+    Private Function GetLatestVersion(ByVal releaseInfo As String) As String
+        Dim releaseData As JObject = JObject.Parse(releaseInfo)
+        Dim tagName As String = releaseData("tag_name").ToString()
+        Return tagName
+    End Function
+    Private Function GetDownloadUrl(ByVal releaseInfo As String) As String
+        Dim releaseData As JObject = JObject.Parse(releaseInfo)
+        Dim assets As JArray = JArray.Parse(releaseData("assets").ToString())
+
+        For Each asset As JObject In assets
+            Dim downloadUrl As String = asset("browser_download_url").ToString()
+            Return downloadUrl
+        Next
+
+        Return Nothing
     End Function
 
     Function GetTableNames(ByVal selectedDatabase As String) As List(Of String)
