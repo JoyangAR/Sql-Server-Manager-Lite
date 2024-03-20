@@ -1336,8 +1336,8 @@ ErrorHandler:
                 Process.Start(updUrl)
             End If
         Else
-            ' If no update is available, show informational message
-            MessageBox.Show("There are no updates available at this time.", "No Updates Available", MessageBoxButtons.OK, MessageBoxIcon.Information)
+            ' If no update is available, show informational message 
+            If Not frmlogin.Sh = True Then MessageBox.Show("There are no updates available at this time.", "No Updates Available", MessageBoxButtons.OK, MessageBoxIcon.Information)
         End If
     End Sub
 
@@ -1345,10 +1345,13 @@ ErrorHandler:
         Try
             Dim latestReleaseInfo As String = GetLatestReleaseInfo()
             If latestReleaseInfo IsNot Nothing Then
-                Dim downloadUrl As String = GetDownloadUrl(latestReleaseInfo)
-                If Not String.IsNullOrEmpty(downloadUrl) Then
-                    Debug.Print(downloadUrl)
-                    Return downloadUrl
+                Dim latestversion As String = GetLatestVersion(latestReleaseInfo)
+                If latestversion > Application.ProductVersion Then
+                    Dim downloadUrl As String = GetDownloadUrl(latestReleaseInfo)
+                    If Not String.IsNullOrEmpty(downloadUrl) Then
+                        Debug.Print(downloadUrl)
+                        Return downloadUrl
+                    End If
                 End If
             End If
         Catch ex As Exception

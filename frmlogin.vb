@@ -6,7 +6,7 @@ Imports System.Xml
 
 Friend Class frmlogin
     Inherits System.Windows.Forms.Form
-
+    Public sh As Boolean
     Private Sub chktrust_CheckStateChanged(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles chktrust.CheckStateChanged
         InputMode(Not chktrust.Checked)
     End Sub
@@ -159,7 +159,9 @@ Friend Class frmlogin
                 ' You can handle this according to your needs
             End If
             RefreshObjects()
+            sh = True
             If UpdCheck Then CheckForUpdates()
+            sh = False
             If chkautologin.Checked Then Timerstart()
 
         Catch ex As Exception
