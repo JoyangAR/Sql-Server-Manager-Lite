@@ -9,7 +9,6 @@ Imports Microsoft.Win32
 
 Friend Class frmmain
     Inherits System.Windows.Forms.Form
-    Public strlogin As String
     Dim windrive As String
     Const vGray As Integer = &H8000000F
     Dim dbpath As String

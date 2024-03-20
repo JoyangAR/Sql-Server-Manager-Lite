@@ -17,6 +17,7 @@ Imports Newtonsoft.Json.Linq
 Module Module1
     Public con As New ADODB.Connection
     Public connection As New SqlConnection
+    Public strlogin As String
 
     ' Path to the configuration XML file in the application directory
     Public configFileName As String = "SSMLConf.xml"
@@ -105,7 +106,7 @@ Module Module1
         If prov = "sqloledb" Then
             con.Execute(sql)
         Else
-            Using connection As New SqlConnection(frmmain.strlogin)
+            Using connection As New SqlConnection(strlogin)
                 connection.Open()
                 Using cmd As New SqlCommand(sql, connection)
                     cmd.ExecuteNonQuery()
@@ -128,7 +129,7 @@ ErrorHandler:
         If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             rs = con.Execute($"RESTORE FILELISTONLY FROM DISK = '{bakPath}'").ExecuteReader()
         ElseIf prov.ToLower() = "integrated" Then
-            Using con As New SqlConnection(frmmain.strlogin)
+            Using con As New SqlConnection(strlogin)
                 con.Open()
 
                 Dim commandText As String = $"RESTORE FILELISTONLY FROM DISK = '{bakPath}'"
@@ -192,7 +193,7 @@ ErrorHandler:
         If prov = "sqloledb" Then
             con.Execute("USE [master]" & vbCrLf & "Create LOGIN [" & username & "] WITH PASSWORD = N'" & Password & "',DEFAULT_Database=[master],CHECK_EXPIRATION=OFF,CHECK_POLICY = OFF" & vbCrLf & "EXEC master..sp_addsrvrolemember @loginame = N'" & username & "', @rolename = N'sysadmin'")
         Else
-            Using connection As New SqlConnection(frmmain.strlogin)
+            Using connection As New SqlConnection(strlogin)
                 connection.Open()
 
                 Using cmd As New SqlCommand("USE [master]" & vbCrLf & "Create LOGIN [" & username & "] WITH PASSWORD = N'" & Password & "',DEFAULT_Database=[master],CHECK_EXPIRATION=OFF,CHECK_POLICY = OFF" & vbCrLf & "EXEC master..sp_addsrvrolemember @loginame = N'" & username & "', @rolename = N'sysadmin'", connection)
@@ -237,7 +238,7 @@ ErrorHandler:
             DatabaseExists = True
         Else
             Try
-                Using connection As New SqlConnection(frmmain.strlogin)
+                Using connection As New SqlConnection(strlogin)
                     connection.Open()
 
                     Using cmd As New SqlCommand("use " & dbname, connection)
@@ -278,7 +279,7 @@ ErrorHandler:
             con.Execute($"ALTER DATABASE {db1} SET SINGLE_USER WITH ROLLBACK IMMEDIATE")
             con.Execute($"ALTER DATABASE {db1} SET MULTI_USER")
         ElseIf prov.ToLower() = "integrated" Then
-            Using connnection As New SqlConnection(frmmain.strlogin)
+            Using connnection As New SqlConnection(strlogin)
                 connnection.Open()
 
                 Dim commandText As String
@@ -321,7 +322,7 @@ ErrorHandler:
         If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             con.Execute($"RESTORE DATABASE {dbname} FROM DISK = '{bckfile}' WITH REPLACE")
         ElseIf prov.ToLower() = "integrated" Then
-            Using con As New SqlConnection(frmmain.strlogin)
+            Using con As New SqlConnection(strlogin)
                 con.Open()
 
                 Dim commandText As String = $"RESTORE DATABASE [{dbname}] FROM DISK = '{bckfile}' WITH REPLACE"
@@ -364,7 +365,7 @@ ErrorHandler:
             rs1.Close()
         ElseIf prov.ToLower() = "integrated" Then
             ' New code with System.Data.SqlClient
-            Using con As New SqlConnection(frmmain.strlogin)
+            Using con As New SqlConnection(strlogin)
                 con.Open()
 
                 Dim query As String = "SELECT * FROM sys.server_principals WHERE type='S' AND name<>'sa' AND name NOT LIKE '##MS_%'"
@@ -406,7 +407,7 @@ ErrorHandler:
             rs1.Close()
         ElseIf prov.ToLower() = "integrated" Then
             ' New code with System.Data.SqlClient
-            Using con As New SqlConnection(frmmain.strlogin)
+            Using con As New SqlConnection(strlogin)
                 con.Open()
 
                 Dim query As String = "SELECT name FROM sys.databases WHERE name NOT IN ('master', 'msdb', 'tempdb', 'model')"
@@ -451,7 +452,7 @@ ErrorHandler:
             Next
 
         ElseIf prov.ToLower() = "integrated" Then
-            Using con As New SqlConnection(frmmain.strlogin)
+            Using con As New SqlConnection(strlogin)
                 con.Open()
 
                 For Each query As String In queries
@@ -535,7 +536,7 @@ ErrorHandler:
         If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             con.Execute($"ALTER LOGIN [{username}] WITH PASSWORD=N'{pwd}'")
         ElseIf prov.ToLower() = "integrated" Then
-            Using con As New SqlConnection(frmmain.strlogin)
+            Using con As New SqlConnection(strlogin)
                 con.Open()
 
                 Dim commandText As String = $"ALTER LOGIN [{username}] WITH PASSWORD=N'{pwd}'"
@@ -560,7 +561,7 @@ ErrorHandler:
         If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             con.Execute($"DROP LOGIN [{username}]")
         ElseIf prov.ToLower() = "integrated" Then
-            Using con As New SqlConnection(frmmain.strlogin)
+            Using con As New SqlConnection(strlogin)
                 con.Open()
 
                 Dim commandText As String = $"DROP LOGIN [{username}]"
@@ -594,7 +595,7 @@ ErrorHandler:
 
                 rs1.Close()
             ElseIf prov.ToLower() = "integrated" Then
-                Using con As New SqlConnection(frmmain.strlogin)
+                Using con As New SqlConnection(strlogin)
                     con.Open()
 
                     Dim commandText As String = $"SELECT * FROM sys.server_principals WHERE name='{username}' AND type='S'"
@@ -629,7 +630,7 @@ ErrorHandler:
                 str_Renamed = $"ALTER DATABASE {dbname} SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DBCC CHECKDB ({dbname}, REPAIR_FAST); ALTER DATABASE {dbname} SET MULTI_USER"
             End If
         ElseIf prov.ToLower() = "integrated" Then
-            Using con As New SqlConnection(frmmain.strlogin)
+            Using con As New SqlConnection(strlogin)
                 con.Open()
 
                 Dim commandText As String = ""
@@ -674,7 +675,7 @@ ErrorHandler:
         If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             con.Execute("DROP DATABASE " & dbname)
         ElseIf prov.ToLower() = "integrated" Then
-            Using con As New SqlConnection(frmmain.strlogin)
+            Using con As New SqlConnection(strlogin)
                 con.Open()
 
                 Dim commandText As String = $"DROP DATABASE [{dbname}]"
@@ -713,7 +714,7 @@ ErrorHandler:
         If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             con.Execute($"BACKUP DATABASE [{dbname1}] TO DISK = N'{ipath}{newbck}' WITH NOFORMAT, INIT, NAME = N'{dbname1}-Full Database Backup', SKIP, NOREWIND, NOUNLOAD")
         ElseIf prov.ToLower() = "integrated" Then
-            Using con As New SqlConnection(frmmain.strlogin)
+            Using con As New SqlConnection(strlogin)
                 con.Open()
 
                 Dim commandText As String = $"BACKUP DATABASE [{dbname1}] TO DISK = N'{ipath}{newbck}' WITH NOFORMAT, INIT, NAME = N'{dbname1}-Full Database Backup', SKIP, NOREWIND, NOUNLOAD"
@@ -768,7 +769,7 @@ ErrorHandler:
 
             rs1.Close()
         ElseIf prov.ToLower() = "integrated" Then
-            Using con As New SqlConnection(frmmain.strlogin)
+            Using con As New SqlConnection(strlogin)
                 con.Open()
 
                 Dim query As String = "SELECT name, hasdbaccess FROM sys.sysusers WHERE name = 'guest'"
@@ -814,7 +815,7 @@ ErrorHandler:
             con.Execute("use " & dbname & " " & str_Renamed)
 
         ElseIf prov.ToLower() = "integrated" Then
-            Using connection As New SqlConnection(frmmain.strlogin)
+            Using connection As New SqlConnection(strlogin)
                 connection.Open()
 
                 Dim commandText As String
@@ -845,7 +846,7 @@ ErrorHandler:
             tmp = Replace(tmp, "master.mdf", "")
             rs1.Close()
         ElseIf prov.ToLower() = "integrated" Then
-            Using con As New SqlConnection(frmmain.strlogin)
+            Using con As New SqlConnection(strlogin)
                 con.Open()
 
                 Dim query As String = "SELECT name, physical_name FROM master.sys.master_files WHERE name='master'"
@@ -882,7 +883,7 @@ ErrorHandler:
             rs.Close()
 
         ElseIf prov.ToLower() = "integrated" Then
-            Using con As New SqlConnection(frmmain.strlogin)
+            Using con As New SqlConnection(strlogin)
 
                 con.Open()
                 Dim query As String = "SELECT @@VERSION AS version"
@@ -958,7 +959,7 @@ ErrorHandler:
                     End Using
                 ElseIf prov.ToLower() = "integrated" Then
                     ' Try to obtain the default data and log locations from SQL Server instance properties
-                    Using con As New SqlConnection(frmmain.strlogin)
+                    Using con As New SqlConnection(strlogin)
 
                         con.Open()
                         Using cmd As New SqlCommand("SELECT SERVERPROPERTY('InstanceDefaultDataPath') AS DefaultDataPath, SERVERPROPERTY('InstanceDefaultLogPath') AS DefaultLogPath", con)
@@ -1086,7 +1087,7 @@ ErrorHandler:
         If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             con.Execute($"USE {dbname}")
         ElseIf prov.ToLower() = "integrated" Then
-            Using con As New SqlConnection(frmmain.strlogin)
+            Using con As New SqlConnection(strlogin)
                 con.Open()
 
                 Dim commandText As String = $"USE {dbname}"
@@ -1133,7 +1134,7 @@ ErrorHandler:
             End Using
         ElseIf prov.ToLower() = "integrated" Then
             ' Use a new connection for integrated scenarios
-            Using conIntegrated As New SqlConnection(frmmain.strlogin)
+            Using conIntegrated As New SqlConnection(strlogin)
                 conIntegrated.Open()
                 Using cmd As New SqlCommand($"SELECT physical_name, type_desc FROM sys.master_files WHERE database_id = DB_ID('{dbName}')", conIntegrated)
                     Using rs As SqlDataReader = cmd.ExecuteReader()
@@ -1203,7 +1204,7 @@ ErrorHandler:
         If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             con.Execute("sp_detach_db " & dbname)
         ElseIf prov.ToLower() = "integrated" Then
-            Using con As New SqlConnection(frmmain.strlogin)
+            Using con As New SqlConnection(strlogin)
                 con.Open()
 
                 Dim commandText As String = $"sp_detach_db '{dbname}'"
@@ -1264,7 +1265,7 @@ ErrorHandler:
             ' Not supported for sqloledb provider
             Throw New Exception("KillConnections is not supported for sqloledb provider.")
         ElseIf prov.ToLower() = "integrated" Then
-            Using con As New SqlConnection(frmmain.strlogin)
+            Using con As New SqlConnection(strlogin)
                 con.Open()
 
                 Dim commandText As String = $"USE master; ALTER DATABASE [{dbName}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; USE [{dbName}];"
@@ -1342,7 +1343,7 @@ ErrorHandler:
     Private Function GetLatestReleaseInfo() As String
         System.Net.ServicePointManager.SecurityProtocol = CType(3072, SecurityProtocolType)
         Dim request As HttpWebRequest = WebRequest.Create(apiUrl)
-        request.UserAgent = "SSML" 
+        request.UserAgent = "SSML"
         request.Method = "GET"
 
         Using response As HttpWebResponse = CType(request.GetResponse(), HttpWebResponse)
@@ -1391,7 +1392,7 @@ ErrorHandler:
                 ' Logic to get table names using SqlConnection for SQL Server
                 ' You can adapt the logic according to your needs
                 Try
-                    Using sqlCon As New SqlConnection(frmmain.strlogin)
+                    Using sqlCon As New SqlConnection(strlogin)
                         sqlCon.Open()
                         Dim query As String = $"USE {selectedDatabase} Select TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'"
                         Using cmd As New SqlCommand(query, sqlCon)
@@ -1454,7 +1455,7 @@ ErrorHandler:
             ElseIf prov.ToLower() = "integrated" Then
                 ' Logic to get rows using SqlConnection for SQL Server
                 Try
-                    Using sqlCon As New SqlConnection(frmmain.strlogin)
+                    Using sqlCon As New SqlConnection(strlogin)
                         sqlCon.Open()
                         Using cmd As New SqlCommand(query, sqlCon)
                             Using reader As SqlDataReader = cmd.ExecuteReader()
@@ -1479,7 +1480,7 @@ ErrorHandler:
         Dim schemaName As String = String.Empty
 
         Try
-            Using sqlCon As New SqlConnection(frmmain.strlogin)
+            Using sqlCon As New SqlConnection(strlogin)
                 sqlCon.Open()
                 ' Make sure the database name is included in the connection string or use it in the SQL query.
                 Dim query As String = String.Format("SELECT TABLE_SCHEMA FROM {0}.INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = @TableName", databaseName)
