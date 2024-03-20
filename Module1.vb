@@ -10,7 +10,6 @@ Imports System.Text
 Imports System.Xml
 Imports Microsoft.VisualBasic.Compatibility.VB6
 Imports Microsoft.Win32
-Imports Newtonsoft.Json
 Imports Newtonsoft.Json.Linq
 
 
@@ -28,6 +27,7 @@ Module Module1
     Public prov As String
     Public cUser As String
     Public cPwd As String
+    Public server As String
     Public instance As String
     Public connectMode As String
     Public provider As String
@@ -39,6 +39,8 @@ Module Module1
     Public colourQE As Boolean = True
     Public disableRND As Boolean
     Public UpdCheck As Boolean
+
+    Public servername As String
 
 
     Enum pShrinkMode
@@ -451,14 +453,19 @@ ErrorHandler:
                 If rowsAffected >= 0 Then totalRowsAffected += rowsAffected
             Next
 
+            ' Close the connection if necessary
+            If con.State = ConnectionState.Open Then con.Close()
+
         ElseIf prov.ToLower() = "integrated" Then
             Using con As New SqlConnection(strlogin)
                 con.Open()
 
                 For Each query As String In queries
-                    Using cmd As New SqlCommand(query, con)
-                        ' Execute the query
-                        Dim rowsAffected As Integer = cmd.ExecuteNonQuery()
+                    ' Execute the query
+                    Using command As New SqlCommand(query, con)
+                        ' Adjust the execution timeout (in seconds)
+                        command.CommandTimeout = 600 ' 10 minutes
+                        Dim rowsAffected As Integer = command.ExecuteNonQuery()
                         ' Handle the execution result
                         If rowsAffected >= 0 Then totalRowsAffected += rowsAffected
                     End Using
@@ -466,69 +473,78 @@ ErrorHandler:
             End Using
         End If
 
-        ' Close the connection if necessary
-        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
-            If con.State = ConnectionState.Open Then con.Close()
-        End If
-
         ' Set the query result
         queryResult = $"Total rows affected: {totalRowsAffected}"
-
         Return True
 
 ErrorHandler:
         errorMessage = "Error executing query: " & Err.Description
         ' Make sure to close the connection here if necessary, similar to the logic above
+        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
+            If Not IsNothing(con) AndAlso con.State = ConnectionState.Open Then con.Close()
+        End If
         Return False
     End Function
 
+    Private Function BuildConnectionString(ByVal databaseName As String) As String
+        If frmmain.islocaldb Then
+            Return $"Data Source=(LocalDB)\MSSQLLocalDB;Initial Catalog={databaseName};Integrated Security=True;"
+        Else
+            If String.IsNullOrEmpty(cUser) OrElse String.IsNullOrEmpty(cPwd) Then
+                Return $"Data Source={servername};Initial Catalog={databaseName};Integrated Security=True;"
+            Else
+                Return $"Data Source={servername};Initial Catalog={databaseName};User ID={cUser};Password={cPwd};"
+            End If
+        End If
+    End Function
 
-    Private Function SplitQueries(queryText As String) As List(Of String) ' Function to split query text into separate queries using "GO" as a delimiter
+    Private Function SplitQueries(queryText As String) As List(Of String)
+        ' Initialize a new list to hold individual queries
         Dim queries As New List(Of String)()
+        ' Use StringBuilder to efficiently build each query
         Dim currentQuery As New StringBuilder()
+        ' Split the input text into lines
         Dim lines As String() = queryText.Split(New String() {vbCrLf, vbLf, vbCr}, StringSplitOptions.None)
+        ' Track whether we are inside a block comment
         Dim insideComment As Boolean = False
 
         For Each line As String In lines
             If insideComment Then
-                ' If we are inside a comment, check if it contains "*/" to exit the comment
+                ' If we're inside a comment, check if the line contains the end of the comment
                 If line.Contains("*/") Then
-                    insideComment = False
-                    line = line.Substring(line.IndexOf("*/") + 2)
-                Else
-                    Continue For
+                    insideComment = False ' End the block comment
                 End If
             Else
-                ' Check if the line contains "/*" to enter a comment
+                ' Check if the line starts a block comment
                 If line.Contains("/*") Then
-                    insideComment = True
-                    ' If it also contains "*/", handle it here to remove the single-line comment
                     If line.Contains("*/") Then
-                        line = line.Remove(line.IndexOf("/*"), line.IndexOf("*/") - line.IndexOf("/*") + 2)
+                        ' If the start and end of the comment are on the same line, ignore the whole line
                     Else
-                        line = line.Substring(0, line.IndexOf("/*"))
+                        ' Otherwise, we're starting a block comment
+                        insideComment = True
+                    End If
+                ElseIf Not line.Trim().StartsWith("--") Then ' Ignore single line comments
+                    ' If the trimmed line equals "GO", consider it as the end of the current query
+                    If line.Trim().ToUpper() = "GO" Then
+                        queries.Add(currentQuery.ToString()) ' Add the current query to the list
+                        currentQuery.Clear() ' Start a new query
+                    Else
+                        ' Add the current line to the current query
+                        currentQuery.AppendLine(line)
                     End If
                 End If
             End If
-
-            line = line.Trim()
-
-            ' If the line ends with "GO", we consider it the end of a query
-            If line.EndsWith("GO", StringComparison.OrdinalIgnoreCase) Then
-                queries.Add(currentQuery.ToString())
-                currentQuery.Clear()
-            Else
-                currentQuery.AppendLine(line)
-            End If
         Next
 
-        ' Add the last query if it does not end with "GO"
+        ' After processing all lines, if there's an unfinished query, add it to the list
         If currentQuery.Length > 0 Then
             queries.Add(currentQuery.ToString())
         End If
 
         Return queries
     End Function
+
+
 
     Function ChangePwd(ByRef username As String, ByRef pwd As String, Optional ByRef errmsg As String = "") As Boolean
         On Error GoTo ErrorHandler
@@ -1016,6 +1032,7 @@ ErrorHandler:
                     writer.WriteElementString("Driver", driver)
                 ElseIf prov.ToLower() = "integrated" Then
                     writer.WriteElementString("ConnectMode", "Integrated")
+                    writer.WriteElementString("Server", server)
                     writer.WriteElementString("Instance", instance)
                 End If
 
