@@ -36,7 +36,7 @@ Module Module1
     Public localdb As CheckState
     Public autologin As CheckState
     Public logtofile As Boolean
-    Public colourQE As Boolean = True
+    Public colourQE As Boolean
     Public disableRND As Boolean
     Public UpdCheck As Boolean
 
@@ -131,13 +131,12 @@ ErrorHandler:
         If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             rs = con.Execute($"RESTORE FILELISTONLY FROM DISK = '{bakPath}'").ExecuteReader()
         ElseIf prov.ToLower() = "integrated" Then
-            Using con As New SqlConnection(strlogin)
-                con.Open()
+            Using connection As New SqlConnection(strlogin)
+                connection.Open()
 
                 Dim commandText As String = $"RESTORE FILELISTONLY FROM DISK = '{bakPath}'"
-                Using cmd As New SqlCommand(commandText, con)
+                Using cmd As New SqlCommand(commandText, connection)
                     rs = cmd.ExecuteReader()
-
                     While rs.Read()
                         Dim fileType As String = rs("Type").ToString().Trim().ToLower()
                         If fileType = "d" Then ' "d" for Data
@@ -324,12 +323,12 @@ ErrorHandler:
         If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             con.Execute($"RESTORE DATABASE {dbname} FROM DISK = '{bckfile}' WITH REPLACE")
         ElseIf prov.ToLower() = "integrated" Then
-            Using con As New SqlConnection(strlogin)
-                con.Open()
+            Using connection As New SqlConnection(strlogin)
+                connection.Open()
 
                 Dim commandText As String = $"RESTORE DATABASE [{dbname}] FROM DISK = '{bckfile}' WITH REPLACE"
 
-                Using cmd As New SqlCommand(commandText, con)
+                Using cmd As New SqlCommand(commandText, connection)
                     cmd.ExecuteNonQuery()
                 End Using
             End Using
@@ -346,6 +345,9 @@ ErrorHandler:
         ' Close the connection if an error occurs
         If con.State = ConnectionState.Open Then
             con.Close()
+        End If
+        If connection.State = ConnectionState.Open Then
+            connection.Close()
         End If
     End Function
 
@@ -367,11 +369,11 @@ ErrorHandler:
             rs1.Close()
         ElseIf prov.ToLower() = "integrated" Then
             ' New code with System.Data.SqlClient
-            Using con As New SqlConnection(strlogin)
-                con.Open()
+            Using connection As New SqlConnection(strlogin)
+                connection.Open()
 
                 Dim query As String = "SELECT * FROM sys.server_principals WHERE type='S' AND name<>'sa' AND name NOT LIKE '##MS_%'"
-                Using cmd As New SqlCommand(query, con)
+                Using cmd As New SqlCommand(query, connection)
                     Dim reader As SqlDataReader = cmd.ExecuteReader()
 
                     While reader.Read()
@@ -409,11 +411,11 @@ ErrorHandler:
             rs1.Close()
         ElseIf prov.ToLower() = "integrated" Then
             ' New code with System.Data.SqlClient
-            Using con As New SqlConnection(strlogin)
-                con.Open()
+            Using connection As New SqlConnection(strlogin)
+                connection.Open()
 
                 Dim query As String = "SELECT name FROM sys.databases WHERE name NOT IN ('master', 'msdb', 'tempdb', 'model')"
-                Using cmd As New SqlCommand(query, con)
+                Using cmd As New SqlCommand(query, connection)
                     Dim reader As SqlDataReader = cmd.ExecuteReader()
 
                     While reader.Read()
@@ -457,12 +459,12 @@ ErrorHandler:
             If con.State = ConnectionState.Open Then con.Close()
 
         ElseIf prov.ToLower() = "integrated" Then
-            Using con As New SqlConnection(strlogin)
-                con.Open()
+            Using connection As New SqlConnection(strlogin)
+                connection.Open()
 
                 For Each query As String In queries
                     ' Execute the query
-                    Using command As New SqlCommand(query, con)
+                    Using command As New SqlCommand(query, connection)
                         ' Adjust the execution timeout (in seconds)
                         command.CommandTimeout = 600 ' 10 minutes
                         Dim rowsAffected As Integer = command.ExecuteNonQuery()
@@ -552,12 +554,12 @@ ErrorHandler:
         If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             con.Execute($"ALTER LOGIN [{username}] WITH PASSWORD=N'{pwd}'")
         ElseIf prov.ToLower() = "integrated" Then
-            Using con As New SqlConnection(strlogin)
-                con.Open()
+            Using connection As New SqlConnection(strlogin)
+                connection.Open()
 
                 Dim commandText As String = $"ALTER LOGIN [{username}] WITH PASSWORD=N'{pwd}'"
 
-                Using cmd As New SqlCommand(commandText, con)
+                Using cmd As New SqlCommand(commandText, connection)
                     cmd.ExecuteNonQuery()
                 End Using
             End Using
@@ -577,12 +579,12 @@ ErrorHandler:
         If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             con.Execute($"DROP LOGIN [{username}]")
         ElseIf prov.ToLower() = "integrated" Then
-            Using con As New SqlConnection(strlogin)
-                con.Open()
+            Using connection As New SqlConnection(strlogin)
+                connection.Open()
 
                 Dim commandText As String = $"DROP LOGIN [{username}]"
 
-                Using cmd As New SqlCommand(commandText, con)
+                Using cmd As New SqlCommand(commandText, connection)
                     cmd.ExecuteNonQuery()
                 End Using
             End Using
@@ -611,11 +613,11 @@ ErrorHandler:
 
                 rs1.Close()
             ElseIf prov.ToLower() = "integrated" Then
-                Using con As New SqlConnection(strlogin)
-                    con.Open()
+                Using connection As New SqlConnection(strlogin)
+                    connection.Open()
 
                     Dim commandText As String = $"SELECT * FROM sys.server_principals WHERE name='{username}' AND type='S'"
-                    Using cmd As New SqlCommand(commandText, con)
+                    Using cmd As New SqlCommand(commandText, connection)
                         Using reader As SqlDataReader = cmd.ExecuteReader()
                             ' Check if the recordset is empty
                             If reader.HasRows Then
@@ -646,8 +648,8 @@ ErrorHandler:
                 str_Renamed = $"ALTER DATABASE {dbname} SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DBCC CHECKDB ({dbname}, REPAIR_FAST); ALTER DATABASE {dbname} SET MULTI_USER"
             End If
         ElseIf prov.ToLower() = "integrated" Then
-            Using con As New SqlConnection(strlogin)
-                con.Open()
+            Using connection As New SqlConnection(strlogin)
+                connection.Open()
 
                 Dim commandText As String = ""
                 If forced = pRepairMode.pForced Then
@@ -658,7 +660,7 @@ ErrorHandler:
                     commandText = $"ALTER DATABASE [{dbname}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DBCC CHECKDB ({dbname}, REPAIR_FAST); ALTER DATABASE [{dbname}] SET MULTI_USER"
                 End If
 
-                Using cmd As New SqlCommand(commandText, con)
+                Using cmd As New SqlCommand(commandText, connection)
                     cmd.ExecuteNonQuery()
                 End Using
             End Using
@@ -691,12 +693,12 @@ ErrorHandler:
         If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             con.Execute("DROP DATABASE " & dbname)
         ElseIf prov.ToLower() = "integrated" Then
-            Using con As New SqlConnection(strlogin)
-                con.Open()
+            Using connection As New SqlConnection(strlogin)
+                connection.Open()
 
                 Dim commandText As String = $"DROP DATABASE [{dbname}]"
 
-                Using cmd As New SqlCommand(commandText, con)
+                Using cmd As New SqlCommand(commandText, connection)
                     cmd.ExecuteNonQuery()
                 End Using
             End Using
@@ -730,12 +732,12 @@ ErrorHandler:
         If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             con.Execute($"BACKUP DATABASE [{dbname1}] TO DISK = N'{ipath}{newbck}' WITH NOFORMAT, INIT, NAME = N'{dbname1}-Full Database Backup', SKIP, NOREWIND, NOUNLOAD")
         ElseIf prov.ToLower() = "integrated" Then
-            Using con As New SqlConnection(strlogin)
-                con.Open()
+            Using connection As New SqlConnection(strlogin)
+                connection.Open()
 
                 Dim commandText As String = $"BACKUP DATABASE [{dbname1}] TO DISK = N'{ipath}{newbck}' WITH NOFORMAT, INIT, NAME = N'{dbname1}-Full Database Backup', SKIP, NOREWIND, NOUNLOAD"
 
-                Using cmd As New SqlCommand(commandText, con)
+                Using cmd As New SqlCommand(commandText, connection)
                     cmd.ExecuteNonQuery()
                 End Using
             End Using
@@ -785,11 +787,11 @@ ErrorHandler:
 
             rs1.Close()
         ElseIf prov.ToLower() = "integrated" Then
-            Using con As New SqlConnection(strlogin)
-                con.Open()
+            Using connection As New SqlConnection(strlogin)
+                connection.Open()
 
                 Dim query As String = "SELECT name, hasdbaccess FROM sys.sysusers WHERE name = 'guest'"
-                Using cmd As New SqlCommand(query, con)
+                Using cmd As New SqlCommand(query, connection)
                     Dim reader As SqlDataReader = cmd.ExecuteReader()
 
                     If reader.Read() Then
@@ -862,11 +864,11 @@ ErrorHandler:
             tmp = Replace(tmp, "master.mdf", "")
             rs1.Close()
         ElseIf prov.ToLower() = "integrated" Then
-            Using con As New SqlConnection(strlogin)
-                con.Open()
+            Using connection As New SqlConnection(strlogin)
+                connection.Open()
 
                 Dim query As String = "SELECT name, physical_name FROM master.sys.master_files WHERE name='master'"
-                Using cmd As New SqlCommand(query, con)
+                Using cmd As New SqlCommand(query, connection)
                     Dim reader As SqlDataReader = cmd.ExecuteReader()
 
                     If reader.Read() Then
@@ -899,11 +901,11 @@ ErrorHandler:
             rs.Close()
 
         ElseIf prov.ToLower() = "integrated" Then
-            Using con As New SqlConnection(strlogin)
+            Using connection As New SqlConnection(strlogin)
 
-                con.Open()
+                connection.Open()
                 Dim query As String = "SELECT @@VERSION AS version"
-                Using cmd As New SqlCommand(query, con)
+                Using cmd As New SqlCommand(query, connection)
                     Dim reader As SqlDataReader = cmd.ExecuteReader()
 
                     If reader.Read() Then
@@ -975,10 +977,10 @@ ErrorHandler:
                     End Using
                 ElseIf prov.ToLower() = "integrated" Then
                     ' Try to obtain the default data and log locations from SQL Server instance properties
-                    Using con As New SqlConnection(strlogin)
+                    Using connection As New SqlConnection(strlogin)
 
-                        con.Open()
-                        Using cmd As New SqlCommand("SELECT SERVERPROPERTY('InstanceDefaultDataPath') AS DefaultDataPath, SERVERPROPERTY('InstanceDefaultLogPath') AS DefaultLogPath", con)
+                        connection.Open()
+                        Using cmd As New SqlCommand("SELECT SERVERPROPERTY('InstanceDefaultDataPath') AS DefaultDataPath, SERVERPROPERTY('InstanceDefaultLogPath') AS DefaultLogPath", connection)
                             Dim reader As SqlDataReader = cmd.ExecuteReader()
                             If reader.Read() Then
                                 DefaultDataPath = EnsureTrailingBackslash(If(IsDBNull(reader("DefaultDataPath")), String.Empty, reader("DefaultDataPath").ToString()))
@@ -1104,11 +1106,11 @@ ErrorHandler:
         If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             con.Execute($"USE {dbname}")
         ElseIf prov.ToLower() = "integrated" Then
-            Using con As New SqlConnection(strlogin)
-                con.Open()
+            Using connection As New SqlConnection(strlogin)
+                connection.Open()
 
                 Dim commandText As String = $"USE {dbname}"
-                Using cmd As New SqlCommand(commandText, con)
+                Using cmd As New SqlCommand(commandText, connection)
                     cmd.ExecuteNonQuery()
                 End Using
             End Using
@@ -1221,12 +1223,12 @@ ErrorHandler:
         If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
             con.Execute("sp_detach_db " & dbname)
         ElseIf prov.ToLower() = "integrated" Then
-            Using con As New SqlConnection(strlogin)
-                con.Open()
+            Using connection As New SqlConnection(strlogin)
+                connection.Open()
 
                 Dim commandText As String = $"sp_detach_db '{dbname}'"
 
-                Using cmd As New SqlCommand(commandText, con)
+                Using cmd As New SqlCommand(commandText, connection)
                     cmd.ExecuteNonQuery()
                 End Using
             End Using
@@ -1282,16 +1284,16 @@ ErrorHandler:
             ' Not supported for sqloledb provider
             Throw New Exception("KillConnections is not supported for sqloledb provider.")
         ElseIf prov.ToLower() = "integrated" Then
-            Using con As New SqlConnection(strlogin)
-                con.Open()
+            Using connection As New SqlConnection(strlogin)
+                connection.Open()
 
                 Dim commandText As String = $"USE master; ALTER DATABASE [{dbName}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; USE [{dbName}];"
-                Using cmd As New SqlCommand(commandText, con)
+                Using cmd As New SqlCommand(commandText, connection)
                     cmd.ExecuteNonQuery()
                 End Using
 
                 commandText = $"USE master; ALTER DATABASE [{dbName}] SET MULTI_USER;"
-                Using cmd As New SqlCommand(commandText, con)
+                Using cmd As New SqlCommand(commandText, connection)
                     cmd.ExecuteNonQuery()
                 End Using
             End Using
