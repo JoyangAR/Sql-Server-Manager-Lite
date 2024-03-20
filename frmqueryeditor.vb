@@ -171,8 +171,9 @@ Public Class frmqueryeditor
             TxtQueryBox.SelectedText = clipboardText
 
             ' Applies coloring to the newly pasted text
-            ' Note: This is a simplified approach and may require adjustments to optimize performance.
-            ColourLoadedText()
+            If colourQE = True Then
+                ColourLoadedText()
+            End If
         End If
     End Sub
 
@@ -354,6 +355,38 @@ Public Class frmqueryeditor
     Private Sub QueryEditor_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         CenterToScreen()
         TxtQueryBox.ContextMenuStrip = ContextMenuStrip1
+    End Sub
+
+    Private Sub GotKeyDown(sender As Object, e As KeyEventArgs) Handles TxtQueryBox.KeyDown
+        ' Check if the Ctrl key is pressed along with another key
+        If e.Control Then
+            Select Case e.KeyCode
+                Case Keys.E
+                    ' Call the CmdExecute method
+                    CmdExecute(sender, e)
+                Case Keys.V
+                    ' Call the CmdPaste method
+                    CmdPaste(sender, e)
+                Case Keys.C
+                    ' Call the CmdCopy method
+                    CmdCopy(sender, e)
+                Case Keys.F
+                    ' Call the CmdSearch method
+                    CmdSearch(sender, e)
+                Case Keys.X
+                    ' Call the CmdCut method
+                    CmdCut(sender, e)
+                Case Keys.R
+                    ' Call the CmdReplace method
+                    CmdReplace(sender, e)
+                Case Keys.S
+                    ' Call the CmdSaveQuery method
+                    CmdSaveQuery(sender, e)
+            End Select
+
+            ' Optionally: Prevent the event from propagating further
+            e.SuppressKeyPress = True
+        End If
     End Sub
 
     Private Sub TxtQueryBox_MouseClick(sender As Object, e As MouseEventArgs) Handles TxtQueryBox.MouseClick
