@@ -59,10 +59,12 @@
         Me.cmdconnect = New System.Windows.Forms.Button()
         Me.Label2 = New System.Windows.Forms.Label()
         Me.Label3 = New System.Windows.Forms.Label()
-        Me.txtsvr = New System.Windows.Forms.TextBox()
+        Me.txtinst = New System.Windows.Forms.TextBox()
         Me.Label6 = New System.Windows.Forms.Label()
         Me.chkautologin = New System.Windows.Forms.CheckBox()
         Me.Timer1 = New System.Windows.Forms.Timer(Me.components)
+        Me.txtsvr = New System.Windows.Forms.TextBox()
+        Me.Label7 = New System.Windows.Forms.Label()
         Me.Frame1.SuspendLayout()
         Me.SuspendLayout()
         '
@@ -312,19 +314,19 @@
         Me.Label3.TabIndex = 5
         Me.Label3.Text = "Password:"
         '
-        'txtsvr
+        'txtinst
         '
-        Me.txtsvr.AcceptsReturn = True
-        Me.txtsvr.BackColor = System.Drawing.SystemColors.Window
-        Me.txtsvr.Cursor = System.Windows.Forms.Cursors.IBeam
-        Me.txtsvr.ForeColor = System.Drawing.SystemColors.WindowText
-        Me.txtsvr.Location = New System.Drawing.Point(72, 69)
-        Me.txtsvr.MaxLength = 0
-        Me.txtsvr.Name = "txtsvr"
-        Me.txtsvr.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.txtsvr.Size = New System.Drawing.Size(209, 20)
-        Me.txtsvr.TabIndex = 9
-        Me.txtsvr.Text = "MSSQLSERVER"
+        Me.txtinst.AcceptsReturn = True
+        Me.txtinst.BackColor = System.Drawing.SystemColors.Window
+        Me.txtinst.Cursor = System.Windows.Forms.Cursors.IBeam
+        Me.txtinst.ForeColor = System.Drawing.SystemColors.WindowText
+        Me.txtinst.Location = New System.Drawing.Point(184, 69)
+        Me.txtinst.MaxLength = 0
+        Me.txtinst.Name = "txtinst"
+        Me.txtinst.RightToLeft = System.Windows.Forms.RightToLeft.No
+        Me.txtinst.Size = New System.Drawing.Size(97, 20)
+        Me.txtinst.TabIndex = 9
+        Me.txtinst.Text = "MSSQLSERVER"
         '
         'Label6
         '
@@ -351,14 +353,42 @@
         Me.chkautologin.Text = "Auto Login"
         Me.chkautologin.UseVisualStyleBackColor = False
         '
+        'txtsvr
+        '
+        Me.txtsvr.AcceptsReturn = True
+        Me.txtsvr.BackColor = System.Drawing.SystemColors.Window
+        Me.txtsvr.Cursor = System.Windows.Forms.Cursors.IBeam
+        Me.txtsvr.ForeColor = System.Drawing.SystemColors.WindowText
+        Me.txtsvr.Location = New System.Drawing.Point(72, 69)
+        Me.txtsvr.MaxLength = 0
+        Me.txtsvr.Name = "txtsvr"
+        Me.txtsvr.RightToLeft = System.Windows.Forms.RightToLeft.No
+        Me.txtsvr.Size = New System.Drawing.Size(91, 20)
+        Me.txtsvr.TabIndex = 12
+        Me.txtsvr.Text = "localhost"
+        '
+        'Label7
+        '
+        Me.Label7.BackColor = System.Drawing.SystemColors.Control
+        Me.Label7.Cursor = System.Windows.Forms.Cursors.Default
+        Me.Label7.ForeColor = System.Drawing.SystemColors.ControlText
+        Me.Label7.Location = New System.Drawing.Point(168, 72)
+        Me.Label7.Name = "Label7"
+        Me.Label7.RightToLeft = System.Windows.Forms.RightToLeft.No
+        Me.Label7.Size = New System.Drawing.Size(10, 14)
+        Me.Label7.TabIndex = 18
+        Me.Label7.Text = "\"
+        '
         'frmlogin
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.BackColor = System.Drawing.SystemColors.Control
         Me.ClientSize = New System.Drawing.Size(289, 411)
-        Me.Controls.Add(Me.chkautologin)
+        Me.Controls.Add(Me.Label7)
         Me.Controls.Add(Me.txtsvr)
+        Me.Controls.Add(Me.chkautologin)
+        Me.Controls.Add(Me.txtinst)
         Me.Controls.Add(Me.Label6)
         Me.Controls.Add(Me.Frame1)
         Me.Controls.Add(Me.chklocaldb)
@@ -387,9 +417,11 @@
     End Sub
 
     Public WithEvents optintegrated As RadioButton
-    Public WithEvents txtsvr As TextBox
+    Public WithEvents txtinst As TextBox
     Public WithEvents Label6 As Label
     Public WithEvents chkautologin As CheckBox
     Friend WithEvents Timer1 As Timer
+    Public WithEvents txtsvr As TextBox
+    Public WithEvents Label7 As Label
 #End Region
 End Class

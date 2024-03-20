@@ -22,14 +22,13 @@ Friend Class frmlogin
     Sub Connect()
         Cursor = System.Windows.Forms.Cursors.WaitCursor
         Dim connectionString As String = ""
-        Dim serverName As String
         If chklocaldb.Checked Then
-            serverName = "(localdb)\MSSQLLocalDB"
+            servername = "(localdb)\MSSQLLocalDB"
         Else
-            If Not txtsvr.Text = "MSSQLSERVER" Then
-                serverName = "localhost\" & txtsvr.Text
+            If Not txtinst.Text = "MSSQLSERVER" Then
+                serverName = If(Not String.IsNullOrEmpty(txtsvr.Text), $"{txtsvr.Text}\{txtinst.Text}", $"localhost\{txtinst.Text}")
             Else
-                serverName = "localhost\"
+                serverName = If(Not String.IsNullOrEmpty(txtsvr.Text), $"{txtsvr.Text}\", "localhost\")
             End If
         End If
         If optoledb.Checked Then
@@ -53,7 +52,8 @@ Friend Class frmlogin
         If ConnectDB(connectionString) Then
             cUser = txtname.Text
             cPwd = txtpwd.Text
-            instance = txtsvr.Text
+            server = If(String.IsNullOrEmpty(txtsvr.Text), "localhost", txtsvr.Text)
+            instance = If(String.IsNullOrEmpty(txtinst.Text), "MSSQLSERVER", txtinst.Text)
             provider = txtprovider.Text
             driver = txtdriver.Text
             trusted = chktrust.CheckState
@@ -101,6 +101,9 @@ Friend Class frmlogin
                                 Case "Driver"
                                     reader.Read()
                                     driver = reader.Value
+                                Case "Server"
+                                    reader.Read()
+                                    server = reader.Value
                                 Case "Instance"
                                     reader.Read()
                                     instance = reader.Value
@@ -138,7 +141,8 @@ Friend Class frmlogin
                     ' Apply the configuration
                     txtname.Text = cUser
                     txtpwd.Text = cPwd
-                    txtsvr.Text = instance
+                    txtsvr.Text = server
+                    txtinst.Text = instance
                     chklocaldb.Checked = localdb
                     chktrust.Checked = trusted
                     chkautologin.Checked = autologin
@@ -194,6 +198,7 @@ Friend Class frmlogin
         Me.txtprovider.Enabled = Me.optoledb.Checked
         Me.txtdriver.Enabled = Me.optodbc.Checked
         chklocaldb.Enabled = optintegrated.Checked
+        txtinst.Enabled = optintegrated.Checked
         txtsvr.Enabled = optintegrated.Checked
         If Not chkautologin.Checked Then Me.Enabled = True
     End Sub
