@@ -348,6 +348,7 @@ Public Class frmqueryeditor
         Const adjustmentHeight As Integer = 96 ' The height to adjust TxtQueryBox by
         If Not TxtResult.Visible = True Then TxtQueryBox.Height -= adjustmentHeight
         TxtResult.Visible = True
+        frmmain.LoadDatabase()
     End Sub
 
     Private Sub QueryEditor_Load(sender As Object, e As EventArgs) Handles MyBase.Load
