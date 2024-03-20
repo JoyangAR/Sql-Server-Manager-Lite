@@ -83,9 +83,9 @@ Partial Class frmconfig
         Me.chkcolourQE.AutoSize = True
         Me.chkcolourQE.Location = New System.Drawing.Point(12, 58)
         Me.chkcolourQE.Name = "chkcolourQE"
-        Me.chkcolourQE.Size = New System.Drawing.Size(105, 17)
+        Me.chkcolourQE.Size = New System.Drawing.Size(183, 17)
         Me.chkcolourQE.TabIndex = 27
-        Me.chkcolourQE.Text = "Colour text in QE"
+        Me.chkcolourQE.Text = "Colour text in QE (To be repaired)"
         Me.chkcolourQE.UseVisualStyleBackColor = True
         '
         'chkdisablerandom
