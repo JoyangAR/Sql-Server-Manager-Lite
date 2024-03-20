@@ -17,17 +17,20 @@ Public Class frmtableview
 
     Private Sub lsttables_SelectedIndexChanged(sender As Object, e As EventArgs) Handles lsttables.SelectedIndexChanged
         ' Get the selected table and the number of rows from the controls
-        Dim selectedTable As String = lsttables.SelectedItem.ToString()
-        Dim numRows As Integer
+        If Not lsttables.SelectedItem = Nothing Then
+            Dim selectedTable As String = lsttables.SelectedItem.ToString()
 
-        If Not Integer.TryParse(txtrows.Text, numRows) Then
-            MessageBox.Show("Please enter a valid number for the number of rows.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-            Return
+            Dim numRows As Integer
+
+            If Not Integer.TryParse(txtrows.Text, numRows) Then
+                MessageBox.Show("Please enter a valid number for the number of rows.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                Return
+            End If
+
+            ' Get the rows and display them in the DataGridView
+            Dim dataTable As DataTable = GetRows(selectedDatabase, selectedTable, numRows)
+            dtgridtable.DataSource = dataTable
         End If
-
-        ' Get the rows and display them in the DataGridView
-        Dim dataTable As DataTable = GetRows(selectedDatabase, selectedTable, numRows)
-        dtgridtable.DataSource = dataTable
     End Sub
 
     Private Sub CmdRefresh_Click(sender As Object, e As EventArgs) Handles CmdRefresh.Click
