@@ -20,8 +20,8 @@ Friend Class frmadduser
 		Me.Hide()
 		
 		frmmain.Wait(True)
-		
-		If CreateAccount((Me.txtname.Text), (Me.txtpwd.Text), err1) = True Then
+
+		If CreateSqlAccount((Me.txtname.Text), (Me.txtpwd.Text), err1) = True Then
 			frmmain.Logg("New user added: " & Me.txtname.Text)
 			frmmain.LoadUser()
 		Else

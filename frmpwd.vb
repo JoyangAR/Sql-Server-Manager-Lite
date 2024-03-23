@@ -9,12 +9,11 @@ Friend Class frmpwd
 	End Sub
 	
 	Private Sub Command2_Click(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles Command2.Click
-		
 		If txtpwd.Text = "" Or txtrepeat.Text = "" Then
 			MsgBox("Fill-up the empty fields", MsgBoxStyle.Exclamation, "")
 			Exit Sub
 		End If
-		
+
 		If txtpwd.Text <> txtrepeat.Text Then
 			MsgBox("Password does not match", MsgBoxStyle.Exclamation, "")
 			Exit Sub
@@ -31,7 +30,7 @@ Friend Class frmpwd
 			Dim selectedUser As String = frmmain.lstuser.SelectedItem.ToString()
 
 			' Call the ChangePwd function
-			If ChangePwd(selectedUser, Me.txtpwd.Text, err1) Then
+			If ChangePassword(selectedUser, Me.txtpwd.Text, err1) Then
 				frmmain.Logg("Password for user " & selectedUser & " changed!")
 			Else
 				frmmain.Logg("Failed to change password: " & err1)

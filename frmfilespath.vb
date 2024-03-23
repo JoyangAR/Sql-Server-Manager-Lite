@@ -53,12 +53,12 @@
     Private Sub cmdapply_Click(sender As Object, e As EventArgs) Handles cmdapply.Click
         If Not String.IsNullOrEmpty(newmdfpath) Then
             mdfpath = newmdfpath
-            WriteXML()
+            WriteConfigurationToXml()
             frmmain.Logg("Default MDF path set to: " & newmdfpath)
         End If
         If Not String.IsNullOrEmpty(newldfpath) Then
             ldfpath = newldfpath
-            WriteXML()
+            WriteConfigurationToXml()
             frmmain.Logg("Default LDF path set to: " & newldfpath)
         End If
         Me.Close()
