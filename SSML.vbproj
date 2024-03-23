@@ -16,7 +16,7 @@
     <GenerateRevisionNumber>True</GenerateRevisionNumber>
     <AssemblyCompanyName>JoyangAR</AssemblyCompanyName>
     <StartWithIE>False</StartWithIE>
-    <ApplicationIcon>src\Project1.ico</ApplicationIcon>
+    <ApplicationIcon>src\icons\SSML-ico.ico</ApplicationIcon>
     <RootNamespace>SqlServerManagerLite</RootNamespace>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
@@ -212,7 +212,6 @@
     <EmbeddedResource Include="src\frmpwd.resX">
       <DependentUpon>frmpwd.vb</DependentUpon>
     </EmbeddedResource>
-    <Content Include="src\Project1.ico" />
     <EmbeddedResource Include="src\frmqueryeditor.resx">
       <DependentUpon>frmqueryeditor.vb</DependentUpon>
     </EmbeddedResource>
@@ -229,6 +228,12 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="My Project\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="src\icons\SSML-ico.ico" />
+    <Content Include="src\icons\SSML-ico2.ico" />
+    <Content Include="src\icons\SSML-ico3.ico" />
+    <Content Include="src\icons\SSML.png" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>
