@@ -108,7 +108,7 @@ Module Module1
         End If
 
         ' Execute the SQL statement
-        If prov = 1 Or 2 Then
+        If prov = 1 OrElse prov = 2 Then
             ' Using ADODB
             con.Open(strlogin)
             con.Execute(sql)
@@ -140,7 +140,7 @@ ErrorHandler:
 
         Dim query As String = "RESTORE FILELISTONLY FROM DISK = '" & bakPath & "'"
 
-        If prov = 1 Or 2 Then
+        If prov = 1 OrElse prov = 2 Then
             ' Using ADODB
             con.Open(strlogin)
             Dim rs As Recordset = con.Execute(query)
@@ -220,7 +220,7 @@ ErrorHandler:
         On Error GoTo ErrorHandler
 
         System.Windows.Forms.Application.DoEvents()
-        If prov = 1 Or 2 Then
+        If prov = 1 OrElse prov = 2 Then
             ' Using ADODB
             con.Open(strlogin)
             con.Execute("USE [master]" & vbCrLf & "Create LOGIN [" & username & "] WITH PASSWORD = N'" & Password & "',DEFAULT_Database=[master],CHECK_EXPIRATION=OFF,CHECK_POLICY = OFF" & vbCrLf & "EXEC master..sp_addsrvrolemember @loginame = N'" & username & "', @rolename = N'sysadmin'")
@@ -250,7 +250,7 @@ ErrorHandler:
     Function ConnectToDatabase(ByRef str_Renamed As String) As Boolean
         Try
             Debug.Print(str_Renamed)
-            If prov = 1 Or 2 Then
+            If prov = 1 OrElse prov = 2 Then
                 ' Using ADODB
                 con.CommandTimeout = 0
                 con.CursorLocation = ADODB.CursorLocationEnum.adUseServer
@@ -275,7 +275,7 @@ ErrorHandler:
 
     Function DatabaseExists(ByRef dbname As String) As Boolean
         On Error GoTo ErrorHandler
-        If prov = 1 Or 2 Then
+        If prov = 1 OrElse prov = 2 Then
             ' Using ADODB
             con.Open(strlogin)
             con.Execute("use " & dbname & "")
@@ -308,7 +308,7 @@ ErrorHandler:
 
         db1 = NormalizeDatabaseName(dbfile)
 
-        If prov = 1 Or 2 Then
+        If prov = 1 OrElse prov = 2 Then
             ' Using ADODB
             con.Open(strlogin)
             con.Execute("USE master")
@@ -354,7 +354,7 @@ ErrorHandler:
     Function RestoreDatabase(ByRef bckfile As String, ByRef dbname As String, Optional ByRef errmsg As String = "") As Boolean
         On Error GoTo ErrorHandler
 
-        If prov = 1 Or 2 Then
+        If prov = 1 OrElse prov = 2 Then
             ' Using ADODB
             con.Open(strlogin)
             con.Execute($"RESTORE DATABASE {dbname} FROM DISK = '{bckfile}' WITH REPLACE")
@@ -392,7 +392,7 @@ ErrorHandler:
         Dim col As New Collection
         Dim tmp As String
 
-        If prov = 1 Or 2 Then
+        If prov = 1 OrElse prov = 2 Then
             ' Using ADODB
             Dim rs1 As New ADODB.Recordset
             con.Open(strlogin)
@@ -442,7 +442,7 @@ ErrorHandler:
         Dim col As New Collection
         Dim tmp As String
 
-        If prov = 1 Or 2 Then
+        If prov = 1 OrElse prov = 2 Then
             ' Using ADODB
             Dim rs1 As New ADODB.Recordset
             con.Open(strlogin)
@@ -504,7 +504,7 @@ ErrorHandler:
 
         Dim totalRowsAffected As Integer = 0
 
-        If prov = 1 Or 2 Then
+        If prov = 1 OrElse prov = 2 Then
             ' Using ADODB
             con.Open(strlogin) '
             Dim recordsAffected As Object = CType(0, Object)
@@ -615,7 +615,7 @@ ErrorHandler:
     Function ChangePassword(ByRef username As String, ByRef pwd As String, Optional ByRef errmsg As String = "") As Boolean
         On Error GoTo ErrorHandler
 
-        If prov = 1 Or 2 Then
+        If prov = 1 OrElse prov = 2 Then
             ' Using ADODB
             con.Open()
             con.Execute($"ALTER LOGIN [{username}] WITH PASSWORD=N'{pwd}'")
@@ -651,7 +651,7 @@ ErrorHandler:
     Function DeleteSqlAccount(ByRef username As String, Optional ByRef errmsg As String = "") As Boolean
         On Error GoTo ErrorHandler
 
-        If prov = 1 Or 2 Then
+        If prov = 1 OrElse prov = 2 Then
             ' Using ADODB
             con.Open()
             con.Execute($"DROP LOGIN [{username}]")
@@ -688,7 +688,7 @@ ErrorHandler:
         Dim tmp As Boolean = False
 
         Try
-            If prov = 1 Or 2 Then
+            If prov = 1 OrElse prov = 2 Then
                 ' Using ADODB
                 Dim rs1 As New ADODB.Recordset
                 con.Open()
@@ -729,7 +729,7 @@ ErrorHandler:
 
         On Error GoTo ErrorHandler
 
-        If prov = 1 Or 2 Then
+        If prov = 1 OrElse prov = 2 Then
             ' Using ADODB
             If forced = pRepairMode.pForced Then
                 str_Renamed = $"ALTER DATABASE {dbname} SET EMERGENCY; ALTER DATABASE {dbname} SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DBCC CHECKDB ({dbname}, REPAIR_ALLOW_DATA_LOSS); ALTER DATABASE {dbname} SET MULTI_USER"
@@ -791,7 +791,7 @@ ErrorHandler:
     Function DeleteDatabase(ByRef dbname As String, Optional ByRef errmsg As String = "") As Boolean
         On Error GoTo ErrorHandler
 
-        If prov = 1 Or 2 Then
+        If prov = 1 OrElse prov = 2 Then
             ' Using ADODB
             con.Open(strlogin)
             con.Execute("DROP DATABASE " & dbname)
@@ -841,7 +841,7 @@ ErrorHandler:
         bckfile = newbck
         System.Windows.Forms.Application.DoEvents()
 
-        If prov = 1 Or 2 Then
+        If prov = 1 OrElse prov = 2 Then
             ' Using ADODB
             con.Open(strlogin)
             con.Execute($"BACKUP DATABASE [{dbname1}] TO DISK = N'{ipath}{newbck}' WITH NOFORMAT, INIT, NAME = N'{dbname1}-Full Database Backup', SKIP, NOREWIND, NOUNLOAD")
@@ -893,7 +893,7 @@ ErrorHandler:
 
         Dim tmp As Boolean
 
-        If prov = 1 Or 2 Then
+        If prov = 1 OrElse prov = 2 Then
             ' Using ADODB
             Dim rs1 As New ADODB.Recordset
             con.Open(strlogin)
@@ -950,7 +950,7 @@ ErrorHandler:
 
         Dim str_Renamed As String
 
-        If prov = 1 Or 2 Then
+        If prov = 1 OrElse prov = 2 Then
             ' Using ADODB
             If Grant Then
                 str_Renamed = "GRANT CONNECT TO GUEST"
@@ -989,7 +989,7 @@ ErrorHandler:
         Dim tmp As String = ""
 
 
-        If prov = 1 Or 2 Then
+        If prov = 1 OrElse prov = 2 Then
             ' Using ADODB
             Dim rs1 As New ADODB.Recordset
             con.Open(strlogin)
@@ -1028,7 +1028,7 @@ ErrorHandler:
 
         On Error GoTo ErrorHandler
 
-        If prov = 1 Or 2 Then
+        If prov = 1 OrElse prov = 2 Then
             ' Using ADODB
             Dim rs As New ADODB.Recordset
             con.Open(strlogin)
@@ -1076,7 +1076,7 @@ ErrorHandler:
     Function ChangeDefaultDataLocation(ByRef newDataPath As String) As Boolean
         Dim result As Boolean = False
 
-        If prov = 1 Or 2 Then
+        If prov = 1 OrElse prov = 2 Then
             ' Using ADODB
             mdfpath = newDataPath
             result = True
@@ -1092,7 +1092,7 @@ ErrorHandler:
     Function ChangeDefaultLogLocation(ByRef newLogPath As String) As Boolean
         Dim result As Boolean = False
 
-        If prov = 1 Or 2 Then
+        If prov = 1 OrElse prov = 2 Then
             ' Using ADODB
             ldfpath = newLogPath
             result = True
@@ -1116,7 +1116,7 @@ ErrorHandler:
         Else
             If Not frmmain.islocaldb Then
                 ' If default values are not set, retrieve them based on the provider type
-                If prov = 1 Or 2 Then
+                If prov = 1 OrElse prov = 2 Then
                     ' Get the default data and log locations from the registry for SQL Server instance
                     Using regKey As Microsoft.Win32.RegistryKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey($"Software\Microsoft\Microsoft SQL Server\{instance}")
                         If regKey IsNot Nothing Then
@@ -1177,7 +1177,7 @@ ErrorHandler:
                 writer.WriteElementString("Username", cUser)
                 'writer.WriteElementString("Password", cPwd)
                 writer.WriteElementString("Password", Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(cPwd)))
-                If prov = 1 Or 2 Then
+                If prov = 1 OrElse prov = 2 Then
                     writer.WriteElementString("ConnectMode", "OLEDB")
                     writer.WriteElementString("Provider", provider)
                 ElseIf prov = 2 Then
@@ -1264,7 +1264,7 @@ ErrorHandler:
             str_Renamed = $"DBCC SHRINKFILE (N'{dbname}_log' , EMPTYFILE)"
         End If
 
-        If prov = 1 Or 2 Then
+        If prov = 1 OrElse prov = 2 Then
             ' Using ADODB
             con.Open(strlogin)
             con.Execute($"USE {dbname}")
@@ -1302,7 +1302,7 @@ ErrorHandler:
 
         On Error GoTo ErrorHandler
 
-        If prov = 1 Or 2 Then
+        If prov = 1 OrElse prov = 2 Then
             ' Using ADODB
             con.Open(strlogin)
             Dim rs As Recordset = con.Execute($"SELECT physical_name, type_desc FROM sys.master_files WHERE database_id = DB_ID('{dbName}')")
@@ -1396,7 +1396,7 @@ ErrorHandler:
     Function DetachDatabase(ByRef dbname As String, Optional ByRef errmsg As String = "") As Boolean
         On Error GoTo ErrorHandler
 
-        If prov = 1 Or 2 Then
+        If prov = 1 OrElse prov = 2 Then
             ' Using ADODB
             con.Open(strlogin)
             con.Execute("sp_detach_db " & dbname)
@@ -1465,7 +1465,7 @@ ErrorHandler:
     Function KillConnections(ByVal dbName As String, ByRef errmsg As String) As Boolean
         On Error GoTo ErrorHandler
 
-        If prov = 1 Or 2 Then
+        If prov = 1 OrElse prov = 2 Then
 
             ' Using ADODB
             con.Open(strlogin)
@@ -1597,7 +1597,7 @@ ErrorHandler:
         Dim tableNames As New List(Of String)
 
         Try
-            If prov = 1 Or 2 Then
+            If prov = 1 OrElse prov = 2 Then
                 ' Using ADODB
                 Dim rsTables As New ADODB.Recordset
                 con.Open(strlogin)
@@ -1653,7 +1653,7 @@ ErrorHandler:
             ' Form the SQL query with the obtained schema
             Dim query As String = String.Format("SELECT TOP {0} * FROM [{1}].[{2}].[{3}]", selectedRows, SelectedDatabase, schemaName, selectedTable)
 
-            If prov = 1 Or 2 Then
+            If prov = 1 OrElse prov = 2 Then
                 ' Using ADODB
                 Dim rsRows As New ADODB.Recordset
                 con.Open(strlogin)
@@ -1711,7 +1711,7 @@ ErrorHandler:
         Dim schemaName As String = String.Empty
 
         Try
-            If prov = 1 Or 2 Then
+            If prov = 1 OrElse prov = 2 Then
                 ' Using ADODB
                 Try
                     con.Open(strlogin)
