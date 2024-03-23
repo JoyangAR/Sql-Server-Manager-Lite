@@ -172,7 +172,8 @@
         Me.txtprovider.RightToLeft = System.Windows.Forms.RightToLeft.No
         Me.txtprovider.Size = New System.Drawing.Size(185, 20)
         Me.txtprovider.TabIndex = 10
-        Me.txtprovider.Text = "SQLOLEDB"
+        Me.txtprovider.Text = "MSOLEDBSQL"
+        Me.ToolTip1.SetToolTip(Me.txtprovider, "SQLOLEDB(Legacy)" & Global.Microsoft.VisualBasic.ChrW(13) & Global.Microsoft.VisualBasic.ChrW(10) & "MSOLEDBSQL" & Global.Microsoft.VisualBasic.ChrW(13) & Global.Microsoft.VisualBasic.ChrW(10) & "SQLNCLI11")
         '
         'Label5
         '
