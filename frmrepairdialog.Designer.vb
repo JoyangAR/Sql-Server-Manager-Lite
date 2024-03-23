@@ -1,4 +1,4 @@
-<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()> Partial Class frmdialog
+<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()> Partial Class frmrepairdialog
 #Region "Windows Form Designer generated code "
 	<System.Diagnostics.DebuggerNonUserCode()> Public Sub New()
 		MyBase.New()
@@ -20,7 +20,7 @@
 	Public WithEvents optfast As System.Windows.Forms.RadioButton
 	Public WithEvents optforce As System.Windows.Forms.RadioButton
 	Public WithEvents optnormal As System.Windows.Forms.RadioButton
-	Public WithEvents CancelButton_Renamed As System.Windows.Forms.Button
+	Public WithEvents CancelButton As System.Windows.Forms.Button
 	Public WithEvents OKButton As System.Windows.Forms.Button
 	'NOTE: The following procedure is required by the Windows Form Designer
 	'It can be modified using the Windows Form Designer.
@@ -31,7 +31,7 @@
         Me.optfast = New System.Windows.Forms.RadioButton()
         Me.optforce = New System.Windows.Forms.RadioButton()
         Me.optnormal = New System.Windows.Forms.RadioButton()
-        Me.CancelButton_Renamed = New System.Windows.Forms.Button()
+        Me.CancelButton = New System.Windows.Forms.Button()
         Me.OKButton = New System.Windows.Forms.Button()
         Me.SuspendLayout()
         '
@@ -78,18 +78,18 @@
         Me.optnormal.Text = "Normal mode"
         Me.optnormal.UseVisualStyleBackColor = False
         '
-        'CancelButton_Renamed
+        'CancelButton
         '
-        Me.CancelButton_Renamed.BackColor = System.Drawing.SystemColors.Control
-        Me.CancelButton_Renamed.Cursor = System.Windows.Forms.Cursors.Default
-        Me.CancelButton_Renamed.ForeColor = System.Drawing.SystemColors.ControlText
-        Me.CancelButton_Renamed.Location = New System.Drawing.Point(160, 88)
-        Me.CancelButton_Renamed.Name = "CancelButton_Renamed"
-        Me.CancelButton_Renamed.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.CancelButton_Renamed.Size = New System.Drawing.Size(81, 25)
-        Me.CancelButton_Renamed.TabIndex = 1
-        Me.CancelButton_Renamed.Text = "Cancel"
-        Me.CancelButton_Renamed.UseVisualStyleBackColor = False
+        Me.CancelButton.BackColor = System.Drawing.SystemColors.Control
+        Me.CancelButton.Cursor = System.Windows.Forms.Cursors.Default
+        Me.CancelButton.ForeColor = System.Drawing.SystemColors.ControlText
+        Me.CancelButton.Location = New System.Drawing.Point(160, 88)
+        Me.CancelButton.Name = "CancelButton"
+        Me.CancelButton.RightToLeft = System.Windows.Forms.RightToLeft.No
+        Me.CancelButton.Size = New System.Drawing.Size(81, 25)
+        Me.CancelButton.TabIndex = 1
+        Me.CancelButton.Text = "Cancel"
+        Me.CancelButton.UseVisualStyleBackColor = False
         '
         'OKButton
         '
@@ -104,7 +104,7 @@
         Me.OKButton.Text = "OK"
         Me.OKButton.UseVisualStyleBackColor = False
         '
-        'frmdialog
+        'frmrepairdialog
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
@@ -114,14 +114,14 @@
         Me.Controls.Add(Me.optfast)
         Me.Controls.Add(Me.optforce)
         Me.Controls.Add(Me.optnormal)
-        Me.Controls.Add(Me.CancelButton_Renamed)
+        Me.Controls.Add(Me.CancelButton)
         Me.Controls.Add(Me.OKButton)
         Me.Cursor = System.Windows.Forms.Cursors.Default
         Me.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog
         Me.Location = New System.Drawing.Point(184, 250)
         Me.MaximizeBox = False
         Me.MinimizeBox = False
-        Me.Name = "frmdialog"
+        Me.Name = "frmrepairdialog"
         Me.RightToLeft = System.Windows.Forms.RightToLeft.No
         Me.ShowInTaskbar = False
         Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
