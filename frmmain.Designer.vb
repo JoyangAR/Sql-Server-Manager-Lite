@@ -60,6 +60,7 @@
         Me.cmdtables = New System.Windows.Forms.Button()
         Me.cmdQueryEditor = New System.Windows.Forms.Button()
         Me.cmdConfig = New System.Windows.Forms.Button()
+        Me.cmdshrinkdb = New System.Windows.Forms.Button()
         Me.Frame3 = New System.Windows.Forms.GroupBox()
         Me.cmdclear = New System.Windows.Forms.Button()
         Me.txtlog = New System.Windows.Forms.TextBox()
@@ -87,7 +88,7 @@
         Me.cmdgetsize.Cursor = System.Windows.Forms.Cursors.Default
         Me.cmdgetsize.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.cmdgetsize.ForeColor = System.Drawing.SystemColors.ControlText
-        Me.cmdgetsize.Location = New System.Drawing.Point(272, 128)
+        Me.cmdgetsize.Location = New System.Drawing.Point(264, 152)
         Me.cmdgetsize.Name = "cmdgetsize"
         Me.cmdgetsize.RightToLeft = System.Windows.Forms.RightToLeft.No
         Me.cmdgetsize.Size = New System.Drawing.Size(81, 25)
@@ -102,7 +103,7 @@
         Me.cmdkillconn.Cursor = System.Windows.Forms.Cursors.Default
         Me.cmdkillconn.Font = New System.Drawing.Font("Microsoft Sans Serif", 8.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.cmdkillconn.ForeColor = System.Drawing.SystemColors.ControlText
-        Me.cmdkillconn.Location = New System.Drawing.Point(264, 151)
+        Me.cmdkillconn.Location = New System.Drawing.Point(264, 182)
         Me.cmdkillconn.Name = "cmdkillconn"
         Me.cmdkillconn.RightToLeft = System.Windows.Forms.RightToLeft.No
         Me.cmdkillconn.Size = New System.Drawing.Size(81, 25)
@@ -245,7 +246,7 @@
         Me.cmdQueryEditor.BackColor = System.Drawing.SystemColors.Control
         Me.cmdQueryEditor.Cursor = System.Windows.Forms.Cursors.Default
         Me.cmdQueryEditor.ForeColor = System.Drawing.SystemColors.ControlText
-        Me.cmdQueryEditor.Location = New System.Drawing.Point(264, 182)
+        Me.cmdQueryEditor.Location = New System.Drawing.Point(264, 211)
         Me.cmdQueryEditor.Name = "cmdQueryEditor"
         Me.cmdQueryEditor.RightToLeft = System.Windows.Forms.RightToLeft.No
         Me.cmdQueryEditor.Size = New System.Drawing.Size(81, 25)
@@ -267,6 +268,21 @@
         Me.cmdConfig.Text = "Configuration"
         Me.ToolTip1.SetToolTip(Me.cmdConfig, "Edit SSML config")
         Me.cmdConfig.UseVisualStyleBackColor = False
+        '
+        'cmdshrinkdb
+        '
+        Me.cmdshrinkdb.BackColor = System.Drawing.SystemColors.Control
+        Me.cmdshrinkdb.Cursor = System.Windows.Forms.Cursors.Default
+        Me.cmdshrinkdb.Enabled = False
+        Me.cmdshrinkdb.ForeColor = System.Drawing.SystemColors.ControlText
+        Me.cmdshrinkdb.Location = New System.Drawing.Point(264, 120)
+        Me.cmdshrinkdb.Name = "cmdshrinkdb"
+        Me.cmdshrinkdb.RightToLeft = System.Windows.Forms.RightToLeft.No
+        Me.cmdshrinkdb.Size = New System.Drawing.Size(81, 25)
+        Me.cmdshrinkdb.TabIndex = 26
+        Me.cmdshrinkdb.Text = "Shrink"
+        Me.ToolTip1.SetToolTip(Me.cmdshrinkdb, "Shrink log file")
+        Me.cmdshrinkdb.UseVisualStyleBackColor = False
         '
         'Frame3
         '
@@ -316,6 +332,8 @@
         'Frame2
         '
         Me.Frame2.BackColor = System.Drawing.SystemColors.Control
+        Me.Frame2.Controls.Add(Me.cmdshrinkdb)
+        Me.Frame2.Controls.Add(Me.cmdgetsize)
         Me.Frame2.Controls.Add(Me.cmdConfig)
         Me.Frame2.Controls.Add(Me.cmdQueryEditor)
         Me.Frame2.Controls.Add(Me.cmdtables)
@@ -479,7 +497,6 @@
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.BackColor = System.Drawing.SystemColors.Control
         Me.ClientSize = New System.Drawing.Size(657, 489)
-        Me.Controls.Add(Me.cmdgetsize)
         Me.Controls.Add(Me.Frame3)
         Me.Controls.Add(Me.Frame2)
         Me.Controls.Add(Me.Frame1)
@@ -507,5 +524,6 @@
     Public WithEvents cmdtables As Button
     Public WithEvents cmdQueryEditor As Button
     Public WithEvents cmdConfig As Button
+    Public WithEvents cmdshrinkdb As Button
 #End Region
 End Class

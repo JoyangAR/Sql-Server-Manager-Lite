@@ -296,7 +296,7 @@ Friend Class frmmain
 
         If MsgBox("Are you sure do you want to delete the database?", MsgBoxStyle.Exclamation + MsgBoxStyle.YesNo, "") = MsgBoxResult.Yes Then
 
-            If RNDSecurity("Delete database") Then
+            If PromptForRandomSecurityCheck("Delete database") Then
                 System.Windows.Forms.Application.DoEvents()
 
                 ' Ensure that there is a selected item in the ListBox
@@ -329,7 +329,7 @@ Friend Class frmmain
 
         If MsgBox("Are you sure do you want to delete the user?", MsgBoxStyle.Exclamation + MsgBoxStyle.YesNo, "") = MsgBoxResult.Yes Then
 
-            If RNDSecurity("Delete user") Then
+            If PromptForRandomSecurityCheck("Delete user") Then
                 Wait(True)
 
                 System.Windows.Forms.Application.DoEvents()
@@ -339,7 +339,7 @@ Friend Class frmmain
                     Dim selectedUser As String = lstuser.Items(lstuser.SelectedIndex).ToString()
 
                     ' Call the DeleteAccount function and handle the result
-                    If DeleteAccount(selectedUser, err1) Then
+                    If DeleteSqlAccount(selectedUser, err1) Then
                         Logg("User " & selectedUser & " deleted!")
                         LoadUser()
                     Else
@@ -373,13 +373,11 @@ Friend Class frmmain
             Exit Sub
         End If
 
-        GetDBFilesLocation(lstdb.Items(lstdb.SelectedIndex).ToString(), mdf, ldf)
+        GetDatabaseFilesLocation(lstdb.Items(lstdb.SelectedIndex).ToString(), mdf, ldf)
         mdfsize = New System.IO.FileInfo(mdf).Length
         ldfsize = New System.IO.FileInfo(ldf).Length
 
-        GetDBFilesLocation(lstdb.Items(lstdb.SelectedIndex).ToString(), mdfloc, ldfloc)
-
-        Debug.Print(mdfsize & "|" & ldfsize)
+        GetDatabaseFilesLocation(lstdb.Items(lstdb.SelectedIndex).ToString(), mdfloc, ldfloc)
 
         If mdfsize >= (1024 ^ 4) Then
             strmdf = System.Math.Round(mdfsize / (1024 ^ 4), 3) & " Tb"
@@ -419,10 +417,10 @@ Friend Class frmmain
 
 
         If UCase(cmdguest.Text) = "GUEST ON" Then
-            SetGuest(lstdb.Items(lstdb.SelectedIndex).ToString(), False)
+            ConfigureGuestAccess(lstdb.Items(lstdb.SelectedIndex).ToString(), False)
             Logg("Guest account for " & lstdb.Items(lstdb.SelectedIndex).ToString() & " disabled")
         ElseIf UCase(cmdguest.Text) = "GUEST OFF" Then
-            SetGuest(lstdb.Items(lstdb.SelectedIndex).ToString(), True)
+            ConfigureGuestAccess(lstdb.Items(lstdb.SelectedIndex).ToString(), True)
             Logg("Guest account for " & lstdb.Items(lstdb.SelectedIndex).ToString() & " enabled")
         End If
 
@@ -459,9 +457,8 @@ Friend Class frmmain
         End If
 
         If MsgBox("Are you sure do you want to repair the database?", MsgBoxStyle.Exclamation + MsgBoxStyle.YesNo, "") = MsgBoxResult.Yes Then
-            frmdialog.ShowDialog(Me)
+            frmrepairdialog.ShowDialog(Me)
         End If
-
 
     End Sub
 
@@ -509,7 +506,7 @@ xc:
 
         If MsgBox("Are you sure do you want to detach the database?", MsgBoxStyle.Exclamation + MsgBoxStyle.YesNo, "") = MsgBoxResult.Yes Then
 
-            If RNDSecurity("Detach database") = True Then
+            If PromptForRandomSecurityCheck("Detach database") = True Then
                 System.Windows.Forms.Application.DoEvents()
 
                 Dim selectedDatabase As String = If(lstdb.SelectedIndex <> -1, lstdb.SelectedItem.ToString(), String.Empty)
@@ -539,7 +536,7 @@ xc:
 
         If MsgBox("Are you sure do you want to kill all connections with the database?", MsgBoxStyle.Exclamation + MsgBoxStyle.YesNo, "") = MsgBoxResult.Yes Then
 
-            If RNDSecurity("Kill connections") = True Then
+            If PromptForRandomSecurityCheck("Kill connections") = True Then
                 System.Windows.Forms.Application.DoEvents()
                 Dim selectedDatabase As String = If(lstdb.SelectedIndex <> -1, lstdb.SelectedItem.ToString(), String.Empty)
 
@@ -627,7 +624,7 @@ xc:
         Dim col1 As Collection
         Dim d As Integer
 
-        col1 = ListUsers()
+        col1 = ListDatabaseUsers()
 
         For d = 1 To col1.Count()
             lstuser.Items.Add(col1.Item(d))
@@ -684,7 +681,7 @@ xc:
         Logg("Copying files...")
         System.Windows.Forms.Application.DoEvents()
 
-        If PathDepth(bakfile) > 1 Then
+        If CalculatePathDepth(bakfile) > 1 Then
             newpath = Path.Combine(windrive, Path.GetFileName(bakfile))
             System.IO.File.Copy(bakfile, newpath)
             mvf = True
@@ -694,74 +691,76 @@ xc:
         End If
 
         Dim restoreOptionsForm As New frmbakdir()
-            If restoreOptionsForm.ShowDialog() = DialogResult.OK Then
-                ' Check which option was selected and proceed accordingly
-                If restoreOptionsForm.optPrevious.Checked Then
+        If restoreOptionsForm.ShowDialog() = DialogResult.OK Then
+            ' Check which option was selected and proceed accordingly
+            If restoreOptionsForm.optprevious.Checked Then
                 ' Use the paths from TabulateDatabase for restoration
                 Logg("Tabulating database...")
                 If Not TabulateDatabase(newpath, dbfile, logfile, err1, datapath, logpath) Then
                     Logg($"Error Tabulating:{err1}")
                 Else
+                    datapath = ExtractDirectoryPath(datapath)
+                    logpath = ExtractDirectoryPath(logpath)
                 End If
-            ElseIf restoreOptionsForm.optDefault.Checked Then
-                    ' Use the default locations
-                    Dim defaultDataPath As String = ""
-                    Dim defaultLogPath As String = ""
-                    GetDefaultDataAndLogLocations(defaultDataPath, defaultLogPath)
+            ElseIf restoreOptionsForm.optdefault.Checked Then
+                ' Use the default locations
+                Dim defaultDataPath As String = ""
+                Dim defaultLogPath As String = ""
+                GetDefaultDataAndLogLocations(defaultDataPath, defaultLogPath)
                 datapath = defaultDataPath
                 logpath = defaultLogPath
+            ElseIf restoreOptionsForm.optnew.Checked Then
+                ' Ask if the user wants to select MDF and LDF locations separately (if needed)
+                ' And then open a FolderBrowserDialog(s) to choose the new location(s)
+                If MessageBox.Show("Do you want to select MDF and LDF locations separately?", "Select Location", MessageBoxButtons.YesNo, MessageBoxIcon.Question) = DialogResult.Yes Then
+                    ' Prompt for MDF file location
+                    Using fbdMdf As New FolderBrowserDialog()
+                        fbdMdf.Description = "Select the location for the MDF file"
+                        If fbdMdf.ShowDialog() = DialogResult.OK Then
+                            datapath = fbdMdf.SelectedPath
+                        Else
+                            ' User cancelled the selection
+                            MessageBox.Show("You did not select a location for the MDF file. Operation cancelled.", "Cancelled", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                            Return
+                        End If
+                    End Using
 
-            ElseIf restoreOptionsForm.optNew.Checked Then
-                    ' Ask if the user wants to select MDF and LDF locations separately (if needed)
-                    ' And then open a FolderBrowserDialog(s) to choose the new location(s)
-                    If MessageBox.Show("Do you want to select MDF and LDF locations separately?", "Select Location", MessageBoxButtons.YesNo, MessageBoxIcon.Question) = DialogResult.Yes Then
-                        ' Prompt for MDF file location
-                        Using fbdMdf As New FolderBrowserDialog()
-                            fbdMdf.Description = "Select the location for the MDF file"
-                            If fbdMdf.ShowDialog() = DialogResult.OK Then
-                                Dim mdfPathSelected = fbdMdf.SelectedPath
-                            Else
-                                ' User cancelled the selection
-                                MessageBox.Show("You did not select a location for the MDF file. Operation cancelled.", "Cancelled", MessageBoxButtons.OK, MessageBoxIcon.Warning)
-                                Return
-                            End If
-                        End Using
-
-                        ' Prompt for LDF file location
-                        Using fbdLdf As New FolderBrowserDialog()
-                            fbdLdf.Description = "Select the location for the LDF file"
-                            If fbdLdf.ShowDialog() = DialogResult.OK Then
-                                Dim ldfPathSelected = fbdLdf.SelectedPath
-                            Else
-                                ' User cancelled the selection
-                                MessageBox.Show("You did not select a location for the LDF file. Operation cancelled.", "Cancelled", MessageBoxButtons.OK, MessageBoxIcon.Warning)
-                                Return
-                            End If
-                        End Using
-                    Else
-                        ' Logic for single selection (both MDF and LDF in the same location)
-                        Using fbd As New FolderBrowserDialog()
-                            If fbd.ShowDialog() = DialogResult.OK Then
-                                ' Use the selected path for both MDF and LDF
-                                datapath = fbd.SelectedPath
-                                logpath = fbd.SelectedPath
-                            End If
-                        End Using
-                    End If
+                    ' Prompt for LDF file location
+                    Using fbdLdf As New FolderBrowserDialog()
+                        fbdLdf.SelectedPath = datapath
+                        fbdLdf.Description = "Select the location for the LDF file"
+                        If fbdLdf.ShowDialog() = DialogResult.OK Then
+                            logpath = fbdLdf.SelectedPath
+                        Else
+                            ' User cancelled the selection
+                            MessageBox.Show("You did not select a location for the LDF file. Operation cancelled.", "Cancelled", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                            Return
+                        End If
+                    End Using
+                Else
+                    ' Logic for single selection (both MDF and LDF in the same location)
+                    Using fbd As New FolderBrowserDialog()
+                        If fbd.ShowDialog() = DialogResult.OK Then
+                            ' Use the selected path for both MDF and LDF
+                            datapath = fbd.SelectedPath
+                            logpath = fbd.SelectedPath
+                        End If
+                    End Using
                 End If
-            Else
-                ' Handle the case where the user cancels the form
-                MessageBox.Show("Operation cancelled by the user.", "Cancelled", MessageBoxButtons.OK, MessageBoxIcon.Information)
-                Return
             End If
+        Else
+            ' Handle the case where the user cancels the form
+            MessageBox.Show("Operation cancelled by the user.", "Cancelled", MessageBoxButtons.OK, MessageBoxIcon.Information)
+            Return
+        End If
 
         If Not TabulateDatabase(newpath, dbfile, logfile, err1) Then
             Logg($"Error Tabulating:{err1}")
         Else
 
-            dbname = CorrectDBname(dbfile)
-            datapath = OnlyDirPath(datapath)
-            logpath = OnlyDirPath(logpath)
+            dbname = NormalizeDatabaseName(dbfile)
+            datapath = EnsureTrailingBackslash(datapath)
+            logpath = EnsureTrailingBackslash(logpath)
 
             If DatabaseExists(dbname) Then
                 Logg("Cannot upload database: Database already exists")
@@ -774,11 +773,8 @@ xc:
                     Else
                         mdfo = True
                     End If
-                    Debug.Print(newpath)
-                    If RestoreDatabase2(newpath, datapath, logpath, dbfile, logfile, err1) Then
-                        'SetGuest(dbname, True)
-                        'con.Execute($"USE {dbname} GRANT CONNECT TO GUEST")
-                        'con.Execute("USE master")
+                    If RestoreDatabaseWithOptions(newpath, datapath, logpath, dbfile, logfile, err1) Then
+                        ConfigureGuestAccess(dbname, True)
 
                         If mdfo Then
                             RebuildLog(dbname)
@@ -815,7 +811,7 @@ xc:
 
         ' Define the file name and database name
         flname = Path.GetFileName(mdffile)
-        dbname = CorrectDBname(Path.GetFileNameWithoutExtension(mdffile))
+        dbname = NormalizeDatabaseName(Path.GetFileNameWithoutExtension(mdffile))
 
         If DatabaseExists(dbname) Then
             Logg("Cannot upload database: Database already exists")
@@ -858,7 +854,7 @@ xc:
         ' Confirm upload after ensuring the file is not in use
         If MsgBox("You will now upload this database. Proceed?" & vbCrLf & vbCrLf & "Database name: " & dbname, MsgBoxStyle.Question + MsgBoxStyle.YesNo, "Notice") = MsgBoxResult.Yes Then
             Logg("Uploading database...")
-            If AttachData(dbname, newpath, mdfo, err1) Then
+            If AttachDatabase(dbname, newpath, mdfo, err1) Then
                 Logg($"Database {dbname} is now uploaded")
             Else
                 Logg($"Database upload of {dbname} failed: {err1}")
@@ -924,7 +920,7 @@ xc:
 
         tmp12 = windrive & "SysDataBackup"
 
-        If DirExists(tmp12) = False Then
+        If DirectoryExists(tmp12) = False Then
             Logg("Creating database backup directory...")
             MkDir(tmp12)
         End If
@@ -957,7 +953,7 @@ xc:
 
             System.Windows.Forms.Application.DoEvents()
 
-            If PathDepth(bckfile) > 1 Then
+            If CalculatePathDepth(bckfile) > 1 Then
                 bfile = Path.Combine(windrive, Path.GetFileName(bckfile))
                 File.Copy(bckfile, bfile)
                 mvf = True
@@ -978,6 +974,34 @@ xc:
         End If
     End Sub
 
+    Sub ProcessShrink(ByRef dbname As String, ByVal forced As Module1.pShrinkMode)
+        Dim err1 As String = ""
+        Dim mode1 As String = ""
+
+        Wait(True)
+
+        If forced = Module1.pShrinkMode.pReleaseUnused Then
+            mode1 = "Release Unused"
+        ElseIf forced = Module1.pShrinkMode.pReorganizeFirst Then
+            mode1 = "Reorganize First"
+        ElseIf forced = Module1.pShrinkMode.pEmptyLog Then
+            mode1 = "Empty Log"
+        End If
+
+        Logg("Shrinking database " & dbname & " started (" & mode1 & ")...")
+
+        System.Windows.Forms.Application.DoEvents()
+
+        If ShrinkLog(dbname, forced, err1) = True Then
+            Logg("Srhink database " & dbname & " successful!")
+        ElseIf Len(err1) > 0 Then
+            Logg("Shrink database failed: " & err1)
+        End If
+
+        Wait(False)
+
+    End Sub
+
     Sub ProcessRepair(ByRef dbname As String, ByVal forced As Module1.pRepairMode)
         Dim err1 As String = ""
         Dim mode1 As String = ""
@@ -996,7 +1020,7 @@ xc:
 
         System.Windows.Forms.Application.DoEvents()
 
-        If RepairDB(dbname, forced, err1) = True Then
+        If RepairDatabase(dbname, forced, err1) = True Then
             Logg("Repair database " & dbname & " successful!")
         ElseIf Len(err1) > 0 Then
             Logg("Repair database failed: " & err1)
@@ -1021,12 +1045,13 @@ xc:
         Me.cmdbackup.Enabled = d
         Me.cmddelete.Enabled = d
         Me.cmdrepairdb.Enabled = d
+        Me.cmdshrinkdb.Enabled = d
         Me.cmdrestore.Enabled = d
         If Not prov = "integrated" Then Me.cmdguest.Enabled = d
         Me.cmdpurge.Enabled = d
         Me.cmdgetsize.Enabled = d
         Me.cmddetach.Enabled = d
-        If Not prov = "sqloledb" Then Me.cmdkillconn.Enabled = d
+        Me.cmdkillconn.Enabled = d
         Me.cmdtables.Enabled = d
     End Sub
 
@@ -1054,7 +1079,7 @@ xc:
 
         System.Windows.Forms.Application.DoEvents()
 
-        If GuestAllowed(dbname) = True Then
+        If IsGuestAccessAllowed(dbname) = True Then
             cmdguest.BackColor = System.Drawing.Color.Lime
             cmdguest.Text = "Guest ON"
         Else
@@ -1069,9 +1094,7 @@ xc:
         Dim err3 As String = ""
         Dim err1 As String = ""
         Dim mdfo As Boolean = True ' MDF Only
-        GetDBFilesLocation(dbname, mdf, ldf)
-
-        Debug.Print(ldf)
+        GetDatabaseFilesLocation(dbname, mdf, ldf)
 
         If mdf = "" Then
             Logg("Clear log file failed")
@@ -1093,7 +1116,7 @@ xc:
 
         Logg($"Reattaching {dbname}...")
 
-        If AttachData(dbname, mdf, mdfo, err3) Then
+        If AttachDatabase(dbname, mdf, mdfo, err3) Then
             Logg($"Log file for {dbname} cleared")
         Else
             Logg($"Attach Failed: {err3}")
@@ -1115,5 +1138,17 @@ xc:
     Private Sub cmdConfig_Click(sender As Object, e As EventArgs) Handles cmdConfig.Click
         frmconfig.Icon = Me.Icon
         frmconfig.ShowDialog()
+    End Sub
+
+    Private Sub cmdshrinkdb_Click(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles cmdshrinkdb.Click
+        If lstdb.SelectedIndex = -1 Then
+            MsgBox("Select database", MsgBoxStyle.Exclamation, "")
+            Exit Sub
+        End If
+
+        If MsgBox("Are you sure do you want to shrink the database?", MsgBoxStyle.Exclamation + MsgBoxStyle.YesNo, "") = MsgBoxResult.Yes Then
+            frmshrinkdialog.ShowDialog(Me)
+        End If
+
     End Sub
 End Class
