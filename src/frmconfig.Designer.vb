@@ -125,7 +125,7 @@ Partial Class frmconfig
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(249, 170)
+        Me.ClientSize = New System.Drawing.Size(249, 174)
         Me.Controls.Add(Me.cmdCheckUpd)
         Me.Controls.Add(Me.chkUpdates)
         Me.Controls.Add(Me.chkdisablerandom)

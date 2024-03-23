@@ -16,7 +16,7 @@
     <GenerateRevisionNumber>True</GenerateRevisionNumber>
     <AssemblyCompanyName>JoyangAR</AssemblyCompanyName>
     <StartWithIE>False</StartWithIE>
-    <ApplicationIcon>Project1.ico</ApplicationIcon>
+    <ApplicationIcon>src\Project1.ico</ApplicationIcon>
     <RootNamespace>SqlServerManagerLite</RootNamespace>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
@@ -113,108 +113,117 @@
     <Import Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AssemblyInfo.vb" />
-    <Compile Include="frmbakdir.Designer.vb">
+    <Compile Include="src\AssemblyInfo.vb" />
+    <Compile Include="src\frmbakdir.Designer.vb">
       <DependentUpon>frmbakdir.vb</DependentUpon>
     </Compile>
-    <Compile Include="frmbakdir.vb">
+    <Compile Include="src\frmbakdir.vb">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="frmconfig.Designer.vb">
+    <Compile Include="src\frmconfig.Designer.vb">
       <DependentUpon>frmconfig.vb</DependentUpon>
     </Compile>
-    <Compile Include="frmconfig.vb">
+    <Compile Include="src\frmconfig.vb">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="frmdialog.Designer.vb">
+    <Compile Include="src\frmrepairdialog.Designer.vb">
       <SubType>Code</SubType>
-      <DependentUpon>frmdialog.vb</DependentUpon>
+      <DependentUpon>frmrepairdialog.vb</DependentUpon>
     </Compile>
-    <Compile Include="frmdialog.vb">
+    <Compile Include="src\frmrepairdialog.vb">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="frmfilespath.Designer.vb">
+    <Compile Include="src\frmfilespath.Designer.vb">
       <DependentUpon>frmfilespath.vb</DependentUpon>
     </Compile>
-    <Compile Include="frmfilespath.vb">
+    <Compile Include="src\frmfilespath.vb">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="frmlogin.Designer.vb">
+    <Compile Include="src\frmlogin.Designer.vb">
       <SubType>Code</SubType>
       <DependentUpon>frmlogin.vb</DependentUpon>
     </Compile>
-    <Compile Include="frmlogin.vb">
+    <Compile Include="src\frmlogin.vb">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="frmadduser.Designer.vb">
+    <Compile Include="src\frmadduser.Designer.vb">
       <SubType>Code</SubType>
       <DependentUpon>frmadduser.vb</DependentUpon>
     </Compile>
-    <Compile Include="frmadduser.vb">
+    <Compile Include="src\frmadduser.vb">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="frmmain.Designer.vb">
+    <Compile Include="src\frmmain.Designer.vb">
       <SubType>Code</SubType>
       <DependentUpon>frmmain.vb</DependentUpon>
     </Compile>
-    <Compile Include="frmmain.vb">
+    <Compile Include="src\frmmain.vb">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="frmqueryeditor.Designer.vb">
+    <Compile Include="src\frmqueryeditor.Designer.vb">
       <DependentUpon>frmqueryeditor.vb</DependentUpon>
     </Compile>
-    <Compile Include="frmqueryeditor.vb">
+    <Compile Include="src\frmqueryeditor.vb">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="frmtableview.Designer.vb">
+    <Compile Include="src\frmshrinkdialog.Designer.vb">
+      <DependentUpon>frmshrinkdialog.vb</DependentUpon>
+    </Compile>
+    <Compile Include="src\frmshrinkdialog.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="src\frmtableview.Designer.vb">
       <DependentUpon>frmtableview.vb</DependentUpon>
     </Compile>
-    <Compile Include="frmtableview.vb">
+    <Compile Include="src\frmtableview.vb">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Module1.vb">
+    <Compile Include="src\Module1.vb">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="frmpwd.Designer.vb">
+    <Compile Include="src\frmpwd.Designer.vb">
       <SubType>Code</SubType>
       <DependentUpon>frmpwd.vb</DependentUpon>
     </Compile>
-    <Compile Include="frmpwd.vb">
+    <Compile Include="src\frmpwd.vb">
       <SubType>Form</SubType>
     </Compile>
-    <EmbeddedResource Include="frmbakdir.resx">
+    <EmbeddedResource Include="src\frmbakdir.resx">
       <DependentUpon>frmbakdir.vb</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="frmconfig.resx">
+    <EmbeddedResource Include="src\frmconfig.resx">
       <DependentUpon>frmconfig.vb</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="frmdialog.resX">
-      <DependentUpon>frmdialog.vb</DependentUpon>
+    <EmbeddedResource Include="src\frmrepairdialog.resX">
+      <DependentUpon>frmrepairdialog.vb</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="frmfilespath.resx">
+    <EmbeddedResource Include="src\frmfilespath.resx">
       <DependentUpon>frmfilespath.vb</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="frmlogin.resX">
+    <EmbeddedResource Include="src\frmlogin.resX">
       <DependentUpon>frmlogin.vb</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="frmadduser.resX">
+    <EmbeddedResource Include="src\frmadduser.resX">
       <DependentUpon>frmadduser.vb</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="frmmain.resX">
+    <EmbeddedResource Include="src\frmmain.resX">
       <DependentUpon>frmmain.vb</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="frmpwd.resX">
+    <EmbeddedResource Include="src\frmpwd.resX">
       <DependentUpon>frmpwd.vb</DependentUpon>
     </EmbeddedResource>
-    <Content Include="Project1.ico" />
-    <EmbeddedResource Include="frmqueryeditor.resx">
+    <Content Include="src\Project1.ico" />
+    <EmbeddedResource Include="src\frmqueryeditor.resx">
       <DependentUpon>frmqueryeditor.vb</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="frmtableview.resx">
+    <EmbeddedResource Include="src\frmshrinkdialog.resx">
+      <DependentUpon>frmshrinkdialog.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="src\frmtableview.resx">
       <DependentUpon>frmtableview.vb</DependentUpon>
     </EmbeddedResource>
-    <None Include="packages.config" />
-    <None Include="_UpgradeReport.htm">
+    <None Include="src\packages.config" />
+    <None Include="docs\_UpgradeReport.htm">
       <SubType>Preview</SubType>
     </None>
   </ItemGroup>
