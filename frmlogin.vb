@@ -3,6 +3,8 @@ Option Explicit On
 
 Imports System.Configuration
 Imports System.Xml
+Imports System.Data.OleDb
+Imports System.Data.Odbc
 
 Friend Class frmlogin
     Inherits System.Windows.Forms.Form
@@ -23,43 +25,50 @@ Friend Class frmlogin
         Cursor = System.Windows.Forms.Cursors.WaitCursor
         Dim connectionString As String = ""
         If chklocaldb.Checked Then
-            servername = "(localdb)\MSSQLLocalDB"
+            fullsvr = "(localdb)\MSSQLLocalDB"
         Else
             If Not txtinst.Text = "MSSQLSERVER" Then
-                serverName = If(Not String.IsNullOrEmpty(txtsvr.Text), $"{txtsvr.Text}\{txtinst.Text}", $"localhost\{txtinst.Text}")
+                fullsvr = If(Not String.IsNullOrEmpty(txtsvr.Text), $"{txtsvr.Text}\{txtinst.Text}", $"localhost\{txtinst.Text}")
             Else
-                serverName = If(Not String.IsNullOrEmpty(txtsvr.Text), $"{txtsvr.Text}\", "localhost\")
+                fullsvr = If(Not String.IsNullOrEmpty(txtsvr.Text), $"{txtsvr.Text}", "localhost")
             End If
         End If
         If optoledb.Checked Then
             ' OLEDB
-            connectionString = $"Provider={txtprovider.Text};Data Source={serverName};Initial Catalog=master;User Id={txtname.Text};Password={txtpwd.Text};"
-            prov = "sqloledb"
-        ElseIf optodbc.Checked Then
-            ' ODBC
-            connectionString = $"Driver={txtdriver.Text};Server={serverName};Uid={txtname.Text};Pwd={txtpwd.Text};"
-            prov = "odbc"
-        ElseIf optintegrated.Checked Then
-            prov = "integrated"
+            prov = 1
             If chktrust.Checked Then
                 ' Use Windows authentication
-                connectionString = $"Data Source={serverName};Initial Catalog=master;Integrated Security=True;"
+                connectionString = $"Provider={txtprovider.Text};Data Source={fullsvr};Initial Catalog=master;Integrated Security=SSPI;{txtparam.Text}"
             Else
                 ' Use SQL Server authentication
-                connectionString = $"Data Source={serverName};Initial Catalog=master;User ID={txtname.Text};Password={txtpwd.Text};"
+                connectionString = $"Provider={txtprovider.Text};Data Source={fullsvr};Initial Catalog=master;User Id={txtname.Text};Password={txtpwd.Text};{txtparam.Text}"
+            End If
+        ElseIf optodbc.Checked Then
+            ' ODBC
+            prov = 2
+            connectionString = $"Driver={txtdriver.Text};Server={fullsvr};Uid={txtname.Text};Pwd={txtpwd.Text};{txtparam.Text}"
+        ElseIf optintegrated.Checked Then
+            ' System.Data.SqlClient
+            prov = 3
+            If chktrust.Checked Then
+                ' Use Windows authentication
+                connectionString = $"Data Source={fullsvr};Initial Catalog=master;Integrated Security=True;{txtparam.Text}"
+            Else
+                ' Use SQL Server authentication
+                connectionString = $"Data Source={fullsvr};Initial Catalog=master;User ID={txtname.Text};Password={txtpwd.Text};{txtparam.Text}"
             End If
         End If
-        If ConnectDB(connectionString) Then
+        If ConnectToDatabase(connectionString) Then
             cUser = txtname.Text
             cPwd = txtpwd.Text
-            server = If(String.IsNullOrEmpty(txtsvr.Text), "localhost", txtsvr.Text)
+            servername = If(String.IsNullOrEmpty(txtsvr.Text), "localhost", txtsvr.Text)
             instance = If(String.IsNullOrEmpty(txtinst.Text), "MSSQLSERVER", txtinst.Text)
             provider = txtprovider.Text
             driver = txtdriver.Text
             trusted = chktrust.CheckState
             localdb = chklocaldb.CheckState
             autologin = chkautologin.CheckState
-            WriteXML()
+            WriteConfigurationToXml()
             frmmain.islocaldb = chklocaldb.Checked
             frmmain.Loadstr(connectionString)
             frmmain.Show()
@@ -103,7 +112,7 @@ Friend Class frmlogin
                                     driver = reader.Value
                                 Case "Server"
                                     reader.Read()
-                                    server = reader.Value
+                                    servername = reader.Value
                                 Case "Instance"
                                     reader.Read()
                                     instance = reader.Value
@@ -137,11 +146,10 @@ Friend Class frmlogin
                             End Select
                         End If
                     End While
-
                     ' Apply the configuration
                     txtname.Text = cUser
                     txtpwd.Text = cPwd
-                    txtsvr.Text = server
+                    txtsvr.Text = servername
                     txtinst.Text = instance
                     chklocaldb.Checked = localdb
                     chktrust.Checked = trusted
@@ -200,8 +208,6 @@ Friend Class frmlogin
         Me.txtprovider.Enabled = Me.optoledb.Checked
         Me.txtdriver.Enabled = Me.optodbc.Checked
         chklocaldb.Enabled = optintegrated.Checked
-        txtinst.Enabled = optintegrated.Checked
-        txtsvr.Enabled = optintegrated.Checked
         If Not chkautologin.Checked Then Me.Enabled = True
     End Sub
 
