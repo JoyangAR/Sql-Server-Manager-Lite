@@ -2,12 +2,15 @@ Option Strict Off
 Option Explicit On
 
 Imports System.Collections.Generic
+Imports System.Data.Odbc
+Imports System.Data.OleDb
 Imports System.Data.SqlClient
 Imports System.Net
 Imports System.Net.NetworkInformation
 Imports System.Security.Principal
 Imports System.Text
 Imports System.Xml
+Imports ADODB
 Imports Microsoft.VisualBasic.Compatibility.VB6
 Imports Microsoft.Win32
 Imports Newtonsoft.Json.Linq
@@ -27,7 +30,7 @@ Module Module1
     Public prov As String
     Public cUser As String
     Public cPwd As String
-    Public server As String
+    Public servername As String
     Public instance As String
     Public connectMode As String
     Public provider As String
@@ -40,7 +43,7 @@ Module Module1
     Public disableRND As Boolean
     Public UpdCheck As Boolean
 
-    Public servername As String
+    Public fullsvr As String
 
 
     Enum pShrinkMode
@@ -74,7 +77,7 @@ Module Module1
         Return principal.IsInRole(WindowsBuiltInRole.Administrator)
     End Function
 
-    Function AttachData(ByRef DatabaseName As String, ByRef mdfPath As String, ByRef MDFOnly As Boolean, Optional ByRef errmsg As String = "") As Boolean
+    Function AttachDatabase(ByRef DatabaseName As String, ByRef mdfPath As String, ByRef MDFOnly As Boolean, Optional ByRef errmsg As String = "") As Boolean
         On Error GoTo ErrorHandler
         Debug.Print(MDFOnly)
         System.Windows.Forms.Application.DoEvents()
@@ -105,9 +108,13 @@ Module Module1
         End If
 
         ' Execute the SQL statement
-        If prov = "sqloledb" Then
+        If prov = 1 Or 2 Then
+            ' Using ADODB
+            con.Open(strlogin)
             con.Execute(sql)
+            con.Close()
         Else
+            ' Using System.Data.SqlClient 
             Using connection As New SqlConnection(strlogin)
                 connection.Open()
                 Using cmd As New SqlCommand(sql, connection)
@@ -119,6 +126,10 @@ Module Module1
         Return True
         Exit Function
 ErrorHandler:
+        ' Close the connection if an error occurs
+        If con.State = ConnectionState.Open Then
+            con.Close()
+        End If
         errmsg = Err.Description
         Return False
     End Function
@@ -126,46 +137,64 @@ ErrorHandler:
     Function TabulateDatabase(ByRef bakPath As String, Optional ByRef dbname As String = "", Optional ByRef LogName As String = "", Optional ByRef errmsg As String = "", Optional ByRef datapath As String = "", Optional ByRef logpath As String = "", Optional ByRef mdfid As Integer = 0) As Boolean
         On Error GoTo ErrorHandler
         Dim resultList As New List(Of String)()
-        Dim rs As SqlDataReader
 
-        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
-            rs = con.Execute($"RESTORE FILELISTONLY FROM DISK = '{bakPath}'").ExecuteReader()
-        ElseIf prov.ToLower() = "integrated" Then
+        Dim query As String = "RESTORE FILELISTONLY FROM DISK = '" & bakPath & "'"
+
+        If prov = 1 Or 2 Then
+            ' Using ADODB
+            con.Open(strlogin)
+            Dim rs As Recordset = con.Execute(query)
+
+            If Not rs.EOF Then
+                rs.MoveFirst()
+                dbname = rs.Fields("LogicalName").Value.ToString()
+                datapath = rs.Fields("PhysicalName").Value.ToString()
+                rs.MoveNext()
+                LogName = rs.Fields("LogicalName").Value.ToString()
+                logpath = rs.Fields("PhysicalName").Value.ToString()
+                ' mdfid = rs.Fields("FileId").Value ' Assuming the field is called FileId
+                rs.Close()
+                con.Close()
+                Return True
+            Else
+                errmsg = "No se encontraron registros."
+                Return False
+            End If
+
+        Else
+            ' Using System.Data.SqlClient
             Using connection As New SqlConnection(strlogin)
                 connection.Open()
-
-                Dim commandText As String = $"RESTORE FILELISTONLY FROM DISK = '{bakPath}'"
-                Using cmd As New SqlCommand(commandText, connection)
-                    rs = cmd.ExecuteReader()
-                    While rs.Read()
-                        Dim fileType As String = rs("Type").ToString().Trim().ToLower()
-                        If fileType = "d" Then ' "d" for Data
-                            dbname = rs("LogicalName").ToString() ' Logical name of the MDF file
-                            datapath = rs("PhysicalName").ToString() ' Physical location of the MDF file
-                        ElseIf fileType = "l" Then ' "l" for Log
-                            LogName = rs("LogicalName").ToString() ' Logical name of the LDF file
-                            logpath = rs("PhysicalName").ToString() ' Physical location of the LDF file
+                Using cmd As New SqlCommand(query, connection)
+                    Using reader As SqlDataReader = cmd.ExecuteReader()
+                        If reader.Read() Then
+                            dbname = reader("LogicalName").ToString()
+                            datapath = reader("PhysicalName").ToString()
+                            If reader.Read() Then
+                                LogName = reader("LogicalName").ToString()
+                                logpath = reader("PhysicalName").ToString()
+                                ' mdfid = Convert.ToInt32(reader("FileId")) ' Assuming the field is called FileId
+                                Return True
+                            End If
                         End If
-                    End While
+                    End Using
                 End Using
             End Using
         End If
 
-        If Not String.IsNullOrEmpty(datapath) And Not String.IsNullOrEmpty(logpath) Then
-            TabulateDatabase = True
-        Else
-            errmsg = "Failed to retrieve complete backup file information."
-            TabulateDatabase = False
-        End If
 
         Exit Function
 
 ErrorHandler:
+        ' Close the connection if an error occurs
+        If con.State = ConnectionState.Open Then
+            con.Close()
+        End If
         errmsg = Err.Description
         TabulateDatabase = False
     End Function
 
-    Function CorrectDBname(ByRef dbname As String) As String
+    Function NormalizeDatabaseName(ByRef dbname As String) As String
         Dim tmp As String = ""
 
         If LCase(dbname).Contains("_dat") Or LCase(dbname).Contains("_data") Then
@@ -178,22 +207,26 @@ ErrorHandler:
             tmp = dbname
         End If
 
-        CorrectDBname = tmp
+        Return tmp
     End Function
 
-    Function OnlyDirPath(ByVal fullpath As String) As String
+    Function ExtractDirectoryPath(ByVal fullpath As String) As String
         Dim dirPath As String = System.IO.Path.GetDirectoryName(fullpath)
         dirPath = EnsureTrailingBackslash(dirPath)
         Return dirPath
     End Function
 
-    Function CreateAccount(ByRef username As String, ByRef Password As String, Optional ByRef errmsg As String = "") As Boolean
+    Function CreateSqlAccount(ByRef username As String, ByRef Password As String, Optional ByRef errmsg As String = "") As Boolean
         On Error GoTo ErrorHandler
 
         System.Windows.Forms.Application.DoEvents()
-        If prov = "sqloledb" Then
+        If prov = 1 Or 2 Then
+            ' Using ADODB
+            con.Open(strlogin)
             con.Execute("USE [master]" & vbCrLf & "Create LOGIN [" & username & "] WITH PASSWORD = N'" & Password & "',DEFAULT_Database=[master],CHECK_EXPIRATION=OFF,CHECK_POLICY = OFF" & vbCrLf & "EXEC master..sp_addsrvrolemember @loginame = N'" & username & "', @rolename = N'sysadmin'")
+            con.Close()
         Else
+            ' Using System.Data.SqlClient
             Using connection As New SqlConnection(strlogin)
                 connection.Open()
 
@@ -206,80 +239,90 @@ ErrorHandler:
         Exit Function
 
 ErrorHandler:
+        ' Close the connection if an error occurs
+        If con.State = ConnectionState.Open Then
+            con.Close()
+        End If
         errmsg = Err.Description
-        CreateAccount = False
+        Return False
     End Function
 
-    Function ConnectDB(ByRef str_Renamed As String) As Boolean
+    Function ConnectToDatabase(ByRef str_Renamed As String) As Boolean
         Try
-
             Debug.Print(str_Renamed)
-            If prov = "sqloledb" Then
+            If prov = 1 Or 2 Then
+                ' Using ADODB
                 con.CommandTimeout = 0
                 con.CursorLocation = ADODB.CursorLocationEnum.adUseServer
                 con.Open(str_Renamed)
-            ElseIf prov = "integrated" Then
+                con.Close()
+            Else
+                ' Using System.Data.SqlClient
                 connection.ConnectionString = str_Renamed
                 connection.Open()
+                connection.Close()
             End If
 
-            ConnectDB = True
+            Return True
+
 
             Exit Function
         Catch ex As Exception
             MsgBox(ex.Message)
-            ConnectDB = False
+            Return False
         End Try
     End Function
 
     Function DatabaseExists(ByRef dbname As String) As Boolean
-
-        If prov = "sqloledb" Then
+        On Error GoTo ErrorHandler
+        If prov = 1 Or 2 Then
+            ' Using ADODB
+            con.Open(strlogin)
             con.Execute("use " & dbname & "")
-            DatabaseExists = True
+            con.Close()
+            Return True
         Else
-            Try
-                Using connection As New SqlConnection(strlogin)
-                    connection.Open()
-
-                    Using cmd As New SqlCommand("use " & dbname, connection)
-                        cmd.ExecuteNonQuery()
-                    End Using
-
-                    Return True
+            ' Using System.Data.SqlClient
+            Using connection As New SqlConnection(strlogin)
+                connection.Open()
+                Using cmd As New SqlCommand("use " & dbname, connection)
+                    cmd.ExecuteNonQuery()
                 End Using
-            Catch ex As Exception
-                Return False
-            End Try
+                Return True
+            End Using
         End If
         Exit Function
-
+ErrorHandler:
+        ' Close the connection if an error occurs
+        If con.State = ConnectionState.Open Then
+            con.Close()
+        End If
         DatabaseExists = False
     End Function
 
-    Public Function RestoreDatabase2(ByRef bckpath As String, ByRef NewDBDatapath As String, ByRef NewDBLogpath As String, ByRef dbfile As String, ByRef logfile As String, Optional ByRef errmsg As String = "", Optional ByRef MDF_Only As Boolean = False, Optional ByRef MDF_ID As Integer = 0) As Boolean
+    Public Function RestoreDatabaseWithOptions(ByRef bckpath As String, ByRef NewDBDatapath As String, ByRef NewDBLogpath As String, ByRef dbfile As String, ByRef logfile As String, Optional ByRef errmsg As String = "", Optional ByRef MDF_Only As Boolean = False, Optional ByRef MDF_ID As Integer = 0) As Boolean
         On Error GoTo ErrorHandler
 
         Dim db1 As String
         Dim str_Renamed As String
 
-        db1 = CorrectDBname(dbfile)
+        db1 = NormalizeDatabaseName(dbfile)
 
-        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
+        If prov = 1 Or 2 Then
+            ' Using ADODB
+            con.Open(strlogin)
             con.Execute("USE master")
             System.Windows.Forms.Application.DoEvents()
 
             If Not MDF_Only Then
-                str_Renamed = $"RESTORE DATABASE {db1} FROM DISK='{bckpath}' WITH MOVE '{dbfile}' TO '{NewDBDatapath}{db1}.mdf', MOVE '{logfile}' TO '{NewDBLogpath}{db1}_log.ldf'"
+                str_Renamed = $"RESTORE DATABASE {db1} FROM DISK='{bckpath}' WITH REPLACE, MOVE '{dbfile}' TO '{NewDBDatapath}{db1}.mdf', MOVE '{logfile}' TO '{NewDBLogpath}{db1}_log.ldf'"
             Else
-                str_Renamed = $"RESTORE DATABASE {db1} FROM DISK='{bckpath}' WITH FILE=1, RECOVERY, MOVE '{dbfile}' TO '{NewDBDatapath}{db1}.mdf', MOVE '{logfile}' TO '{NewDBLogpath}{db1}_log.ldf'"
+                str_Renamed = $"RESTORE DATABASE {db1} FROM DISK='{bckpath}' WITH FILE=1, RECOVERY, REPLACE, MOVE '{dbfile}' TO '{NewDBDatapath}{db1}.mdf', MOVE '{logfile}' TO '{NewDBLogpath}{db1}_log.ldf'"
             End If
             con.Execute(str_Renamed)
-
-            ' Alter the database to set to single-user mode and back to multi-user mode
-            con.Execute($"ALTER DATABASE {db1} SET SINGLE_USER WITH ROLLBACK IMMEDIATE")
-            con.Execute($"ALTER DATABASE {db1} SET MULTI_USER")
-        ElseIf prov.ToLower() = "integrated" Then
+            con.Close()
+        Else
+            ' Using System.Data.SqlClient
             Using connnection As New SqlConnection(strlogin)
                 connnection.Open()
 
@@ -293,24 +336,15 @@ ErrorHandler:
                 Using cmd As New SqlCommand(commandText, connnection)
                     cmd.ExecuteNonQuery()
                 End Using
-
-                ' Alter the database to set to single-user mode and back to multi-user mode
-                Using cmd As New SqlCommand($"ALTER DATABASE [{db1}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE", connnection)
-                    cmd.ExecuteNonQuery()
-                End Using
-                Using cmd As New SqlCommand($"ALTER DATABASE [{db1}] SET MULTI_USER", connnection)
-                    cmd.ExecuteNonQuery()
-                End Using
             End Using
         End If
 
-        RestoreDatabase2 = True
+        Return True
         Exit Function
 
 ErrorHandler:
-        Debug.Print(str_Renamed)
         errmsg = Err.Description
-        RestoreDatabase2 = False
+        Return False
         ' Close the connection if an error occurs
         If con.State = ConnectionState.Open Then
             con.Close()
@@ -320,9 +354,13 @@ ErrorHandler:
     Function RestoreDatabase(ByRef bckfile As String, ByRef dbname As String, Optional ByRef errmsg As String = "") As Boolean
         On Error GoTo ErrorHandler
 
-        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
+        If prov = 1 Or 2 Then
+            ' Using ADODB
+            con.Open(strlogin)
             con.Execute($"RESTORE DATABASE {dbname} FROM DISK = '{bckfile}' WITH REPLACE")
-        ElseIf prov.ToLower() = "integrated" Then
+            con.Close()
+        Else
+            ' Using System.Data.SqlClient
             Using connection As New SqlConnection(strlogin)
                 connection.Open()
 
@@ -334,14 +372,11 @@ ErrorHandler:
             End Using
         End If
 
-        RestoreDatabase = True
+        Return True
         Exit Function
 
 ErrorHandler:
-        Debug.Print($"RESTORE DATABASE {dbname} FROM DISK = '{bckfile}' WITH REPLACE")
-
         errmsg = Err.Description
-        RestoreDatabase = False
         ' Close the connection if an error occurs
         If con.State = ConnectionState.Open Then
             con.Close()
@@ -349,14 +384,18 @@ ErrorHandler:
         If connection.State = ConnectionState.Open Then
             connection.Close()
         End If
+        Return False
     End Function
 
-    Function ListUsers() As Collection
+    Function ListDatabaseUsers() As Collection
+        On Error GoTo ErrorHandler
         Dim col As New Collection
         Dim tmp As String
 
-        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
+        If prov = 1 Or 2 Then
+            ' Using ADODB
             Dim rs1 As New ADODB.Recordset
+            con.Open(strlogin)
             rs1.Open("SELECT * FROM sys.server_principals where type='S' and name<>'sa' and name not like '##MS_%'", con, ADODB.CursorTypeEnum.adOpenStatic, ADODB.LockTypeEnum.adLockOptimistic)
 
             Do Until rs1.EOF
@@ -367,8 +406,9 @@ ErrorHandler:
             Loop
 
             rs1.Close()
-        ElseIf prov.ToLower() = "integrated" Then
-            ' New code with System.Data.SqlClient
+            con.Close()
+        Else
+            ' Using System.Data.SqlClient
             Using connection As New SqlConnection(strlogin)
                 connection.Open()
 
@@ -386,15 +426,26 @@ ErrorHandler:
         End If
 
         Return col
-
+        Exit Function
+ErrorHandler:
+        ' Close the connection if an error occurs
+        If con.State = ConnectionState.Open Then
+            con.Close()
+        End If
+        If connection.State = ConnectionState.Open Then
+            connection.Close()
+        End If
     End Function
 
     Function ListDatabases() As Collection
+        On Error GoTo ErrorHandler
         Dim col As New Collection
         Dim tmp As String
 
-        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
+        If prov = 1 Or 2 Then
+            ' Using ADODB
             Dim rs1 As New ADODB.Recordset
+            con.Open(strlogin)
             rs1 = con.Execute("sp_databases")
 
             Do Until rs1.EOF
@@ -409,8 +460,9 @@ ErrorHandler:
             Loop
 
             rs1.Close()
-        ElseIf prov.ToLower() = "integrated" Then
-            ' New code with System.Data.SqlClient
+            con.Close()
+        Else
+            ' Using System.Data.SqlClient
             Using connection As New SqlConnection(strlogin)
                 connection.Open()
 
@@ -428,6 +480,17 @@ ErrorHandler:
         End If
 
         Return col
+
+        Exit Function
+
+ErrorHandler:
+        ' Close the connection if an error occurs
+        If con.State = ConnectionState.Open Then
+            con.Close()
+        End If
+        If connection.State = ConnectionState.Open Then
+            connection.Close()
+        End If
     End Function
     Function ExecuteQuery(ByRef queryText As String, ByRef queryResult As String, Optional ByRef errorMessage As String = "") As Boolean
         On Error GoTo ErrorHandler
@@ -441,24 +504,20 @@ ErrorHandler:
 
         Dim totalRowsAffected As Integer = 0
 
-        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
-            ' Open the connection if it is not already open
-            If con.State <> ConnectionState.Open Then con.Open()
-
+        If prov = 1 Or 2 Then
+            ' Using ADODB
+            con.Open(strlogin) '
+            Dim recordsAffected As Object = CType(0, Object)
             For Each query As String In queries
-                ' Execute each query
-                Dim cmd = con.CreateCommand()
-                cmd.CommandText = query
-                Dim rowsAffected As Integer = cmd.ExecuteNonQuery()
-
-                ' Handle the execution result
+                ' Execute query and get amount of rows affected in recordsAffected
+                con.Execute(query, recordsAffected, -1)
+                Dim rowsAffected As Integer = CInt(recordsAffected)
                 If rowsAffected >= 0 Then totalRowsAffected += rowsAffected
             Next
 
-            ' Close the connection if necessary
-            If con.State = ConnectionState.Open Then con.Close()
-
-        ElseIf prov.ToLower() = "integrated" Then
+            con.Close()
+        Else
+            ' Using System.Data.SqlClient
             Using connection As New SqlConnection(strlogin)
                 connection.Open()
 
@@ -478,12 +537,17 @@ ErrorHandler:
         ' Set the query result
         queryResult = $"Total rows affected: {totalRowsAffected}"
         Return True
+        Exit Function
 
 ErrorHandler:
         errorMessage = "Error executing query: " & Err.Description
         ' Make sure to close the connection here if necessary, similar to the logic above
-        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
-            If Not IsNothing(con) AndAlso con.State = ConnectionState.Open Then con.Close()
+        ' Close the connection if an error occurs
+        If con.State = ConnectionState.Open Then
+            con.Close()
+        End If
+        If connection.State = ConnectionState.Open Then
+            connection.Close()
         End If
         Return False
     End Function
@@ -492,10 +556,10 @@ ErrorHandler:
         If frmmain.islocaldb Then
             Return $"Data Source=(LocalDB)\MSSQLLocalDB;Initial Catalog={databaseName};Integrated Security=True;"
         Else
-            If String.IsNullOrEmpty(cUser) OrElse String.IsNullOrEmpty(cPwd) Then
-                Return $"Data Source={servername};Initial Catalog={databaseName};Integrated Security=True;"
+            If String.IsNullOrEmpty(fullsvr) OrElse String.IsNullOrEmpty(cPwd) Then
+                Return $"Data Source={fullsvr};Initial Catalog={databaseName};Integrated Security=True;"
             Else
-                Return $"Data Source={servername};Initial Catalog={databaseName};User ID={cUser};Password={cPwd};"
+                Return $"Data Source={fullsvr};Initial Catalog={databaseName};User ID={cUser};Password={cPwd};"
             End If
         End If
     End Function
@@ -548,12 +612,16 @@ ErrorHandler:
 
 
 
-    Function ChangePwd(ByRef username As String, ByRef pwd As String, Optional ByRef errmsg As String = "") As Boolean
+    Function ChangePassword(ByRef username As String, ByRef pwd As String, Optional ByRef errmsg As String = "") As Boolean
         On Error GoTo ErrorHandler
 
-        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
+        If prov = 1 Or 2 Then
+            ' Using ADODB
+            con.Open()
             con.Execute($"ALTER LOGIN [{username}] WITH PASSWORD=N'{pwd}'")
-        ElseIf prov.ToLower() = "integrated" Then
+            con.Close()
+        Else
+            ' Using System.Data.SqlClient
             Using connection As New SqlConnection(strlogin)
                 connection.Open()
 
@@ -565,20 +633,31 @@ ErrorHandler:
             End Using
         End If
 
-        ChangePwd = True
+        Return True
         Exit Function
 
 ErrorHandler:
+        ' Close the connection if an error occurs
+        If con.State = ConnectionState.Open Then
+            con.Close()
+        End If
+        If connection.State = ConnectionState.Open Then
+            connection.Close()
+        End If
         errmsg = Err.Description
-        ChangePwd = False
+        Return False
     End Function
 
-    Function DeleteAccount(ByRef username As String, Optional ByRef errmsg As String = "") As Boolean
+    Function DeleteSqlAccount(ByRef username As String, Optional ByRef errmsg As String = "") As Boolean
         On Error GoTo ErrorHandler
 
-        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
+        If prov = 1 Or 2 Then
+            ' Using ADODB
+            con.Open()
             con.Execute($"DROP LOGIN [{username}]")
-        ElseIf prov.ToLower() = "integrated" Then
+            con.Close()
+        Else
+            ' Using System.Data.SqlClient
             Using connection As New SqlConnection(strlogin)
                 connection.Open()
 
@@ -590,20 +669,29 @@ ErrorHandler:
             End Using
         End If
 
-        DeleteAccount = True
+        Return True
         Exit Function
 
 ErrorHandler:
+        ' Close the connection if an error occurs
+        If con.State = ConnectionState.Open Then
+            con.Close()
+        End If
+        If connection.State = ConnectionState.Open Then
+            connection.Close()
+        End If
         errmsg = Err.Description
-        DeleteAccount = False
+        Return False
     End Function
 
-    Function AccountExists(ByVal username As String) As Boolean
+    Function SqlAccountExists(ByVal username As String) As Boolean 'Unused
         Dim tmp As Boolean = False
 
         Try
-            If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
+            If prov = 1 Or 2 Then
+                ' Using ADODB
                 Dim rs1 As New ADODB.Recordset
+                con.Open()
                 rs1.Open($"SELECT * FROM sys.server_principals WHERE name='{username}' AND type='S'", con, ADODB.CursorTypeEnum.adOpenStatic, ADODB.LockTypeEnum.adLockOptimistic)
 
                 ' Check if the recordset is empty (EOF)
@@ -612,7 +700,9 @@ ErrorHandler:
                 End If
 
                 rs1.Close()
-            ElseIf prov.ToLower() = "integrated" Then
+                con.Close()
+            Else
+                ' Using System.Data.SqlClient
                 Using connection As New SqlConnection(strlogin)
                     connection.Open()
 
@@ -634,12 +724,13 @@ ErrorHandler:
         Return tmp
     End Function
 
-    Function RepairDB(ByRef dbname As String, Optional ByRef forced As pRepairMode = pRepairMode.pStandard, Optional ByRef errmsg As String = "", Optional ByRef rs As ADODB.Recordset = Nothing) As Boolean
+    Function RepairDatabase(ByRef dbname As String, Optional ByRef forced As pRepairMode = pRepairMode.pStandard, Optional ByRef errmsg As String = "", Optional ByRef rs As ADODB.Recordset = Nothing) As Boolean
         Dim str_Renamed As String = ""
 
         On Error GoTo ErrorHandler
 
-        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
+        If prov = 1 Or 2 Then
+            ' Using ADODB
             If forced = pRepairMode.pForced Then
                 str_Renamed = $"ALTER DATABASE {dbname} SET EMERGENCY; ALTER DATABASE {dbname} SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DBCC CHECKDB ({dbname}, REPAIR_ALLOW_DATA_LOSS); ALTER DATABASE {dbname} SET MULTI_USER"
             ElseIf forced = pRepairMode.pStandard Then
@@ -647,7 +738,11 @@ ErrorHandler:
             ElseIf forced = pRepairMode.pFast Then
                 str_Renamed = $"ALTER DATABASE {dbname} SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DBCC CHECKDB ({dbname}, REPAIR_FAST); ALTER DATABASE {dbname} SET MULTI_USER"
             End If
-        ElseIf prov.ToLower() = "integrated" Then
+            con.Open(strlogin)
+            con.Execute(str_Renamed)
+            con.Close()
+        Else
+            ' Using System.Data.SqlClient
             Using connection As New SqlConnection(strlogin)
                 connection.Open()
 
@@ -668,7 +763,7 @@ ErrorHandler:
 
         Debug.Print(str_Renamed)
 
-        RepairDB = True
+        Return True
         Exit Function
 
 ErrorHandler:
@@ -683,16 +778,26 @@ ErrorHandler:
         Else
             errmsg = Err.Description
         End If
-
-        RepairDB = False
+        ' Close the connection if an error occurs
+        If con.State = ConnectionState.Open Then
+            con.Close()
+        End If
+        If connection.State = ConnectionState.Open Then
+            connection.Close()
+        End If
+        Return False
     End Function
 
     Function DeleteDatabase(ByRef dbname As String, Optional ByRef errmsg As String = "") As Boolean
         On Error GoTo ErrorHandler
 
-        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
+        If prov = 1 Or 2 Then
+            ' Using ADODB
+            con.Open(strlogin)
             con.Execute("DROP DATABASE " & dbname)
-        ElseIf prov.ToLower() = "integrated" Then
+            con.Close()
+        Else
+            ' Using System.Data.SqlClient
             Using connection As New SqlConnection(strlogin)
                 connection.Open()
 
@@ -708,16 +813,23 @@ ErrorHandler:
         Exit Function
 
 ErrorHandler:
+        ' Close the connection if an error occurs
+        If con.State = ConnectionState.Open Then
+            con.Close()
+        End If
+        If connection.State = ConnectionState.Open Then
+            connection.Close()
+        End If
         errmsg = Err.Description
         DeleteDatabase = False
     End Function
 
-    Function DirExists(ByRef DirName As String) As Boolean
+    Function DirectoryExists(ByRef DirName As String) As Boolean
         On Error GoTo ErrorHandler
-        ' test the directory attribute
-        DirExists = GetAttr(DirName) And FileAttribute.Directory
+        ' Test the directory attribute
+        DirectoryExists = GetAttr(DirName) And FileAttribute.Directory
 ErrorHandler:
-        ' if an error occurs, this function returns False
+        ' If an error occurs, this function returns False
     End Function
 
     Function BackupDatabase(ByRef dbname1 As String, ByRef ipath As String, ByRef bckfile As String, Optional ByRef errmsg As String = "") As Boolean
@@ -729,9 +841,13 @@ ErrorHandler:
         bckfile = newbck
         System.Windows.Forms.Application.DoEvents()
 
-        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
+        If prov = 1 Or 2 Then
+            ' Using ADODB
+            con.Open(strlogin)
             con.Execute($"BACKUP DATABASE [{dbname1}] TO DISK = N'{ipath}{newbck}' WITH NOFORMAT, INIT, NAME = N'{dbname1}-Full Database Backup', SKIP, NOREWIND, NOUNLOAD")
-        ElseIf prov.ToLower() = "integrated" Then
+            con.Close()
+        Else
+            ' Using System.Data.SqlClient
             Using connection As New SqlConnection(strlogin)
                 connection.Open()
 
@@ -747,6 +863,13 @@ ErrorHandler:
         Exit Function
 
 ErrorHandler:
+        ' Close the connection if an error occurs
+        If con.State = ConnectionState.Open Then
+            con.Close()
+        End If
+        If connection.State = ConnectionState.Open Then
+            connection.Close()
+        End If
         errmsg = Err.Description
         BackupDatabase = False
     End Function
@@ -763,15 +886,17 @@ ErrorHandler:
         Return keyAsciiMode
     End Function
 
-    Function GuestAllowed(ByRef dbname As String) As Boolean
+    Function IsGuestAccessAllowed(ByRef dbname As String) As Boolean
         System.Windows.Forms.Application.DoEvents()
 
         On Error GoTo ErrorHandler
 
         Dim tmp As Boolean
 
-        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
+        If prov = 1 Or 2 Then
+            ' Using ADODB
             Dim rs1 As New ADODB.Recordset
+            con.Open(strlogin)
             con.Execute("use " & dbname)
             rs1.Open("SELECT name, hasdbaccess From sys.sysusers WHERE name = 'guest'", con, ADODB.CursorTypeEnum.adOpenStatic, ADODB.LockTypeEnum.adLockOptimistic)
 
@@ -786,7 +911,9 @@ ErrorHandler:
             End If
 
             rs1.Close()
-        ElseIf prov.ToLower() = "integrated" Then
+            con.Close()
+        Else
+            ' Using System.Data.SqlClient
             Using connection As New SqlConnection(strlogin)
                 connection.Open()
 
@@ -804,23 +931,27 @@ ErrorHandler:
             End Using
         End If
 
-        GuestAllowed = tmp
-
-        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
-            con.Execute("use master")
-        End If
+        Return tmp
 
         Exit Function
 
 ErrorHandler:
-        GuestAllowed = False
+        ' Close the connection if an error occurs
+        If con.State = ConnectionState.Open Then
+            con.Close()
+        End If
+        If connection.State = ConnectionState.Open Then
+            connection.Close()
+        End If
+        Return False
     End Function
 
-    Sub SetGuest(ByRef dbname As String, ByRef Grant As Boolean)
+    Sub ConfigureGuestAccess(ByRef dbname As String, ByRef Grant As Boolean)
 
         Dim str_Renamed As String
 
-        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
+        If prov = 1 Or 2 Then
+            ' Using ADODB
             If Grant Then
                 str_Renamed = "GRANT CONNECT TO GUEST"
             Else
@@ -828,11 +959,13 @@ ErrorHandler:
             End If
 
             System.Windows.Forms.Application.DoEvents()
+            con.Open(strlogin)
             con.Execute("use " & dbname & " " & str_Renamed)
             str_Renamed = LCase(str_Renamed)
             con.Execute("use " & dbname & " " & str_Renamed)
-
-        ElseIf prov.ToLower() = "integrated" Then
+            con.Close()
+        Else
+            ' Using System.Data.SqlClient
             Using connection As New SqlConnection(strlogin)
                 connection.Open()
 
@@ -856,14 +989,18 @@ ErrorHandler:
         Dim tmp As String = ""
 
 
-        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
+        If prov = 1 Or 2 Then
+            ' Using ADODB
             Dim rs1 As New ADODB.Recordset
+            con.Open(strlogin)
             con.Execute("use master")
             rs1.Open("SELECT name, physical_name FROM master.sys.master_files where name='master'", con, ADODB.CursorTypeEnum.adOpenStatic, ADODB.LockTypeEnum.adLockReadOnly)
             tmp = rs1.Fields("physical_name").Value
             tmp = Replace(tmp, "master.mdf", "")
             rs1.Close()
-        ElseIf prov.ToLower() = "integrated" Then
+            con.Close()
+        Else
+            ' Using System.Data.SqlClient
             Using connection As New SqlConnection(strlogin)
                 connection.Open()
 
@@ -891,16 +1028,18 @@ ErrorHandler:
 
         On Error GoTo ErrorHandler
 
-        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
+        If prov = 1 Or 2 Then
+            ' Using ADODB
             Dim rs As New ADODB.Recordset
-
+            con.Open(strlogin)
             rs.Open("SELECT @@VERSION AS version", con, ADODB.CursorTypeEnum.adOpenStatic, ADODB.LockTypeEnum.adLockReadOnly)
             If Not rs.EOF Then
                 version = rs.Fields("version").Value.ToString()
             End If
             rs.Close()
-
-        ElseIf prov.ToLower() = "integrated" Then
+            con.Close()
+        Else
+            ' Using System.Data.SqlClient
             Using connection As New SqlConnection(strlogin)
 
                 connection.Open()
@@ -920,10 +1059,16 @@ ErrorHandler:
         End If
 
         Return True
-        Return version
         Exit Function
 
 ErrorHandler:
+        ' Close the connection if an error occurs
+        If con.State = ConnectionState.Open Then
+            con.Close()
+        End If
+        If connection.State = ConnectionState.Open Then
+            connection.Close()
+        End If
         errmsg = Err.Description
         Return False
     End Function
@@ -931,10 +1076,12 @@ ErrorHandler:
     Function ChangeDefaultDataLocation(ByRef newDataPath As String) As Boolean
         Dim result As Boolean = False
 
-        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
+        If prov = 1 Or 2 Then
+            ' Using ADODB
             mdfpath = newDataPath
             result = True
-        ElseIf prov.ToLower() = "integrated" Then
+        Else
+            ' Using System.Data.SqlClient
             mdfpath = newDataPath
             result = True
         End If
@@ -945,10 +1092,12 @@ ErrorHandler:
     Function ChangeDefaultLogLocation(ByRef newLogPath As String) As Boolean
         Dim result As Boolean = False
 
-        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
+        If prov = 1 Or 2 Then
+            ' Using ADODB
             ldfpath = newLogPath
             result = True
-        ElseIf prov.ToLower() = "integrated" Then
+        Else
+            ' Using System.Data.SqlClient
             mdfpath = newLogPath
             result = True
         End If
@@ -967,7 +1116,7 @@ ErrorHandler:
         Else
             If Not frmmain.islocaldb Then
                 ' If default values are not set, retrieve them based on the provider type
-                If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
+                If prov = 1 Or 2 Then
                     ' Get the default data and log locations from the registry for SQL Server instance
                     Using regKey As Microsoft.Win32.RegistryKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey($"Software\Microsoft\Microsoft SQL Server\{instance}")
                         If regKey IsNot Nothing Then
@@ -975,10 +1124,10 @@ ErrorHandler:
                             DefaultLogPath = EnsureTrailingBackslash(CStr(regKey.GetValue("DefaultLog")))
                         End If
                     End Using
-                ElseIf prov.ToLower() = "integrated" Then
+                Else
                     ' Try to obtain the default data and log locations from SQL Server instance properties
                     Using connection As New SqlConnection(strlogin)
-
+                        ' Using System.Data.SqlClient
                         connection.Open()
                         Using cmd As New SqlCommand("SELECT SERVERPROPERTY('InstanceDefaultDataPath') AS DefaultDataPath, SERVERPROPERTY('InstanceDefaultLogPath') AS DefaultLogPath", connection)
                             Dim reader As SqlDataReader = cmd.ExecuteReader()
@@ -1000,19 +1149,21 @@ ErrorHandler:
 
         Return True
 
+        Exit Function
+
 ErrorHandler:
         errmsg = Err.Description
         Return False
     End Function
 
-    Private Function EnsureTrailingBackslash(path As String) As String
+    Function EnsureTrailingBackslash(path As String) As String
         If Not path.EndsWith(System.IO.Path.DirectorySeparatorChar) Then
             path += System.IO.Path.DirectorySeparatorChar
         End If
         Return path
     End Function
 
-    Sub WriteXML()
+    Sub WriteConfigurationToXml()
         Try
             ' Create a new XML configuration file
             Using writer As New XmlTextWriter(configFilePath, Nothing)
@@ -1026,18 +1177,19 @@ ErrorHandler:
                 writer.WriteElementString("Username", cUser)
                 'writer.WriteElementString("Password", cPwd)
                 writer.WriteElementString("Password", Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(cPwd)))
-                If prov.ToLower() = "sqloledb" Then
+                If prov = 1 Or 2 Then
                     writer.WriteElementString("ConnectMode", "OLEDB")
                     writer.WriteElementString("Provider", provider)
-                ElseIf prov.ToLower() = "odbc" Then
+                ElseIf prov = 2 Then
                     writer.WriteElementString("ConnectMode", "ODBC")
                     writer.WriteElementString("Driver", driver)
-                ElseIf prov.ToLower() = "integrated" Then
+                ElseIf prov = 3 Then
                     writer.WriteElementString("ConnectMode", "Integrated")
-                    writer.WriteElementString("Server", server)
-                    writer.WriteElementString("Instance", instance)
                 End If
 
+
+                writer.WriteElementString("Server", servername)
+                writer.WriteElementString("Instance", instance)
                 writer.WriteElementString("Trusted", If(trusted = 1, "1", "0"))
                 writer.WriteElementString("LocalDB", If(localdb = 1, "1", "0"))
                 writer.WriteElementString("AutoLogin", If(autologin = 1, "1", "0"))
@@ -1058,14 +1210,15 @@ ErrorHandler:
         End Try
     End Sub
 
-    Function GetBackupPath() As String
+    Function GetBackupPath() As String 'Unused
         Dim rs1 As ADODB.Recordset
         Dim tmp As String
+        con.Open(strlogin)
         con.Execute("use master")
         rs1 = con.Execute("master..xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\Microsoft\MSSQLServer\MSSQLServer', N'BackupDirectory'")
         tmp = rs1.Fields(1).Value
         rs1.Close()
-
+        con.Close()
         GetBackupPath = tmp & "\"
 
     End Function
@@ -1098,23 +1251,10 @@ ErrorHandler:
         Return String.Empty
     End Function
 
-    Function ShrinkLog(ByRef dbname As String, Optional ByRef pMode As pShrinkMode = 0, Optional ByRef ShrinkSize As Integer = 1, Optional ByRef errmsg As String = "") As Boolean
+    Function ShrinkLog(ByRef dbname As String, Optional ByRef pMode As pShrinkMode = 0, Optional ByRef errmsg As String = "", Optional ByRef ShrinkSize As Integer = 1) As Boolean
         Dim str_Renamed As String = ""
 
         On Error GoTo ErrorHandler
-
-        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
-            con.Execute($"USE {dbname}")
-        ElseIf prov.ToLower() = "integrated" Then
-            Using connection As New SqlConnection(strlogin)
-                connection.Open()
-
-                Dim commandText As String = $"USE {dbname}"
-                Using cmd As New SqlCommand(commandText, connection)
-                    cmd.ExecuteNonQuery()
-                End Using
-            End Using
-        End If
 
         If pMode = pShrinkMode.pReleaseUnused Then
             str_Renamed = $"DBCC SHRINKFILE (N'{dbname}_log' , 0, TRUNCATEONLY)"
@@ -1124,38 +1264,65 @@ ErrorHandler:
             str_Renamed = $"DBCC SHRINKFILE (N'{dbname}_log' , EMPTYFILE)"
         End If
 
-        con.Execute(str_Renamed)
+        If prov = 1 Or 2 Then
+            ' Using ADODB
+            con.Open(strlogin)
+            con.Execute($"USE {dbname}")
+            con.Execute(str_Renamed)
+            con.Close()
+        Else
+            ' Using System.Data.SqlClient
+            Using connection As New SqlConnection(strlogin)
+                connection.Open()
+                Dim cmd As New SqlCommand("use " & dbname, connection)
+                cmd.ExecuteNonQuery()
+                cmd.CommandText = str_Renamed
+                cmd.ExecuteNonQuery()
+            End Using
+        End If
+
 
         ShrinkLog = True
         Exit Function
 
 ErrorHandler:
+        ' Close the connection if an error occurs
+        If con.State = ConnectionState.Open Then
+            con.Close()
+        End If
+        If connection.State = ConnectionState.Open Then
+            connection.Close()
+        End If
         errmsg = Err.Description
         ShrinkLog = False
 
     End Function
 
-    Function GetDBFilesLocation(ByVal dbName As String, Optional ByRef dataFileLocation As String = "", Optional ByRef logFileLocation As String = "", Optional ByRef errmsg As String = "") As String
+    Function GetDatabaseFilesLocation(ByVal dbName As String, Optional ByRef dataFileLocation As String = "", Optional ByRef logFileLocation As String = "", Optional ByRef errmsg As String = "") As String
 
         On Error GoTo ErrorHandler
 
-        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
-            ' Assuming con.Execute is a method that executes SQL and returns a SqlDataReader
-            Using rs As SqlDataReader = con.Execute($"SELECT physical_name, type_desc FROM sys.master_files WHERE database_id = DB_ID('{dbName}')").ExecuteReader()
-                While rs.Read()
-                    Dim typeDesc As String = rs("type_desc").ToString()
-                    If typeDesc = "ROWS" Then
-                        dataFileLocation = rs("physical_name").ToString()
-                    ElseIf typeDesc = "LOG" Then
-                        logFileLocation = rs("physical_name").ToString()
-                    End If
-                End While
-            End Using
-        ElseIf prov.ToLower() = "integrated" Then
-            ' Use a new connection for integrated scenarios
-            Using conIntegrated As New SqlConnection(strlogin)
-                conIntegrated.Open()
-                Using cmd As New SqlCommand($"SELECT physical_name, type_desc FROM sys.master_files WHERE database_id = DB_ID('{dbName}')", conIntegrated)
+        If prov = 1 Or 2 Then
+            ' Using ADODB
+            con.Open(strlogin)
+            Dim rs As Recordset = con.Execute($"SELECT physical_name, type_desc FROM sys.master_files WHERE database_id = DB_ID('{dbName}')")
+            While Not rs.EOF
+                Dim typeDesc As String = rs.Fields("type_desc").Value.ToString()
+                If typeDesc = "ROWS" Then
+                    dataFileLocation = rs.Fields("physical_name").Value.ToString()
+                ElseIf typeDesc = "LOG" Then
+                    logFileLocation = rs.Fields("physical_name").Value.ToString()
+                End If
+                rs.MoveNext()
+            End While
+            rs.Close()
+            con.Close()
+        Else
+            ' Using System.Data.SqlClient
+            Using sqlCon As New SqlConnection(strlogin)
+                sqlCon.Open()
+                Dim query As String = $"SELECT physical_name, type_desc FROM sys.master_files WHERE database_id = DB_ID('{dbName}')"
+                Using cmd As New SqlCommand(query, sqlCon)
                     Using rs As SqlDataReader = cmd.ExecuteReader()
                         While rs.Read()
                             Dim typeDesc As String = rs("type_desc").ToString()
@@ -1170,14 +1337,23 @@ ErrorHandler:
             End Using
         End If
 
+        Exit Function
+
 ErrorHandler:
+        ' Close the connection if an error occurs
+        If con.State = ConnectionState.Open Then
+            con.Close()
+        End If
+        If connection.State = ConnectionState.Open Then
+            connection.Close()
+        End If
         errmsg = Err.Description
         Exit Function
 
     End Function
 
 
-    Function PathDepth(ByVal path As String) As Integer
+    Function CalculatePathDepth(ByVal path As String) As Integer
         Dim tmp As String = ""
 
         If path.StartsWith("\\") Then
@@ -1195,7 +1371,7 @@ ErrorHandler:
         Return UBound(t)
     End Function
 
-    Function RNDSecurity(ByRef title As String) As Boolean
+    Function PromptForRandomSecurityCheck(ByRef title As String) As Boolean
         ' Check if random number dialog is disabled; if so, bypass security check
         If disableRND Then Return True
 
@@ -1220,26 +1396,35 @@ ErrorHandler:
     Function DetachDatabase(ByRef dbname As String, Optional ByRef errmsg As String = "") As Boolean
         On Error GoTo ErrorHandler
 
-        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
+        If prov = 1 Or 2 Then
+            ' Using ADODB
+            con.Open(strlogin)
             con.Execute("sp_detach_db " & dbname)
-        ElseIf prov.ToLower() = "integrated" Then
+            con.Close()
+        Else
             Using connection As New SqlConnection(strlogin)
+                ' Using System.Data.SqlClient
                 connection.Open()
-
                 Dim commandText As String = $"sp_detach_db '{dbname}'"
-
                 Using cmd As New SqlCommand(commandText, connection)
                     cmd.ExecuteNonQuery()
                 End Using
             End Using
         End If
 
-        DetachDatabase = True
+        Return True
         Exit Function
 
 ErrorHandler:
+        ' Close the connection if an error occurs
+        If con.State = ConnectionState.Open Then
+            con.Close()
+        End If
+        If connection.State = ConnectionState.Open Then
+            connection.Close()
+        End If
         errmsg = Err.Description
-        DetachDatabase = False
+        Return False
     End Function
 
     Function IsPortInUse(port As Integer) As Boolean
@@ -1280,26 +1465,36 @@ ErrorHandler:
     Function KillConnections(ByVal dbName As String, ByRef errmsg As String) As Boolean
         On Error GoTo ErrorHandler
 
-        If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
-            ' Not supported for sqloledb provider
-            Throw New Exception("KillConnections is not supported for sqloledb provider.")
-        ElseIf prov.ToLower() = "integrated" Then
-            Using connection As New SqlConnection(strlogin)
-                connection.Open()
+        If prov = 1 Or 2 Then
 
-                Dim commandText As String = $"USE master; ALTER DATABASE [{dbName}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; USE [{dbName}];"
-                Using cmd As New SqlCommand(commandText, connection)
-                    cmd.ExecuteNonQuery()
-                End Using
+            ' Using ADODB
+            con.Open(strlogin)
+            Dim rs As Recordset = con.Execute($"SELECT spid FROM master..sysprocesses WHERE dbid = DB_ID('{dbName}')")
 
-                commandText = $"USE master; ALTER DATABASE [{dbName}] SET MULTI_USER;"
-                Using cmd As New SqlCommand(commandText, connection)
-                    cmd.ExecuteNonQuery()
+            While Not rs.EOF
+                Dim spid As String = rs.Fields("spid").Value.ToString()
+                con.Execute($"KILL {spid};")
+                rs.MoveNext()
+            End While
+            con.Close()
+        Else
+            ' Using System.Data.SqlClient
+            Using sqlCon As New SqlConnection(strlogin)
+                sqlCon.Open()
+                Dim cmd As New SqlCommand($"SELECT session_id FROM sys.dm_exec_sessions WHERE database_id = DB_ID('{dbName}')", sqlCon)
+                Using rs As SqlDataReader = cmd.ExecuteReader()
+                    While rs.Read()
+                        Dim sessionId As Integer = rs("session_id")
+                        Using killCmd As New SqlCommand($"KILL {sessionId};", sqlCon)
+                            killCmd.ExecuteNonQuery()
+                        End Using
+                    End While
                 End Using
             End Using
+
         End If
 
-        KillConnections = True
+        Return True
         Exit Function
 
 ErrorHandler:
@@ -1314,8 +1509,14 @@ ErrorHandler:
         Else
             errmsg = Err.Description
         End If
-
-        KillConnections = False
+        ' Close the connection if an error occurs
+        If con.State = ConnectionState.Open Then
+            con.Close()
+        End If
+        If connection.State = ConnectionState.Open Then
+            connection.Close()
+        End If
+        Return False
     End Function
 
 
@@ -1337,7 +1538,7 @@ ErrorHandler:
             End If
         Else
             ' If no update is available, show informational message 
-            If Not frmlogin.Sh = True Then MessageBox.Show("There are no updates available at this time.", "No Updates Available", MessageBoxButtons.OK, MessageBoxIcon.Information)
+            If Not frmlogin.sh = True Then MessageBox.Show("There are no updates available at this time.", "No Updates Available", MessageBoxButtons.OK, MessageBoxIcon.Information)
         End If
     End Sub
 
@@ -1396,10 +1597,10 @@ ErrorHandler:
         Dim tableNames As New List(Of String)
 
         Try
-            If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
-                ' Logic to get table names using ADODB for SQL Server
-                ' You can adapt the logic according to your needs
+            If prov = 1 Or 2 Then
+                ' Using ADODB
                 Dim rsTables As New ADODB.Recordset
+                con.Open(strlogin)
                 con.Execute("USE " & selectedDatabase)
 
                 ' Query to get table names
@@ -1410,9 +1611,9 @@ ErrorHandler:
                     rsTables.MoveNext()
                 Loop
                 rsTables.Close()
-            ElseIf prov.ToLower() = "integrated" Then
-                ' Logic to get table names using SqlConnection for SQL Server
-                ' You can adapt the logic according to your needs
+                con.Close()
+            Else
+                ' Using System.Data.SqlClient
                 Try
                     Using sqlCon As New SqlConnection(strlogin)
                         sqlCon.Open()
@@ -1449,14 +1650,14 @@ ErrorHandler:
             If String.IsNullOrEmpty(schemaName) Then
                 Throw New Exception("Failed to get the schema of the table.")
             End If
-
             ' Form the SQL query with the obtained schema
             Dim query As String = String.Format("SELECT TOP {0} * FROM [{1}].[{2}].[{3}]", selectedRows, SelectedDatabase, schemaName, selectedTable)
 
-            If prov.ToLower() = "sqloledb" Or prov.ToLower() = "odbc" Then
-                ' Logic to get rows using ADODB for SQL Server
+            If prov = 1 Or 2 Then
+                ' Using ADODB
                 Dim rsRows As New ADODB.Recordset
-                con.Execute(query, , 1024) ' 1024 is the value of adExecuteNoRecords
+                con.Open(strlogin)
+                con.Execute(query)
 
                 rsRows.Open(query, con, ADODB.CursorTypeEnum.adOpenStatic, ADODB.LockTypeEnum.adLockOptimistic)
 
@@ -1474,8 +1675,9 @@ ErrorHandler:
                 Loop
 
                 rsRows.Close()
-            ElseIf prov.ToLower() = "integrated" Then
-                ' Logic to get rows using SqlConnection for SQL Server
+                con.Close()
+            Else
+                ' Using System.Data.SqlClient
                 Try
                     Using sqlCon As New SqlConnection(strlogin)
                         sqlCon.Open()
@@ -1494,6 +1696,13 @@ ErrorHandler:
             Return resultTable
         Catch ex As Exception
             Debug.Print("Error in GetRows: " & ex.Message)
+            ' Close the connection if an error occurs
+            If con.State = ConnectionState.Open Then
+                con.Close()
+            End If
+            If connection.State = ConnectionState.Open Then
+                connection.Close()
+            End If
             Return New DataTable()
         End Try
     End Function
@@ -1502,19 +1711,47 @@ ErrorHandler:
         Dim schemaName As String = String.Empty
 
         Try
-            Using sqlCon As New SqlConnection(strlogin)
-                sqlCon.Open()
-                ' Make sure the database name is included in the connection string or use it in the SQL query.
-                Dim query As String = String.Format("SELECT TABLE_SCHEMA FROM {0}.INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = @TableName", databaseName)
-                Using cmd As New SqlCommand(query, sqlCon)
-                    cmd.Parameters.AddWithValue("@TableName", tableName)
-                    Dim result As Object = cmd.ExecuteScalar()
-                    If result IsNot Nothing Then
-                        schemaName = result.ToString()
+            If prov = 1 Or 2 Then
+                ' Using ADODB
+                Try
+                    con.Open(strlogin)
+                    Dim query As String = $"SELECT TABLE_SCHEMA FROM {databaseName}.INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = '{tableName}'"
+
+                    ' ADODB uses a Recordset to execute queries and obtain results
+                    Dim rs As Recordset = con.Execute(query)
+                    If Not rs.EOF Then
+                        schemaName = rs.Fields("TABLE_SCHEMA").Value.ToString()
                     End If
+                    rs.Close()
+                Catch ex As Exception
+                    Debug.Print("Error getting table schema: " & ex.Message)
+                Finally
+                    If con.State = ConnectionState.Open Then
+                        con.Close()
+                    End If
+                End Try
+            Else
+                ' Using System.Data.SqlClient
+                Using sqlCon As New SqlConnection(strlogin)
+                    sqlCon.Open()
+                    Dim query As String = $"SELECT TABLE_SCHEMA FROM {databaseName}.INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = @TableName"
+                    Using cmd As New SqlCommand(query, sqlCon)
+                        cmd.Parameters.AddWithValue("@TableName", tableName)
+                        Dim result As Object = cmd.ExecuteScalar()
+                        If result IsNot Nothing Then
+                            schemaName = result.ToString()
+                        End If
+                    End Using
                 End Using
-            End Using
-        Catch ex As SqlException
+            End If
+        Catch ex As Exception ' Catch both SqlException and OleDbException
+            ' Close the connection if an error occurs
+            If con.State = ConnectionState.Open Then
+                con.Close()
+            End If
+            If connection.State = ConnectionState.Open Then
+                connection.Close()
+            End If
             Debug.Print("Error getting table schema: " & ex.Message)
         End Try
 
