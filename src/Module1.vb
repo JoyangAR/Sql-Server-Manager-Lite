@@ -66,7 +66,6 @@ Module Module1
             MsgBox("Please run this program as administrator", MsgBoxStyle.Exclamation, "")
             Exit Sub
         End If
-
         frmlogin.Show()
 
     End Sub
@@ -125,10 +124,14 @@ Module Module1
 
         Return True
         Exit Function
+
 ErrorHandler:
         ' Close the connection if an error occurs
         If con.State = ConnectionState.Open Then
             con.Close()
+        End If
+        If connection.State = ConnectionState.Open Then
+            connection.Close()
         End If
         errmsg = Err.Description
         Return False
@@ -190,6 +193,9 @@ ErrorHandler:
         If con.State = ConnectionState.Open Then
             con.Close()
         End If
+        If connection.State = ConnectionState.Open Then
+            connection.Close()
+        End If
         errmsg = Err.Description
         TabulateDatabase = False
     End Function
@@ -243,13 +249,17 @@ ErrorHandler:
         If con.State = ConnectionState.Open Then
             con.Close()
         End If
+        If connection.State = ConnectionState.Open Then
+            connection.Close()
+        End If
         errmsg = Err.Description
         Return False
     End Function
 
     Function ConnectToDatabase(ByRef str_Renamed As String) As Boolean
-        Try
-            Debug.Print(str_Renamed)
+        On Error GoTo ErrorHandler
+
+        Debug.Print(str_Renamed)
             If prov = 1 OrElse prov = 2 Then
                 ' Using ADODB
                 con.CommandTimeout = 0
@@ -266,15 +276,17 @@ ErrorHandler:
             Return True
 
 
-            Exit Function
-        Catch ex As Exception
-            MsgBox(ex.Message)
-            Return False
-        End Try
+        Exit Function
+
+ErrorHandler:
+        MsgBox(Err.Description)
+        Return False
+
     End Function
 
     Function DatabaseExists(ByRef dbname As String) As Boolean
         On Error GoTo ErrorHandler
+
         If prov = 1 OrElse prov = 2 Then
             ' Using ADODB
             con.Open(strlogin)
@@ -292,10 +304,14 @@ ErrorHandler:
             End Using
         End If
         Exit Function
+
 ErrorHandler:
         ' Close the connection if an error occurs
         If con.State = ConnectionState.Open Then
             con.Close()
+        End If
+        If connection.State = ConnectionState.Open Then
+            connection.Close()
         End If
         DatabaseExists = False
     End Function
@@ -348,6 +364,9 @@ ErrorHandler:
         ' Close the connection if an error occurs
         If con.State = ConnectionState.Open Then
             con.Close()
+        End If
+        If connection.State = ConnectionState.Open Then
+            connection.Close()
         End If
     End Function
 
@@ -541,7 +560,6 @@ ErrorHandler:
 
 ErrorHandler:
         errorMessage = "Error executing query: " & Err.Description
-        ' Make sure to close the connection here if necessary, similar to the logic above
         ' Close the connection if an error occurs
         If con.State = ConnectionState.Open Then
             con.Close()
@@ -617,7 +635,7 @@ ErrorHandler:
 
         If prov = 1 OrElse prov = 2 Then
             ' Using ADODB
-            con.Open()
+            con.Open(strlogin)
             con.Execute($"ALTER LOGIN [{username}] WITH PASSWORD=N'{pwd}'")
             con.Close()
         Else
@@ -653,7 +671,7 @@ ErrorHandler:
 
         If prov = 1 OrElse prov = 2 Then
             ' Using ADODB
-            con.Open()
+            con.Open(strlogin)
             con.Execute($"DROP LOGIN [{username}]")
             con.Close()
         Else
@@ -685,90 +703,97 @@ ErrorHandler:
     End Function
 
     Function SqlAccountExists(ByVal username As String) As Boolean 'Unused
-        Dim tmp As Boolean = False
-
-        Try
-            If prov = 1 OrElse prov = 2 Then
-                ' Using ADODB
-                Dim rs1 As New ADODB.Recordset
-                con.Open()
-                rs1.Open($"SELECT * FROM sys.server_principals WHERE name='{username}' AND type='S'", con, ADODB.CursorTypeEnum.adOpenStatic, ADODB.LockTypeEnum.adLockOptimistic)
-
-                ' Check if the recordset is empty (EOF)
-                If Not rs1.EOF Then
-                    tmp = True
-                End If
-
-                rs1.Close()
-                con.Close()
-            Else
-                ' Using System.Data.SqlClient
-                Using connection As New SqlConnection(strlogin)
-                    connection.Open()
-
-                    Dim commandText As String = $"SELECT * FROM sys.server_principals WHERE name='{username}' AND type='S'"
-                    Using cmd As New SqlCommand(commandText, connection)
-                        Using reader As SqlDataReader = cmd.ExecuteReader()
-                            ' Check if the recordset is empty
-                            If reader.HasRows Then
-                                tmp = True
-                            End If
-                        End Using
-                    End Using
-                End Using
-            End If
-        Catch ex As Exception
-            MsgBox(ex.Message, MsgBoxStyle.Exclamation, "")
-        End Try
-
-        Return tmp
-    End Function
-
-    Function RepairDatabase(ByRef dbname As String, Optional ByRef forced As pRepairMode = pRepairMode.pStandard, Optional ByRef errmsg As String = "", Optional ByRef rs As ADODB.Recordset = Nothing) As Boolean
-        Dim str_Renamed As String = ""
-
         On Error GoTo ErrorHandler
+        Dim tmp As Boolean = False
 
         If prov = 1 OrElse prov = 2 Then
             ' Using ADODB
-            If forced = pRepairMode.pForced Then
-                str_Renamed = $"ALTER DATABASE {dbname} SET EMERGENCY; ALTER DATABASE {dbname} SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DBCC CHECKDB ({dbname}, REPAIR_ALLOW_DATA_LOSS); ALTER DATABASE {dbname} SET MULTI_USER"
-            ElseIf forced = pRepairMode.pStandard Then
-                str_Renamed = $"ALTER DATABASE {dbname} SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DBCC CHECKDB ({dbname}, REPAIR_REBUILD); ALTER DATABASE {dbname} SET MULTI_USER"
-            ElseIf forced = pRepairMode.pFast Then
-                str_Renamed = $"ALTER DATABASE {dbname} SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DBCC CHECKDB ({dbname}, REPAIR_FAST); ALTER DATABASE {dbname} SET MULTI_USER"
-            End If
+            Dim rs1 As New ADODB.Recordset
             con.Open(strlogin)
-            con.Execute(str_Renamed)
+            rs1.Open($"SELECT * FROM sys.server_principals WHERE name='{username}' AND type='S'", con, ADODB.CursorTypeEnum.adOpenStatic, ADODB.LockTypeEnum.adLockOptimistic)
+
+            ' Check if the recordset is empty (EOF)
+            If Not rs1.EOF Then
+                tmp = True
+            End If
+
+            rs1.Close()
             con.Close()
         Else
             ' Using System.Data.SqlClient
             Using connection As New SqlConnection(strlogin)
                 connection.Open()
 
-                Dim commandText As String = ""
+                Dim commandText As String = $"SELECT * FROM sys.server_principals WHERE name='{username}' AND type='S'"
+                Using cmd As New SqlCommand(commandText, connection)
+                    Using reader As SqlDataReader = cmd.ExecuteReader()
+                        ' Check if the recordset is empty
+                        If reader.HasRows Then
+                            tmp = True
+                        End If
+                    End Using
+                End Using
+            End Using
+        End If
+        ' Account exists
+        Return tmp
+        Exit Function
+
+ErrorHandler:
+        ' Close the connection if an error occurs
+        If con.State = ConnectionState.Open Then
+            con.Close()
+        End If
+        If connection.State = ConnectionState.Open Then
+            connection.Close()
+        End If
+        ' Account does not exist
+        Return False
+    End Function
+
+    Function RepairDatabase(ByRef dbname As String, Optional ByRef forced As pRepairMode = pRepairMode.pStandard, Optional ByRef errmsg As String = "", Optional ByRef rs As ADODB.Recordset = Nothing) As Boolean
+
+
+        On Error GoTo ErrorHandler
+
+        If prov = 1 OrElse prov = 2 Then
+            ' Using ADODB
+            Dim commandADODB As String = ""
+            If forced = pRepairMode.pForced Then
+                commandADODB = $"ALTER DATABASE {dbname} SET EMERGENCY; ALTER DATABASE {dbname} SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DBCC CHECKDB ({dbname}, REPAIR_ALLOW_DATA_LOSS); ALTER DATABASE {dbname} SET MULTI_USER"
+            ElseIf forced = pRepairMode.pStandard Then
+                commandADODB = $"ALTER DATABASE {dbname} SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DBCC CHECKDB ({dbname}, REPAIR_REBUILD); ALTER DATABASE {dbname} SET MULTI_USER"
+            ElseIf forced = pRepairMode.pFast Then
+                commandADODB = $"ALTER DATABASE {dbname} SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DBCC CHECKDB ({dbname}, REPAIR_FAST); ALTER DATABASE {dbname} SET MULTI_USER"
+            End If
+            con.Open(strlogin)
+            con.Execute(commandADODB)
+            con.Close()
+        Else
+            ' Using System.Data.SqlClient
+            Using connection As New SqlConnection(strlogin)
+                connection.Open()
+
+                Dim commandSqlClient As String = ""
                 If forced = pRepairMode.pForced Then
-                    commandText = $"ALTER DATABASE [{dbname}] SET EMERGENCY; ALTER DATABASE [{dbname}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DBCC CHECKDB ({dbname}, REPAIR_ALLOW_DATA_LOSS); ALTER DATABASE [{dbname}] SET MULTI_USER"
+                    commandSqlClient = $"ALTER DATABASE [{dbname}] SET EMERGENCY; ALTER DATABASE [{dbname}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DBCC CHECKDB ({dbname}, REPAIR_ALLOW_DATA_LOSS); ALTER DATABASE [{dbname}] SET MULTI_USER"
                 ElseIf forced = pRepairMode.pStandard Then
-                    commandText = $"ALTER DATABASE [{dbname}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DBCC CHECKDB ({dbname}, REPAIR_REBUILD); ALTER DATABASE [{dbname}] SET MULTI_USER"
+                    commandSqlClient = $"ALTER DATABASE [{dbname}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DBCC CHECKDB ({dbname}, REPAIR_REBUILD); ALTER DATABASE [{dbname}] SET MULTI_USER"
                 ElseIf forced = pRepairMode.pFast Then
-                    commandText = $"ALTER DATABASE [{dbname}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DBCC CHECKDB ({dbname}, REPAIR_FAST); ALTER DATABASE [{dbname}] SET MULTI_USER"
+                    commandSqlClient = $"ALTER DATABASE [{dbname}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DBCC CHECKDB ({dbname}, REPAIR_FAST); ALTER DATABASE [{dbname}] SET MULTI_USER"
                 End If
 
-                Using cmd As New SqlCommand(commandText, connection)
+                Using cmd As New SqlCommand(commandSqlClient, connection)
                     cmd.ExecuteNonQuery()
                 End Using
             End Using
         End If
-
-        Debug.Print(str_Renamed)
 
         Return True
         Exit Function
 
 ErrorHandler:
         Dim errLoop As SqlError
-
         ' Loop through each Error object in Errors collection.
         If con.Errors.Count > 1 Then
             For Each errLoop In con.Errors
@@ -828,14 +853,17 @@ ErrorHandler:
         On Error GoTo ErrorHandler
         ' Test the directory attribute
         DirectoryExists = GetAttr(DirName) And FileAttribute.Directory
+        Exit Function
+
 ErrorHandler:
         ' If an error occurs, this function returns False
+        Return False
     End Function
 
     Function BackupDatabase(ByRef dbname1 As String, ByRef ipath As String, ByRef bckfile As String, Optional ByRef errmsg As String = "") As Boolean
-        Dim newbck As String = ""
-
         On Error GoTo ErrorHandler
+
+        Dim newbck As String = ""
 
         newbck = $"{dbname1}_{Today:MM-dd-yyyy}_{Now:hhmmss}.bak"
         bckfile = newbck
@@ -946,8 +974,8 @@ ErrorHandler:
         Return False
     End Function
 
-    Sub ConfigureGuestAccess(ByRef dbname As String, ByRef Grant As Boolean)
-
+    Sub ConfigureGuestAccess(ByRef dbname As String, ByRef Grant As Boolean, Optional ByRef errmsg As String = "")
+        On Error GoTo ErrorHandler
         Dim str_Renamed As String
 
         If prov = 1 OrElse prov = 2 Then
@@ -981,11 +1009,22 @@ ErrorHandler:
                 End Using
             End Using
         End If
+        Exit Sub
+
+ErrorHandler:
+        ' Close the connection if an error occurs
+        If con.State = ConnectionState.Open Then
+            con.Close()
+        End If
+        If connection.State = ConnectionState.Open Then
+            connection.Close()
+        End If
+        errmsg = Err.Description
 
     End Sub
 
-    Function GetDatabasePath() As String
-
+    Function GetDatabasePath(Optional ByRef errmsg As String = "") As String
+        On Error GoTo ErrorHandler
         Dim tmp As String = ""
 
 
@@ -1019,9 +1058,20 @@ ErrorHandler:
             End Using
         End If
 
-
         Return tmp
 
+        Exit Function
+
+ErrorHandler:
+        ' Close the connection if an error occurs
+        If con.State = ConnectionState.Open Then
+            con.Close()
+        End If
+        If connection.State = ConnectionState.Open Then
+            connection.Close()
+        End If
+        errmsg = Err.Description
+        Return ""
     End Function
 
     Function GetInstanceVersion(ByRef version As String, ByRef errmsg As String)
@@ -1134,7 +1184,6 @@ ErrorHandler:
                             If reader.Read() Then
                                 DefaultDataPath = EnsureTrailingBackslash(If(IsDBNull(reader("DefaultDataPath")), String.Empty, reader("DefaultDataPath").ToString()))
                                 DefaultLogPath = EnsureTrailingBackslash(If(IsDBNull(reader("DefaultLogPath")), String.Empty, reader("DefaultLogPath").ToString()))
-                                Return True
                             End If
                         End Using
 
@@ -1164,50 +1213,52 @@ ErrorHandler:
     End Function
 
     Sub WriteConfigurationToXml()
-        Try
-            ' Create a new XML configuration file
-            Using writer As New XmlTextWriter(configFilePath, Nothing)
-                ' Start the XML document
-                writer.WriteStartDocument()
+        On Error GoTo ErrorHandler
+        ' Create a new XML configuration file
+        Using writer As New XmlTextWriter(configFilePath, Nothing)
+            ' Start the XML document
+            writer.WriteStartDocument()
 
-                ' Root element <Configuration>
-                writer.WriteStartElement("Configuration")
+            ' Root element <Configuration>
+            writer.WriteStartElement("Configuration")
 
-                ' Elements within <Configuration>
-                writer.WriteElementString("Username", cUser)
-                'writer.WriteElementString("Password", cPwd)
-                writer.WriteElementString("Password", Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(cPwd)))
-                If prov = 1 OrElse prov = 2 Then
-                    writer.WriteElementString("ConnectMode", "OLEDB")
-                    writer.WriteElementString("Provider", provider)
-                ElseIf prov = 2 Then
-                    writer.WriteElementString("ConnectMode", "ODBC")
-                    writer.WriteElementString("Driver", driver)
-                ElseIf prov = 3 Then
-                    writer.WriteElementString("ConnectMode", "Integrated")
-                End If
+            ' Elements within <Configuration>
+            writer.WriteElementString("Username", cUser)
+            'writer.WriteElementString("Password", cPwd)
+            writer.WriteElementString("Password", Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(cPwd)))
+            If prov = 1 OrElse prov = 2 Then
+                writer.WriteElementString("ConnectMode", "OLEDB")
+                writer.WriteElementString("Provider", provider)
+            ElseIf prov = 2 Then
+                writer.WriteElementString("ConnectMode", "ODBC")
+                writer.WriteElementString("Driver", driver)
+            ElseIf prov = 3 Then
+                writer.WriteElementString("ConnectMode", "Integrated")
+            End If
 
 
-                writer.WriteElementString("Server", servername)
-                writer.WriteElementString("Instance", instance)
-                writer.WriteElementString("Trusted", If(trusted = 1, "1", "0"))
-                writer.WriteElementString("LocalDB", If(localdb = 1, "1", "0"))
-                writer.WriteElementString("AutoLogin", If(autologin = 1, "1", "0"))
-                writer.WriteElementString("LogToFile", If(logtofile = True, "1", "0"))
-                writer.WriteElementString("ColourQE", If(colourQE = True, "1", "0"))
-                writer.WriteElementString("DisableRND", If(disableRND = True, "1", "0"))
-                writer.WriteElementString("AutoCheckforUpd", If(UpdCheck = True, "1", "0"))
-                writer.WriteElementString("DefaultMDFPath", mdfpath)
-                writer.WriteElementString("DefaultLDFPath", ldfpath)
+            writer.WriteElementString("Server", servername)
+            writer.WriteElementString("Instance", instance)
+            writer.WriteElementString("Trusted", If(trusted = 1, "1", "0"))
+            writer.WriteElementString("LocalDB", If(localdb = 1, "1", "0"))
+            writer.WriteElementString("AutoLogin", If(autologin = 1, "1", "0"))
+            writer.WriteElementString("LogToFile", If(logtofile = True, "1", "0"))
+            writer.WriteElementString("ColourQE", If(colourQE = True, "1", "0"))
+            writer.WriteElementString("DisableRND", If(disableRND = True, "1", "0"))
+            writer.WriteElementString("AutoCheckforUpd", If(UpdCheck = True, "1", "0"))
+            writer.WriteElementString("DefaultMDFPath", mdfpath)
+            writer.WriteElementString("DefaultLDFPath", ldfpath)
 
-                ' Close the root element <Configuration>
-                writer.WriteEndElement()
+            ' Close the root element <Configuration>
+            writer.WriteEndElement()
 
-                ' Finish the XML document
-                writer.WriteEndDocument()
-            End Using
-        Catch ex As Exception
-        End Try
+            ' Finish the XML document
+            writer.WriteEndDocument()
+        End Using
+        Exit Sub
+
+ErrorHandler:
+
     End Sub
 
     Function GetBackupPath() As String 'Unused
@@ -1543,23 +1594,21 @@ ErrorHandler:
     End Sub
 
     Public Function GetUpdateLink() As String
-        Try
-            Dim latestReleaseInfo As String = GetLatestReleaseInfo()
-            If latestReleaseInfo IsNot Nothing Then
-                Dim latestversion As String = GetLatestVersion(latestReleaseInfo)
-                If latestversion > Application.ProductVersion Then
-                    Dim downloadUrl As String = GetDownloadUrl(latestReleaseInfo)
-                    If Not String.IsNullOrEmpty(downloadUrl) Then
-                        Debug.Print(downloadUrl)
-                        Return downloadUrl
-                    End If
+        On Error GoTo ErrorHandler
+        Dim latestReleaseInfo As String = GetLatestReleaseInfo()
+        If latestReleaseInfo IsNot Nothing Then
+            Dim latestversion As String = GetLatestVersion(latestReleaseInfo)
+            If latestversion > Application.ProductVersion Then
+                Dim downloadUrl As String = GetDownloadUrl(latestReleaseInfo)
+                If Not String.IsNullOrEmpty(downloadUrl) Then
+                    Debug.Print(downloadUrl)
+                    Return downloadUrl
                 End If
             End If
-        Catch ex As Exception
-            ' Handle Errors
-            Console.WriteLine("Error al verificar actualizaciones: " & ex.Message)
-        End Try
+        End If
+        Exit Function
 
+ErrorHandler:
         Return Nothing
     End Function
 
@@ -1596,143 +1645,136 @@ ErrorHandler:
     Function GetTableNames(ByVal selectedDatabase As String) As List(Of String)
         Dim tableNames As New List(Of String)
 
-        Try
-            If prov = 1 OrElse prov = 2 Then
-                ' Using ADODB
-                Dim rsTables As New ADODB.Recordset
-                con.Open(strlogin)
-                con.Execute("USE " & selectedDatabase)
+        On Error GoTo ErrorHandler
+        If prov = 1 OrElse prov = 2 Then
+            ' Using ADODB
+            Dim rsTables As New ADODB.Recordset
+            con.Open(strlogin)
+            con.Execute("USE " & selectedDatabase)
 
-                ' Query to get table names
-                rsTables.Open("SELECT table_name FROM information_schema.tables WHERE table_type = 'BASE TABLE'", con, ADODB.CursorTypeEnum.adOpenStatic, ADODB.LockTypeEnum.adLockOptimistic)
+            ' Query to get table names
+            rsTables.Open("SELECT table_name FROM information_schema.tables WHERE table_type = 'BASE TABLE'", con, ADODB.CursorTypeEnum.adOpenStatic, ADODB.LockTypeEnum.adLockOptimistic)
 
-                Do Until rsTables.EOF
-                    tableNames.Add(rsTables.Fields("table_name").Value.ToString())
-                    rsTables.MoveNext()
-                Loop
-                rsTables.Close()
-                con.Close()
-            Else
-                ' Using System.Data.SqlClient
-                Try
-                    Using sqlCon As New SqlConnection(strlogin)
-                        sqlCon.Open()
-                        Dim query As String = $"USE {selectedDatabase} Select TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'"
-                        Using cmd As New SqlCommand(query, sqlCon)
-                            Dim reader As SqlDataReader = cmd.ExecuteReader()
-                            While reader.Read()
-                                tableNames.Add(reader("TABLE_NAME").ToString())
-                            End While
-                        End Using
-                    End Using
-                Catch ex As Exception
-                    Debug.Print("Error in GetTableNames (Integrated): " & ex.Message)
-                    Return New List(Of String)()
-                End Try
-            End If
+            Do Until rsTables.EOF
+                tableNames.Add(rsTables.Fields("table_name").Value.ToString())
+                rsTables.MoveNext()
+            Loop
+            rsTables.Close()
+            con.Close()
+        Else
+            ' Using System.Data.SqlClient
+            Using sqlCon As New SqlConnection(strlogin)
+                sqlCon.Open()
+                Dim query As String = $"USE {selectedDatabase} Select TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'"
+                Using cmd As New SqlCommand(query, sqlCon)
+                    Dim reader As SqlDataReader = cmd.ExecuteReader()
+                    While reader.Read()
+                        tableNames.Add(reader("TABLE_NAME").ToString())
+                    End While
+                End Using
+            End Using
+        End If
 
-            ' Sort the list alphabetically
-            tableNames.Sort()
+        ' Sort the list alphabetically
+        tableNames.Sort()
 
-            Return tableNames
-        Catch ex As Exception
-            Debug.Print("Error in GetTableNames: " & ex.Message)
-            Return New List(Of String)()
-        End Try
+        Return tableNames
+        Exit Function
+
+ErrorHandler:
+        ' Close the connection if an error occurs
+        If con.State = ConnectionState.Open Then
+            con.Close()
+        End If
+        If connection.State = ConnectionState.Open Then
+            connection.Close()
+        End If
+        frmmain.Logg("Error in GetTableNames: " & Err.Description)
+        Return New List(Of String)()
+
     End Function
 
     Function GetRows(ByVal SelectedDatabase As String, ByVal selectedTable As String, ByVal selectedRows As Integer) As DataTable
         Dim resultTable As New DataTable()
 
-        Try
-            ' Get the schema of the table
-            Dim schemaName As String = GetTableSchema(SelectedDatabase, selectedTable)
-            If String.IsNullOrEmpty(schemaName) Then
-                Throw New Exception("Failed to get the schema of the table.")
-            End If
-            ' Form the SQL query with the obtained schema
-            Dim query As String = String.Format("SELECT TOP {0} * FROM [{1}].[{2}].[{3}]", selectedRows, SelectedDatabase, schemaName, selectedTable)
+        On Error GoTo ErrorHandler
+        ' Get the schema of the table
+        Dim schemaName As String = GetTableSchema(SelectedDatabase, selectedTable)
+        If String.IsNullOrEmpty(schemaName) Then
+            Throw New Exception("Failed to get the schema of the table.")
+        End If
+        ' Form the SQL query with the obtained schema
+        Dim query As String = String.Format("SELECT TOP {0} * FROM [{1}].[{2}].[{3}]", selectedRows, SelectedDatabase, schemaName, selectedTable)
 
-            If prov = 1 OrElse prov = 2 Then
-                ' Using ADODB
-                Dim rsRows As New ADODB.Recordset
-                con.Open(strlogin)
-                con.Execute(query)
+        If prov = 1 OrElse prov = 2 Then
+            ' Using ADODB
+            Dim rsRows As New ADODB.Recordset
+            con.Open(strlogin)
+            con.Execute(query)
 
-                rsRows.Open(query, con, ADODB.CursorTypeEnum.adOpenStatic, ADODB.LockTypeEnum.adLockOptimistic)
+            rsRows.Open(query, con, ADODB.CursorTypeEnum.adOpenStatic, ADODB.LockTypeEnum.adLockOptimistic)
 
+            For Each field As ADODB.Field In rsRows.Fields
+                resultTable.Columns.Add(field.Name, Type.GetType("System.Object"))
+            Next
+
+            Do Until rsRows.EOF
+                Dim newRow As DataRow = resultTable.NewRow()
                 For Each field As ADODB.Field In rsRows.Fields
-                    resultTable.Columns.Add(field.Name, Type.GetType("System.Object"))
+                    newRow(field.Name) = field.Value
                 Next
+                resultTable.Rows.Add(newRow)
+                rsRows.MoveNext()
+            Loop
 
-                Do Until rsRows.EOF
-                    Dim newRow As DataRow = resultTable.NewRow()
-                    For Each field As ADODB.Field In rsRows.Fields
-                        newRow(field.Name) = field.Value
-                    Next
-                    resultTable.Rows.Add(newRow)
-                    rsRows.MoveNext()
-                Loop
-
-                rsRows.Close()
-                con.Close()
-            Else
-                ' Using System.Data.SqlClient
-                Try
-                    Using sqlCon As New SqlConnection(strlogin)
-                        sqlCon.Open()
-                        Using cmd As New SqlCommand(query, sqlCon)
-                            Using reader As SqlDataReader = cmd.ExecuteReader()
-                                resultTable.Load(reader)
-                            End Using
-                        End Using
+            rsRows.Close()
+            con.Close()
+        Else
+            ' Using System.Data.SqlClient
+            Using sqlCon As New SqlConnection(strlogin)
+                sqlCon.Open()
+                Using cmd As New SqlCommand(query, sqlCon)
+                    Using reader As SqlDataReader = cmd.ExecuteReader()
+                        resultTable.Load(reader)
                     End Using
-                Catch ex As SqlException
-                    Debug.Print("Error in GetRows (Integrated): " & ex.Message)
-                    Return New DataTable()
-                End Try
-            End If
+                End Using
+            End Using
+        End If
 
-            Return resultTable
-        Catch ex As Exception
-            Debug.Print("Error in GetRows: " & ex.Message)
-            ' Close the connection if an error occurs
-            If con.State = ConnectionState.Open Then
-                con.Close()
-            End If
-            If connection.State = ConnectionState.Open Then
-                connection.Close()
-            End If
-            Return New DataTable()
-        End Try
+        Return resultTable
+        Exit Function
+
+ErrorHandler:
+        frmmain.Logg("Error in GetRows: " & Err.Description)
+        ' Close the connection if an error occurs
+        If con.State = ConnectionState.Open Then
+            con.Close()
+        End If
+        If connection.State = ConnectionState.Open Then
+            connection.Close()
+        End If
+        Return New DataTable()
     End Function
 
     Function GetTableSchema(ByVal databaseName As String, ByVal tableName As String) As String
+        On Error GoTo ErrorHandler
         Dim schemaName As String = String.Empty
 
-        Try
-            If prov = 1 OrElse prov = 2 Then
-                ' Using ADODB
-                Try
-                    con.Open(strlogin)
-                    Dim query As String = $"SELECT TABLE_SCHEMA FROM {databaseName}.INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = '{tableName}'"
+        If prov = 1 OrElse prov = 2 Then
+            ' Using ADODB
 
-                    ' ADODB uses a Recordset to execute queries and obtain results
-                    Dim rs As Recordset = con.Execute(query)
-                    If Not rs.EOF Then
-                        schemaName = rs.Fields("TABLE_SCHEMA").Value.ToString()
-                    End If
-                    rs.Close()
-                Catch ex As Exception
-                    Debug.Print("Error getting table schema: " & ex.Message)
-                Finally
-                    If con.State = ConnectionState.Open Then
-                        con.Close()
-                    End If
-                End Try
-            Else
-                ' Using System.Data.SqlClient
-                Using sqlCon As New SqlConnection(strlogin)
+            con.Open(strlogin)
+            Dim query As String = $"SELECT TABLE_SCHEMA FROM {databaseName}.INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = '{tableName}'"
+
+            ' ADODB uses a Recordset to execute queries and obtain results
+            Dim rs As Recordset = con.Execute(query)
+            If Not rs.EOF Then
+                schemaName = rs.Fields("TABLE_SCHEMA").Value.ToString()
+            End If
+            rs.Close()
+        Else
+            ' Using System.Data.SqlClient
+            Using sqlCon As New SqlConnection(strlogin)
                     sqlCon.Open()
                     Dim query As String = $"SELECT TABLE_SCHEMA FROM {databaseName}.INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = @TableName"
                     Using cmd As New SqlCommand(query, sqlCon)
@@ -1744,18 +1786,18 @@ ErrorHandler:
                     End Using
                 End Using
             End If
-        Catch ex As Exception ' Catch both SqlException and OleDbException
-            ' Close the connection if an error occurs
-            If con.State = ConnectionState.Open Then
-                con.Close()
-            End If
-            If connection.State = ConnectionState.Open Then
-                connection.Close()
-            End If
-            Debug.Print("Error getting table schema: " & ex.Message)
-        End Try
 
         Return schemaName
+        Exit Function
+ErrorHandler:
+        ' Close the connection if an error occurs
+        If con.State = ConnectionState.Open Then
+            con.Close()
+        End If
+        If connection.State = ConnectionState.Open Then
+            connection.Close()
+        End If
+        frmmain.Logg(Err.Description)
     End Function
 
 End Module
