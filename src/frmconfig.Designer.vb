@@ -39,7 +39,7 @@ Partial Class frmconfig
         'chkautologin
         '
         Me.chkautologin.AutoSize = True
-        Me.chkautologin.Location = New System.Drawing.Point(6, 88)
+        Me.chkautologin.Location = New System.Drawing.Point(6, 19)
         Me.chkautologin.Name = "chkautologin"
         Me.chkautologin.Size = New System.Drawing.Size(78, 17)
         Me.chkautologin.TabIndex = 0
@@ -55,7 +55,7 @@ Partial Class frmconfig
         Me.grpSettings.Controls.Add(Me.chkautologin)
         Me.grpSettings.Location = New System.Drawing.Point(12, 12)
         Me.grpSettings.Name = "grpSettings"
-        Me.grpSettings.Size = New System.Drawing.Size(225, 132)
+        Me.grpSettings.Size = New System.Drawing.Size(236, 132)
         Me.grpSettings.TabIndex = 1
         Me.grpSettings.TabStop = False
         Me.grpSettings.Text = "Settings"
@@ -63,7 +63,7 @@ Partial Class frmconfig
         'chkUpdates
         '
         Me.chkUpdates.AutoSize = True
-        Me.chkUpdates.Location = New System.Drawing.Point(6, 19)
+        Me.chkUpdates.Location = New System.Drawing.Point(6, 88)
         Me.chkUpdates.Name = "chkUpdates"
         Me.chkUpdates.Size = New System.Drawing.Size(148, 17)
         Me.chkUpdates.TabIndex = 29
@@ -72,9 +72,9 @@ Partial Class frmconfig
         '
         'cmdCheckUpd
         '
-        Me.cmdCheckUpd.Location = New System.Drawing.Point(147, 94)
+        Me.cmdCheckUpd.Location = New System.Drawing.Point(155, 84)
         Me.cmdCheckUpd.Name = "cmdCheckUpd"
-        Me.cmdCheckUpd.Size = New System.Drawing.Size(71, 25)
+        Me.cmdCheckUpd.Size = New System.Drawing.Size(75, 23)
         Me.cmdCheckUpd.TabIndex = 30
         Me.cmdCheckUpd.Text = "Check now"
         Me.cmdCheckUpd.UseVisualStyleBackColor = True
@@ -104,7 +104,7 @@ Partial Class frmconfig
         Me.grpQE.Controls.Add(Me.chkcolourQE)
         Me.grpQE.Location = New System.Drawing.Point(12, 151)
         Me.grpQE.Name = "grpQE"
-        Me.grpQE.Size = New System.Drawing.Size(225, 53)
+        Me.grpQE.Size = New System.Drawing.Size(236, 53)
         Me.grpQE.TabIndex = 2
         Me.grpQE.TabStop = False
         Me.grpQE.Text = "QE Options"
@@ -122,7 +122,7 @@ Partial Class frmconfig
         'CmdApply
         '
         Me.CmdApply.DialogResult = System.Windows.Forms.DialogResult.OK
-        Me.CmdApply.Location = New System.Drawing.Point(156, 209)
+        Me.CmdApply.Location = New System.Drawing.Point(167, 209)
         Me.CmdApply.Name = "CmdApply"
         Me.CmdApply.Size = New System.Drawing.Size(81, 25)
         Me.CmdApply.TabIndex = 3
@@ -142,7 +142,7 @@ Partial Class frmconfig
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(249, 243)
+        Me.ClientSize = New System.Drawing.Size(260, 243)
         Me.Controls.Add(Me.cmddataloc)
         Me.Controls.Add(Me.CmdApply)
         Me.Controls.Add(Me.grpQE)
