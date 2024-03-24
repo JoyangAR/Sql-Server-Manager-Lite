@@ -44,12 +44,12 @@
         Me.txtpwd.Cursor = System.Windows.Forms.Cursors.IBeam
         Me.txtpwd.ForeColor = System.Drawing.SystemColors.WindowText
         Me.txtpwd.ImeMode = System.Windows.Forms.ImeMode.Disable
-        Me.txtpwd.Location = New System.Drawing.Point(64, 40)
+        Me.txtpwd.Location = New System.Drawing.Point(89, 40)
         Me.txtpwd.MaxLength = 0
         Me.txtpwd.Name = "txtpwd"
         Me.txtpwd.PasswordChar = Global.Microsoft.VisualBasic.ChrW(42)
         Me.txtpwd.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.txtpwd.Size = New System.Drawing.Size(209, 20)
+        Me.txtpwd.Size = New System.Drawing.Size(184, 20)
         Me.txtpwd.TabIndex = 1
         '
         'txtname
@@ -58,11 +58,11 @@
         Me.txtname.BackColor = System.Drawing.SystemColors.Window
         Me.txtname.Cursor = System.Windows.Forms.Cursors.IBeam
         Me.txtname.ForeColor = System.Drawing.SystemColors.WindowText
-        Me.txtname.Location = New System.Drawing.Point(64, 8)
+        Me.txtname.Location = New System.Drawing.Point(89, 8)
         Me.txtname.MaxLength = 0
         Me.txtname.Name = "txtname"
         Me.txtname.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.txtname.Size = New System.Drawing.Size(209, 20)
+        Me.txtname.Size = New System.Drawing.Size(184, 20)
         Me.txtname.TabIndex = 0
         '
         'CancelButton_Renamed
@@ -99,7 +99,7 @@
         Me.Label3.Location = New System.Drawing.Point(8, 40)
         Me.Label3.Name = "Label3"
         Me.Label3.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.Label3.Size = New System.Drawing.Size(57, 17)
+        Me.Label3.Size = New System.Drawing.Size(75, 17)
         Me.Label3.TabIndex = 5
         Me.Label3.Text = "Password:"
         '
@@ -111,7 +111,7 @@
         Me.Label2.Location = New System.Drawing.Point(8, 8)
         Me.Label2.Name = "Label2"
         Me.Label2.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.Label2.Size = New System.Drawing.Size(57, 17)
+        Me.Label2.Size = New System.Drawing.Size(75, 17)
         Me.Label2.TabIndex = 4
         Me.Label2.Text = "Username:"
         '

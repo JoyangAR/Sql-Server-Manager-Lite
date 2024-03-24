@@ -44,12 +44,12 @@
         Me.txtrepeat.Cursor = System.Windows.Forms.Cursors.IBeam
         Me.txtrepeat.ForeColor = System.Drawing.SystemColors.WindowText
         Me.txtrepeat.ImeMode = System.Windows.Forms.ImeMode.Disable
-        Me.txtrepeat.Location = New System.Drawing.Point(104, 40)
+        Me.txtrepeat.Location = New System.Drawing.Point(113, 40)
         Me.txtrepeat.MaxLength = 0
         Me.txtrepeat.Name = "txtrepeat"
         Me.txtrepeat.PasswordChar = Global.Microsoft.VisualBasic.ChrW(42)
         Me.txtrepeat.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.txtrepeat.Size = New System.Drawing.Size(185, 20)
+        Me.txtrepeat.Size = New System.Drawing.Size(176, 20)
         Me.txtrepeat.TabIndex = 4
         '
         'Command2
@@ -85,12 +85,12 @@
         Me.txtpwd.Cursor = System.Windows.Forms.Cursors.IBeam
         Me.txtpwd.ForeColor = System.Drawing.SystemColors.WindowText
         Me.txtpwd.ImeMode = System.Windows.Forms.ImeMode.Disable
-        Me.txtpwd.Location = New System.Drawing.Point(104, 8)
+        Me.txtpwd.Location = New System.Drawing.Point(113, 8)
         Me.txtpwd.MaxLength = 0
         Me.txtpwd.Name = "txtpwd"
         Me.txtpwd.PasswordChar = Global.Microsoft.VisualBasic.ChrW(42)
         Me.txtpwd.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.txtpwd.Size = New System.Drawing.Size(185, 20)
+        Me.txtpwd.Size = New System.Drawing.Size(176, 20)
         Me.txtpwd.TabIndex = 0
         '
         'Label1
@@ -101,7 +101,7 @@
         Me.Label1.Location = New System.Drawing.Point(8, 40)
         Me.Label1.Name = "Label1"
         Me.Label1.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.Label1.Size = New System.Drawing.Size(89, 17)
+        Me.Label1.Size = New System.Drawing.Size(99, 20)
         Me.Label1.TabIndex = 5
         Me.Label1.Text = "Repeat Password:"
         '
@@ -113,7 +113,7 @@
         Me.Label3.Location = New System.Drawing.Point(8, 8)
         Me.Label3.Name = "Label3"
         Me.Label3.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.Label3.Size = New System.Drawing.Size(81, 17)
+        Me.Label3.Size = New System.Drawing.Size(99, 20)
         Me.Label3.TabIndex = 3
         Me.Label3.Text = "New Password:"
         '
