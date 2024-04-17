@@ -161,6 +161,7 @@ ErrorHandler:
                 Return True
             Else
                 errmsg = "No se encontraron registros."
+                con.Close()
                 Return False
             End If
 

@@ -363,10 +363,9 @@ Friend Class frmmain
         Dim msg1 As String
         Dim mdfsize As Long
         Dim ldfsize As Long
-        Dim mdfloc As String = ""
-        Dim ldfloc As String = ""
         Dim strmdf As String
         Dim strldf As String
+        On Error GoTo ErrorHandler
 
         If lstdb.SelectedIndex = -1 Then
             MsgBox("Select database", MsgBoxStyle.Exclamation, "")
@@ -376,8 +375,6 @@ Friend Class frmmain
         GetDatabaseFilesLocation(lstdb.Items(lstdb.SelectedIndex).ToString(), mdf, ldf)
         mdfsize = New System.IO.FileInfo(mdf).Length
         ldfsize = New System.IO.FileInfo(ldf).Length
-
-        GetDatabaseFilesLocation(lstdb.Items(lstdb.SelectedIndex).ToString(), mdfloc, ldfloc)
 
         If mdfsize >= (1024 ^ 4) Then
             strmdf = System.Math.Round(mdfsize / (1024 ^ 4), 3) & " Tb"
@@ -403,8 +400,12 @@ Friend Class frmmain
             strldf = System.Math.Round(ldfsize, 3) & " B"
         End If
 
-        msg1 = "DB Name: " & lstdb.Items(lstdb.SelectedIndex).ToString() & vbCrLf & "DB Filesize: " & strmdf & vbCrLf & "Log Filesize: " & strldf & vbCrLf & "DB Data: " & mdfloc & vbCrLf & "DB Log: " & ldfloc
+        msg1 = "DB Name: " & lstdb.Items(lstdb.SelectedIndex).ToString() & vbCrLf & "DB Filesize: " & strmdf & vbCrLf & "Log Filesize: " & strldf & vbCrLf & "DB Data: " & mdf & vbCrLf & "DB Log: " & ldf
         Logg(msg1)
+        Exit Sub
+
+ErrorHandler:
+        Logg("Error getting files information:" & vbCrLf & Err.Description)
     End Sub
 
 

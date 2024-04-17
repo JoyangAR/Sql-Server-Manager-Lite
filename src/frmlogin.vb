@@ -1,10 +1,7 @@
 Option Strict Off
 Option Explicit On
 
-Imports System.Configuration
 Imports System.Xml
-Imports System.Data.OleDb
-Imports System.Data.Odbc
 
 Friend Class frmlogin
     Inherits System.Windows.Forms.Form
@@ -207,7 +204,6 @@ Friend Class frmlogin
     Sub RefreshObjects()
         Me.txtprovider.Enabled = Me.optoledb.Checked
         Me.txtdriver.Enabled = Me.optodbc.Checked
-        chklocaldb.Enabled = optintegrated.Checked
         If Not chkautologin.Checked Then Me.Enabled = True
     End Sub
 
