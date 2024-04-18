@@ -6,15 +6,20 @@ Public Class frmqueryeditor
 
     ' Define the patterns for SQL keywords and their corresponding colors
     Private sqlKeywordsPatterns As Dictionary(Of String, Color) = New Dictionary(Of String, Color) From {
-    {"\b(SELECT|FROM|WHERE|JOIN|INNER JOIN|LEFT JOIN|RIGHT JOIN|OUTER JOIN|FULL JOIN|CROSS JOIN)\b", Color.Blue},
+    {"\b(SELECT|FROM|WHERE|JOIN|INNER|LEFT|RIGHT|OUTER|FULL|CROSS)\b", Color.Blue},
+    {"\b(ALTER|INDEX|CREATE|DROP|REBUILD|WITH|REORGANIZE)\b", Color.Brown},
     {"\b(AND|OR|NOT|IN|AS|ON|IS|NULL)\b", Color.Green},
     {"\b(GO|SET|USE|DELETE|UPDATE|INSERT|INTO|VALUES|CREATE|TABLE|VIEW|PROCEDURE|FUNCTION|TRIGGER)\b", Color.Red},
     {"\b(BEGIN|END|DECLARE|INT|VARCHAR|DATE|DATETIME|BOOLEAN|FLOAT|DOUBLE|DECIMAL)\b", Color.Purple},
     {"\b(CASE|WHEN|THEN|ELSE|END)\b", Color.Magenta},
-    {"\b(TOP|LIMIT|GROUP BY|ORDER BY|HAVING|DISTINCT)\b", Color.Orange},
-    {"\b(UNION|UNION ALL|INTERSECT|EXCEPT)\b", Color.DarkCyan},
+    {"\b(GETDATE|DATEPART|DATEDIFF|DATEADD|CONVERT|CAST)\b", Color.DarkMagenta},
+    {"\b(TOP|LIMIT|GROUP|BY|ORDER|HAVING|DISTINCT)\b", Color.Orange},
+    {"\b(COMMIT|ROLLBACK|TRANSACTION|SAVE)\b", Color.DarkOrange},
+    {"\b(UNION|ALL|INTERSECT|EXCEPT)\b", Color.DarkCyan},
     {"\b(EXEC|EXECUTE)\b", Color.Gray},
     {"\b(COUNT|SUM|AVG|MIN|MAX)\b", Color.Teal},
+    {"\b(UPDATE STATISTICS|DBCC|RECONFIGURE)\b", Color.Sienna},
+    {"\b(BACKUP|DATABASE|RESTORE)\b", Color.DarkSalmon},
     {"--.*|/\*[\s\S]*?\*/", Color.DarkGreen} ' For single-line and multi-line comments
 }
 
@@ -53,44 +58,42 @@ Public Class frmqueryeditor
     End Sub
 
     Private Sub TxtQueryBox_TextChanged(sender As Object, e As EventArgs) Handles TxtQueryBox.TextChanged
-        If colourQE = True Then
-            If suspended = False Then
-                ' Defines the range for highlighting
-                Const HighlightRange As Integer = 50 ' Number of characters to check before and after the current point
+        If colourQE AndAlso Not suspended Then
+            ' Obtains the current cursor position
+            Dim currentText As String = TxtQueryBox.Text
+            Dim currentPos As Integer = TxtQueryBox.SelectionStart
 
-                ' Saves the current cursor position
-                Dim originalSelectionStart As Integer = TxtQueryBox.SelectionStart
-                Dim originalSelectionLength As Integer = TxtQueryBox.SelectionLength
+            ' Checks if the last entered character is a space or an enter and that it is not the first character of the text
+            If currentPos > 1 AndAlso (currentText(currentPos - 1) = " " OrElse currentText(currentPos - 1) = Chr(10)) Then
+                ' Finds the start of the last word
+                Dim wordStart As Integer = currentText.LastIndexOfAny(New Char() {" "c, Chr(10)}, currentPos - 2) + 1
+                Dim wordLength As Integer = (currentPos - 1) - wordStart
 
-                ' Recalculates the text range based on the current cursor position
-                Dim startRange As Integer = Math.Max(0, originalSelectionStart - HighlightRange)
-                Dim endRange As Integer = Math.Min(TxtQueryBox.TextLength, originalSelectionStart + HighlightRange + 1) ' +1 to include the last character
-                Dim textRange As String = TxtQueryBox.Text.Substring(startRange, endRange - startRange)
+                ' Extracts the last word
+                Dim lastWord As String = currentText.Substring(wordStart, wordLength)
 
-                ' First, reset the color of the changed range to the default color to avoid unintentional coloring
-                TxtQueryBox.Select(startRange, textRange.Length)
-                TxtQueryBox.SelectionColor = Color.Black ' Or any default color of your choice
-
-                ' Iterates through each group of keywords and comments to apply highlighting
-                For Each kvp As KeyValuePair(Of String, Color) In sqlKeywordsPatterns
-                    Dim regex As New Regex(kvp.Key, RegexOptions.IgnoreCase)
-                    Dim matches As MatchCollection = regex.Matches(textRange)
-
-                    For Each match As Match In matches
-                        ' Select and color only the matching text
-                        TxtQueryBox.Select(startRange + match.Index, match.Length)
-                        TxtQueryBox.SelectionColor = kvp.Value
-                    Next
-                Next
-
-                ' Restore the original cursor position and selection without changing the text color
-                TxtQueryBox.Select(originalSelectionStart, originalSelectionLength)
+                ' Resets the text color in that range to black before applying the new color
+                TxtQueryBox.Select(wordStart, wordLength)
                 TxtQueryBox.SelectionColor = Color.Black
 
+                ' Checks the last word against the keyword patterns
+                For Each kvp As KeyValuePair(Of String, Color) In sqlKeywordsPatterns
+                    Dim regex As New Regex(kvp.Key, RegexOptions.IgnoreCase)
+                    Dim match As Match = regex.Match(lastWord)
+                    If match.Success Then
+                        ' If the word matches a keyword, changes the color
+                        TxtQueryBox.Select(wordStart, wordLength)
+                        TxtQueryBox.SelectionColor = kvp.Value
+                        Exit For ' If a match is found, there is no need to check more patterns
+                    End If
+                Next
+
+                ' Restores the cursor position without changing the text color
+                TxtQueryBox.Select(currentPos, 0)
+                TxtQueryBox.SelectionColor = Color.Black
             End If
         End If
     End Sub
-
 
     Private Sub CmdFont(sender As Object, e As EventArgs) Handles FontMS.Click
         ' Gets the current font size
