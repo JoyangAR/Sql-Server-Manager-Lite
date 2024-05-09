@@ -4,7 +4,7 @@ This repository contains the modernized version of SQL Server Manager Lite, a da
 
 ## Overview
 
-SQL Server Manager Lite is a versatile tool designed to interact with Microsoft SQL Server databases. It provides various functionalities to manage SQL Server instances and databases efficiently.
+SQL Server Manager Lite is a simple tool designed for interacting with Microsoft SQL Server databases. It provides essential functionalities to manage SQL Server instances and databases efficiently.
 
 ## Features
 
