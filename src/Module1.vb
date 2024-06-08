@@ -149,6 +149,7 @@ ErrorHandler:
                 Return True
             Else
                 errmsg = "No se encontraron registros."
+                rs.Close()
                 con.Close()
                 Return False
             End If
@@ -1516,6 +1517,7 @@ ErrorHandler:
                 con.Execute($"KILL {spid};")
                 rs.MoveNext()
             End While
+            rs.Close()
             con.Close()
         Else
             ' Using System.Data.SqlClient
@@ -1761,6 +1763,7 @@ ErrorHandler:
                 schemaName = rs.Fields("TABLE_SCHEMA").Value.ToString()
             End If
             rs.Close()
+            con.Close()
         Else
             ' Using System.Data.SqlClient
             Using sqlCon As New SqlConnection(strlogin)
