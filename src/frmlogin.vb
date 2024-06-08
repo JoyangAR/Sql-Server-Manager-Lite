@@ -55,6 +55,7 @@ Friend Class frmlogin
                 connectionString = $"Data Source={fullsvr};Initial Catalog=master;User ID={txtname.Text};Password={txtpwd.Text};{txtparam.Text}"
             End If
         End If
+        Debug.WriteLine(connectionString)
         If ConnectToDatabase(connectionString) Then
             cUser = txtname.Text
             cPwd = txtpwd.Text
@@ -82,6 +83,10 @@ Friend Class frmlogin
     End Sub
 
     Private Sub frmlogin_Load(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles MyBase.Load
+        If Not IsUserAdministrator() Then
+            MsgBox("Please run this program as administrator", MsgBoxStyle.Exclamation, "")
+            Me.Close()
+        End If
         Me.Enabled = False
         Try
             ' Check if the XML configuration file exists

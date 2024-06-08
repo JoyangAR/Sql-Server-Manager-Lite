@@ -58,18 +58,6 @@ Module Module1
         pForced
     End Enum
 
-    'UPGRADE_WARNING: Application will terminate when Sub Main() finishes. Click for more: 'ms-help://MS.VSCC.v90/dv_commoner/local/redirect.htm?keyword="E08DDC71-66BA-424F-A612-80AF11498FF8"'
-    Public Sub Main()
-        System.Net.ServicePointManager.SecurityProtocol = CType(3072, SecurityProtocolType)
-
-        If Not IsUserAdministrator() Then
-            MsgBox("Please run this program as administrator", MsgBoxStyle.Exclamation, "")
-            Exit Sub
-        End If
-        frmlogin.Show()
-
-    End Sub
-
     Function IsUserAdministrator() As Boolean
         Dim identity = WindowsIdentity.GetCurrent()
         Dim principal = New WindowsPrincipal(identity)
