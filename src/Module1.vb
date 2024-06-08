@@ -1767,17 +1767,17 @@ ErrorHandler:
         Else
             ' Using System.Data.SqlClient
             Using sqlCon As New SqlConnection(strlogin)
-                    sqlCon.Open()
-                    Dim query As String = $"SELECT TABLE_SCHEMA FROM {databaseName}.INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = @TableName"
-                    Using cmd As New SqlCommand(query, sqlCon)
-                        cmd.Parameters.AddWithValue("@TableName", tableName)
-                        Dim result As Object = cmd.ExecuteScalar()
-                        If result IsNot Nothing Then
-                            schemaName = result.ToString()
-                        End If
-                    End Using
+                sqlCon.Open()
+                Dim query As String = $"SELECT TABLE_SCHEMA FROM {databaseName}.INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = @TableName"
+                Using cmd As New SqlCommand(query, sqlCon)
+                    cmd.Parameters.AddWithValue("@TableName", tableName)
+                    Dim result As Object = cmd.ExecuteScalar()
+                    If result IsNot Nothing Then
+                        schemaName = result.ToString()
+                    End If
                 End Using
-            End If
+            End Using
+        End If
 
         Return schemaName
         Exit Function
@@ -1790,6 +1790,109 @@ ErrorHandler:
             connection.Close()
         End If
         frmmain.Logg(Err.Description)
+    End Function
+
+    Public Function GetSearchResults(ByVal databaseName As String, ByVal tableName As String, ByVal searchQuery As String, ByVal whereCondition As String) As DataTable
+        On Error GoTo ErrorHandler
+        Dim resultTable As New DataTable()
+        Dim schemaName As String = GetTableSchema(databaseName, tableName)
+
+        If prov = 1 OrElse prov = 2 Then
+            ' Using ADODB
+            con.Open(strlogin)
+            Dim query As String = $"SELECT * FROM [{databaseName}].[{schemaName}].[{tableName}] WHERE [{whereCondition}] LIKE '%{searchQuery}%'"
+            Dim rs As New Recordset
+            rs.Open(query, con, CursorTypeEnum.adOpenStatic, LockTypeEnum.adLockReadOnly)
+            If Not rs.EOF Then
+                Dim dataArray As Object(,) = rs.GetRows()
+                Dim cols As Integer = dataArray.GetUpperBound(0) + 1
+                Dim rows As Integer = dataArray.GetUpperBound(1) + 1
+
+                For i As Integer = 0 To cols - 1
+                    resultTable.Columns.Add(rs.Fields(i).Name)
+                Next
+
+                For j As Integer = 0 To rows - 1
+                    Dim row As DataRow = resultTable.NewRow()
+                    For k As Integer = 0 To cols - 1
+                        row(k) = dataArray(k, j)
+                    Next
+                    resultTable.Rows.Add(row)
+                Next
+            End If
+            rs.Close()
+            con.Close()
+        Else
+            ' Using System.Data.SqlClient
+            Using sqlCon As New SqlConnection(strlogin)
+                sqlCon.Open()
+                Dim query As String = $"SELECT * FROM [{databaseName}].[{schemaName}].[{tableName}] WHERE [{whereCondition}] LIKE @SearchQuery"
+                Using cmd As New SqlCommand(query, sqlCon)
+                    cmd.Parameters.AddWithValue("@SearchQuery", "%" & searchQuery & "%")
+                    Using reader As SqlDataReader = cmd.ExecuteReader()
+                        resultTable.Load(reader)
+                    End Using
+                End Using
+            End Using
+        End If
+
+        Return resultTable
+        Exit Function
+
+ErrorHandler:
+        ' Close the connections if an error occurs
+        If con.State = ConnectionState.Open Then
+            con.Close()
+        End If
+        frmmain.Logg(Err.Description)
+        Return Nothing
+    End Function
+
+    Public Function GetColumnNames(ByVal databaseName As String, ByVal tableName As String) As List(Of String)
+        On Error GoTo ErrorHandler
+        Dim columnNames As New List(Of String)()
+        Dim schemaName As String = GetTableSchema(databaseName, tableName)
+
+        Dim query As String = $"SELECT COLUMN_NAME FROM {databaseName}.INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '{schemaName}' AND TABLE_NAME = '{tableName}'"
+
+        If prov = 1 OrElse prov = 2 Then
+            ' Using ADODB
+            Dim con As New ADODB.Connection()
+            Dim rs As New ADODB.Recordset()
+
+            con.Open(strlogin)
+            rs.Open(query, con, CursorTypeEnum.adOpenStatic, LockTypeEnum.adLockReadOnly)
+
+            While Not rs.EOF
+                columnNames.Add(rs.Fields("COLUMN_NAME").Value.ToString())
+                rs.MoveNext()
+            End While
+
+            rs.Close()
+            con.Close()
+        Else
+            ' Using System.Data.SqlClient
+            Using sqlCon As New SqlConnection(strlogin)
+                sqlCon.Open()
+                Using cmd As New SqlCommand(query, sqlCon)
+                    Using reader As SqlDataReader = cmd.ExecuteReader()
+                        While reader.Read()
+                            columnNames.Add(reader("COLUMN_NAME").ToString())
+                        End While
+                    End Using
+                End Using
+            End Using
+        End If
+
+        Return columnNames
+ErrorHandler:
+        ' Close the connections if an error occurs
+        If con.State = ConnectionState.Open Then
+            con.Close()
+        End If
+        frmmain.Logg(Err.Description)
+        Return Nothing
+
     End Function
 
 End Module

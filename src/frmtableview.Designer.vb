@@ -29,7 +29,10 @@ Partial Class frmtableview
         Me.Label1 = New System.Windows.Forms.Label()
         Me.CmdRefresh = New System.Windows.Forms.Button()
         Me.ToolTip1 = New System.Windows.Forms.ToolTip(Me.components)
+        Me.ContextMenuStrip1 = New System.Windows.Forms.ContextMenuStrip(Me.components)
+        Me.SearchRC = New System.Windows.Forms.ToolStripMenuItem()
         CType(Me.dtgridtable, System.ComponentModel.ISupportInitialize).BeginInit()
+        Me.ContextMenuStrip1.SuspendLayout()
         Me.SuspendLayout()
         '
         'dtgridtable
@@ -40,6 +43,7 @@ Partial Class frmtableview
         Me.dtgridtable.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize
         Me.dtgridtable.Location = New System.Drawing.Point(242, 12)
         Me.dtgridtable.Name = "dtgridtable"
+        Me.dtgridtable.RowHeadersVisible = False
         Me.dtgridtable.Size = New System.Drawing.Size(650, 464)
         Me.dtgridtable.TabIndex = 1
         '
@@ -83,6 +87,18 @@ Partial Class frmtableview
         Me.ToolTip1.SetToolTip(Me.CmdRefresh, "Refresh")
         Me.CmdRefresh.UseVisualStyleBackColor = True
         '
+        'ContextMenuStrip1
+        '
+        Me.ContextMenuStrip1.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.SearchRC})
+        Me.ContextMenuStrip1.Name = "ContextMenuStrip1"
+        Me.ContextMenuStrip1.Size = New System.Drawing.Size(110, 26)
+        '
+        'SearchRC
+        '
+        Me.SearchRC.Name = "SearchRC"
+        Me.SearchRC.Size = New System.Drawing.Size(109, 22)
+        Me.SearchRC.Text = "Search"
+        '
         'frmtableview
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
@@ -98,6 +114,7 @@ Partial Class frmtableview
         Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
         Me.Text = "Table View"
         CType(Me.dtgridtable, System.ComponentModel.ISupportInitialize).EndInit()
+        Me.ContextMenuStrip1.ResumeLayout(False)
         Me.ResumeLayout(False)
         Me.PerformLayout()
 
@@ -108,4 +125,6 @@ Partial Class frmtableview
     Friend WithEvents Label1 As Label
     Friend WithEvents CmdRefresh As Button
     Friend WithEvents ToolTip1 As ToolTip
+    Friend WithEvents ContextMenuStrip1 As ContextMenuStrip
+    Friend WithEvents SearchRC As ToolStripMenuItem
 End Class
