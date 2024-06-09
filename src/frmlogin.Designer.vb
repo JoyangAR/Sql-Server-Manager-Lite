@@ -41,13 +41,13 @@
         Me.components = New System.ComponentModel.Container()
         Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(frmlogin))
         Me.ToolTip1 = New System.Windows.Forms.ToolTip(Me.components)
+        Me.txtprovider = New System.Windows.Forms.TextBox()
         Me.Frame1 = New System.Windows.Forms.GroupBox()
         Me.optintegrated = New System.Windows.Forms.RadioButton()
         Me.txtparam = New System.Windows.Forms.TextBox()
         Me.txtdriver = New System.Windows.Forms.TextBox()
         Me.optodbc = New System.Windows.Forms.RadioButton()
         Me.optoledb = New System.Windows.Forms.RadioButton()
-        Me.txtprovider = New System.Windows.Forms.TextBox()
         Me.Label5 = New System.Windows.Forms.Label()
         Me.Label4 = New System.Windows.Forms.Label()
         Me.Label1 = New System.Windows.Forms.Label()
@@ -67,6 +67,21 @@
         Me.Label7 = New System.Windows.Forms.Label()
         Me.Frame1.SuspendLayout()
         Me.SuspendLayout()
+        '
+        'txtprovider
+        '
+        Me.txtprovider.AcceptsReturn = True
+        Me.txtprovider.BackColor = System.Drawing.SystemColors.Window
+        Me.txtprovider.Cursor = System.Windows.Forms.Cursors.IBeam
+        Me.txtprovider.ForeColor = System.Drawing.SystemColors.WindowText
+        Me.txtprovider.Location = New System.Drawing.Point(80, 89)
+        Me.txtprovider.MaxLength = 0
+        Me.txtprovider.Name = "txtprovider"
+        Me.txtprovider.RightToLeft = System.Windows.Forms.RightToLeft.No
+        Me.txtprovider.Size = New System.Drawing.Size(185, 20)
+        Me.txtprovider.TabIndex = 10
+        Me.txtprovider.Text = "MSOLEDBSQL"
+        Me.ToolTip1.SetToolTip(Me.txtprovider, "SQLOLEDB(Legacy)" & Global.Microsoft.VisualBasic.ChrW(13) & Global.Microsoft.VisualBasic.ChrW(10) & "MSOLEDBSQL" & Global.Microsoft.VisualBasic.ChrW(13) & Global.Microsoft.VisualBasic.ChrW(10) & "SQLNCLI11")
         '
         'Frame1
         '
@@ -130,6 +145,8 @@
         Me.txtdriver.RightToLeft = System.Windows.Forms.RightToLeft.No
         Me.txtdriver.Size = New System.Drawing.Size(185, 20)
         Me.txtdriver.TabIndex = 14
+        Me.txtdriver.Text = "SQL Server"
+        Me.ToolTip1.SetToolTip(Me.txtdriver, resources.GetString("txtdriver.ToolTip"))
         '
         'optodbc
         '
@@ -159,21 +176,6 @@
         Me.optoledb.TabStop = True
         Me.optoledb.Text = "OLE DB"
         Me.optoledb.UseVisualStyleBackColor = False
-        '
-        'txtprovider
-        '
-        Me.txtprovider.AcceptsReturn = True
-        Me.txtprovider.BackColor = System.Drawing.SystemColors.Window
-        Me.txtprovider.Cursor = System.Windows.Forms.Cursors.IBeam
-        Me.txtprovider.ForeColor = System.Drawing.SystemColors.WindowText
-        Me.txtprovider.Location = New System.Drawing.Point(80, 89)
-        Me.txtprovider.MaxLength = 0
-        Me.txtprovider.Name = "txtprovider"
-        Me.txtprovider.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.txtprovider.Size = New System.Drawing.Size(185, 20)
-        Me.txtprovider.TabIndex = 10
-        Me.txtprovider.Text = "MSOLEDBSQL"
-        Me.ToolTip1.SetToolTip(Me.txtprovider, "SQLOLEDB(Legacy)" & Global.Microsoft.VisualBasic.ChrW(13) & Global.Microsoft.VisualBasic.ChrW(10) & "MSOLEDBSQL" & Global.Microsoft.VisualBasic.ChrW(13) & Global.Microsoft.VisualBasic.ChrW(10) & "SQLNCLI11")
         '
         'Label5
         '

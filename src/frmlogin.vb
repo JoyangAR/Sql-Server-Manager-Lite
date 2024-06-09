@@ -149,6 +149,8 @@ Friend Class frmlogin
                     txtpwd.Text = cPwd
                     txtsvr.Text = servername
                     txtinst.Text = instance
+                    txtprovider.Text = provider
+                    txtdriver.Text = driver
                     chklocaldb.Checked = localdb
                     chktrust.Checked = trusted
                     chkautologin.Checked = autologin

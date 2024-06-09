@@ -120,6 +120,16 @@
   <metadata name="ToolTip1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>17, 17</value>
   </metadata>
+  <data name="txtdriver.ToolTip" xml:space="preserve">
+    <value>SQL Server(Legacy)
+SQL Server Native Client 10.0
+SQL Server Native Client 11.0
+ODBC Driver 11 for SQL Server
+ODBC Driver 13 for SQL Server
+ODBC Driver 13.1 for SQL Server
+ODBC Driver 17 for SQL Server
+ODBC Driver 18 for SQL Server</value>
+  </data>
   <metadata name="Timer1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>115, 17</value>
   </metadata>

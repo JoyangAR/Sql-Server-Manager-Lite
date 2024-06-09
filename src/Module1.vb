@@ -1216,7 +1216,7 @@ ErrorHandler:
             writer.WriteElementString("Username", cUser)
             'writer.WriteElementString("Password", cPwd)
             writer.WriteElementString("Password", Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(cPwd)))
-            If prov = 1 OrElse prov = 2 Then
+            If prov = 1 Then
                 writer.WriteElementString("ConnectMode", "OLEDB")
                 writer.WriteElementString("Provider", provider)
             ElseIf prov = 2 Then
