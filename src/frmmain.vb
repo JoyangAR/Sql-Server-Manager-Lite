@@ -1,5 +1,6 @@
 Option Strict Off
 Option Explicit On
+Imports System.Data.Common
 Imports System.IO
 Imports System.Linq
 Imports System.Net.NetworkInformation
@@ -14,6 +15,7 @@ Friend Class frmmain
     Dim dbpath As String
     Dim bckpath As String
     Public islocaldb As Boolean
+    Private IsDisconnection As Boolean = False
 
     Private Sub frmmain_Load(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles MyBase.Load
         LoadUser()
@@ -581,7 +583,7 @@ xc:
                     End If
                 End If
             Else
-                    Logg("Random check not passed")
+                Logg("Random check not passed")
             End If
 
         End If
@@ -1152,10 +1154,15 @@ xc:
     End Sub
     Private Sub frmmain_FormClosing(sender As Object, e As FormClosingEventArgs) Handles Me.FormClosing
         ' Check if frmLogin is open and close it
-        If Not frmlogin Is Nothing AndAlso Not frmlogin.IsDisposed Then
-            frmlogin.Close()
+        If IsDisconnection = False Then
+            If Not frmlogin Is Nothing AndAlso Not frmlogin.IsDisposed Then
+                frmlogin.Close()
+            End If
+        Else
+
         End If
     End Sub
+
 
     Private Sub cmdQueryEditor_Click(sender As Object, e As EventArgs) Handles cmdQueryEditor.Click
         frmqueryeditor.Icon = Me.Icon
@@ -1178,5 +1185,11 @@ xc:
             frmshrinkdialog.ShowDialog(Me)
         End If
 
+    End Sub
+
+    Private Sub cmddisconnect_Click(sender As Object, e As EventArgs) Handles cmddisconnect.Click
+        IsDisconnection = True
+        Me.Close()
+        frmlogin.Show()
     End Sub
 End Class

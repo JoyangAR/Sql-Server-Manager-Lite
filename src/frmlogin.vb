@@ -71,6 +71,7 @@ Friend Class frmlogin
             frmmain.Loadstr(connectionString)
             frmmain.Show()
             Me.Cursor = System.Windows.Forms.Cursors.Default
+            Me.Enabled = True
             Me.Hide()
         End If
         Me.Enabled = True

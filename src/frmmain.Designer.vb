@@ -62,6 +62,7 @@
         Me.cmdConfig = New System.Windows.Forms.Button()
         Me.cmdshrinkdb = New System.Windows.Forms.Button()
         Me.Frame3 = New System.Windows.Forms.GroupBox()
+        Me.cmddisconnect = New System.Windows.Forms.Button()
         Me.cmdclear = New System.Windows.Forms.Button()
         Me.txtlog = New System.Windows.Forms.TextBox()
         Me.Frame2 = New System.Windows.Forms.GroupBox()
@@ -287,6 +288,7 @@
         'Frame3
         '
         Me.Frame3.BackColor = System.Drawing.SystemColors.Control
+        Me.Frame3.Controls.Add(Me.cmddisconnect)
         Me.Frame3.Controls.Add(Me.cmdclear)
         Me.Frame3.Controls.Add(Me.txtlog)
         Me.Frame3.ForeColor = System.Drawing.SystemColors.ControlText
@@ -298,6 +300,19 @@
         Me.Frame3.TabIndex = 12
         Me.Frame3.TabStop = False
         Me.Frame3.Text = "Message"
+        '
+        'cmddisconnect
+        '
+        Me.cmddisconnect.BackColor = System.Drawing.SystemColors.Control
+        Me.cmddisconnect.Cursor = System.Windows.Forms.Cursors.Default
+        Me.cmddisconnect.ForeColor = System.Drawing.SystemColors.ControlText
+        Me.cmddisconnect.Location = New System.Drawing.Point(8, 184)
+        Me.cmddisconnect.Name = "cmddisconnect"
+        Me.cmddisconnect.RightToLeft = System.Windows.Forms.RightToLeft.No
+        Me.cmddisconnect.Size = New System.Drawing.Size(81, 25)
+        Me.cmddisconnect.TabIndex = 22
+        Me.cmddisconnect.Text = "Disconnect"
+        Me.cmddisconnect.UseVisualStyleBackColor = False
         '
         'cmdclear
         '
@@ -526,5 +541,6 @@
     Public WithEvents cmdQueryEditor As Button
     Public WithEvents cmdConfig As Button
     Public WithEvents cmdshrinkdb As Button
+    Public WithEvents cmddisconnect As Button
 #End Region
 End Class
