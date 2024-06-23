@@ -43,6 +43,7 @@ Partial Class frmtableview
         Me.dtgridtable.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize
         Me.dtgridtable.Location = New System.Drawing.Point(242, 12)
         Me.dtgridtable.Name = "dtgridtable"
+        Me.dtgridtable.ReadOnly = True
         Me.dtgridtable.RowHeadersVisible = False
         Me.dtgridtable.Size = New System.Drawing.Size(650, 464)
         Me.dtgridtable.TabIndex = 1
