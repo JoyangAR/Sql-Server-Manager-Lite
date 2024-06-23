@@ -8,6 +8,7 @@ Imports System.Data.SqlClient
 Imports System.Net
 Imports System.Net.NetworkInformation
 Imports System.Security.Principal
+Imports System.ServiceProcess
 Imports System.Text
 Imports System.Xml
 Imports ADODB
@@ -244,6 +245,167 @@ ErrorHandler:
         End If
         errmsg = Err.Description
         Return False
+    End Function
+
+    Function FirewallExcepted(ByRef mode As Boolean)
+        Try
+            Dim PortInUse As Boolean = IsPortInUse(1433)
+
+            If Not PortInUse Then
+                ' Get information from the connections table
+                Dim connections = IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpConnections()
+
+                ' Check if there is a local connection on port 1433
+                Dim isLocalPortInUse As Boolean = False
+
+                For Each connection As TcpConnectionInformation In connections
+                    If connection.LocalEndPoint.Port = 1433 Then
+                        isLocalPortInUse = True
+                        Exit For
+                    End If
+                Next
+
+                If Not isLocalPortInUse Then
+                    ' Add firewall exception for port 1433
+                    AddFirewallException(1433, "SQLServerException")
+                    Return ("Firewall exception applied for port 1433.")
+                Else
+                    Return ("Firewall exception not applied. Port 1433 is already in use.")
+                End If
+            Else
+                Return ("Firewall exception not applied. Port 1433 is already in use.")
+            End If
+        Catch ex As Exception
+            Return ("Failed to apply firewall exception: " & ex.Message)
+        End Try
+    End Function
+
+    Function ManageSQLBrowser(ByRef lmode As Boolean)
+        Dim serviceName As String = "SQLBrowser" ' SQL Browser's service name
+
+        If lmode Then
+            If IsServiceRunning(serviceName) Then
+                Return ("SQL Browser already running")
+            Else
+                frmmain.Logg("Starting SQL Browser...")
+
+                If GetServiceStartMode(serviceName) <> ServiceStartMode.Automatic Then
+                    frmmain.Logg(SetServiceStartMode(serviceName, ServiceStartMode.Automatic))
+                End If
+
+                Return StartService(serviceName)
+
+            End If
+        Else
+            frmmain.Logg("Stopping SQL Browser...")
+            If GetServiceStartMode(serviceName) <> ServiceStartMode.Manual Then
+                frmmain.Logg(SetServiceStartMode(serviceName, ServiceStartMode.Manual))
+            End If
+            Return StopService(serviceName)
+        End If
+    End Function
+
+    Function IsServiceRunning(ByVal serviceName As String) As Boolean
+        Dim controller As New ServiceController(serviceName)
+        Return controller.Status = ServiceControllerStatus.Running
+    End Function
+
+    Function GetServiceStartMode(ByVal serviceName As String) As ServiceStartMode
+        Dim service As New ServiceController(serviceName)
+        Dim regKey As Microsoft.Win32.RegistryKey = Nothing
+
+        Try
+            regKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey($"SYSTEM\CurrentControlSet\Services\{serviceName}")
+            Dim startMode As Object = regKey.GetValue("Start")
+
+            If startMode IsNot Nothing Then
+                Return DirectCast(startMode, ServiceStartMode)
+            End If
+        Finally
+            regKey?.Close()
+        End Try
+
+        Return ServiceStartMode.Manual
+    End Function
+
+    Function SetServiceStartMode(ByVal serviceName As String, ByVal startMode As ServiceStartMode)
+        Try
+            Dim regKey As RegistryKey = Registry.LocalMachine.OpenSubKey($"SYSTEM\CurrentControlSet\Services\{serviceName}", True)
+
+            If regKey IsNot Nothing Then
+                ' Change the start mode
+                Select Case startMode
+                    Case ServiceStartMode.Automatic
+                        regKey.SetValue("Start", 2) ' Value 2 represents automatic start
+                    Case ServiceStartMode.Manual
+                        regKey.SetValue("Start", 3) ' Value 3 represents manual start
+                    Case ServiceStartMode.Disabled
+                        regKey.SetValue("Start", 4) ' Value 4 represents that the service is disabled
+                End Select
+
+                ' Close the Registry key
+                regKey.Close()
+
+                ' Report the successful change
+                Return ($"Start mode of the service {serviceName} changed to {startMode}.")
+            Else
+                ' Registry entry not found
+                Return ("Error: Registry entry for the service is not found.")
+            End If
+        Catch ex As Exception
+            ' Another error while changing the service start mode
+            Return ("Error changing the service start mode: " & ex.Message)
+        End Try
+    End Function
+
+    Function StartService(ByVal serviceName As String)
+        Try
+            Using controller As New ServiceController(serviceName)
+                If controller.Status = ServiceControllerStatus.Stopped Then
+                    ' Start the service
+                    controller.Start()
+                    ' Wait until the service is in the 'Running' state
+                    controller.WaitForStatus(ServiceControllerStatus.Running)
+                    Return ($"The service {serviceName} has been started successfully.")
+                Else
+                    Return ($"The service {serviceName} is already running.")
+                End If
+            End Using
+        Catch ex As InvalidOperationException
+            ' The exception occurs if the service does not exist or if the service cannot be controlled (e.g., may require elevated privileges).
+            Return ($"Error attempting to start the service {serviceName}: {ex.Message}")
+        Catch ex As TimeoutException
+            ' The exception occurs if the timeout is exceeded while waiting for the service to reach the 'Running' state.
+            Return ($"Timeout error while starting the service {serviceName}: {ex.Message}")
+        Catch ex As Exception
+            ' Catch other unexpected exceptions
+            Return ($"Unexpected error while starting the service {serviceName}: {ex.Message}")
+        End Try
+    End Function
+
+
+    Function StopService(ByVal serviceName As String)
+        Dim controller As New ServiceController(serviceName)
+
+        If controller.Status = ServiceControllerStatus.Running Then
+            Try
+                controller.Stop()
+                controller.WaitForStatus(ServiceControllerStatus.Stopped)
+                Return ($"The service {serviceName} has been stopped successfully.")
+            Catch ex As InvalidOperationException
+                ' The exception occurs if the service does not exist or if the service cannot be controlled (e.g., may require elevated privileges).
+                Return ($"Error attempting to stopping the service {serviceName}: {ex.Message}")
+            Catch ex As TimeoutException
+                ' The exception occurs if the timeout is exceeded while waiting for the service to reach the 'Running' state.
+                Return ($"Timeout error while stopping the service {serviceName}: {ex.Message}")
+            Catch ex As Exception
+                ' Catch other unexpected exceptions
+                Return ($"Unexpected error while stopping the service {serviceName}: {ex.Message}")
+            End Try
+        Else
+            Return ($"The service {serviceName} is already stopped.")
+        End If
+        Return True
     End Function
 
     Function ConnectToDatabaseEngine(ByRef GivenConnectionString As String) As Boolean

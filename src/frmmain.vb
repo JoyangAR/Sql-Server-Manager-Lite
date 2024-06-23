@@ -54,46 +54,6 @@ Friend Class frmmain
         frmadduser.ShowDialog(Me)
     End Sub
 
-    Sub FirewallExcepted(ByRef mode As Boolean)
-        Wait(True)
-        Logg("Applying firewall exception...")
-        Try
-            Dim PortInUse As Boolean = IsPortInUse(1433)
-
-            If Not PortInUse Then
-                ' Get information from the connections table
-                Dim connections = IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpConnections()
-
-                ' Check if there is a local connection on port 1433
-                Dim isLocalPortInUse As Boolean = False
-
-                For Each connection As TcpConnectionInformation In connections
-                    If connection.LocalEndPoint.Port = 1433 Then
-                        isLocalPortInUse = True
-                        Exit For
-                    End If
-                Next
-
-                If Not isLocalPortInUse Then
-                    ' Add firewall exception for port 1433
-                    AddFirewallException(1433, "SQLServerException")
-                    Logg("Firewall exception applied for port 1433.")
-                Else
-                    Logg("Firewall exception not applied. Port 1433 is already in use.")
-                End If
-            Else
-                Logg("Firewall exception not applied. Port 1433 is already in use.")
-            End If
-        Catch ex As Exception
-            Logg("Failed to apply firewall exception: " & ex.Message)
-        End Try
-    End Sub
-
-
-
-
-
-
     Private Sub chkfirewall_CheckStateChanged(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles chkfirewall.CheckStateChanged
 
         If Me.chkfirewall.Checked = False Then
@@ -101,155 +61,16 @@ Friend Class frmmain
                 Exit Sub
             End If
         End If
-
-        FirewallExcepted(chkfirewall.Checked)
+        Wait(True)
+        Logg("Applying firewall exception...")
+        Logg(FirewallExcepted(chkfirewall.Checked))
+        Wait(False)
 
     End Sub
-
-
-
 
     Private Sub chksqlbrowser_CheckStateChanged(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles chksqlbrowser.CheckStateChanged
         ManageSQLBrowser(chksqlbrowser.Checked)
     End Sub
-
-    Sub ManageSQLBrowser(ByRef lmode As Boolean)
-        Dim serviceName As String = "SQLBrowser" ' SQL Browser's service name
-
-        If lmode Then
-            If IsServiceRunning(serviceName) Then
-                Logg("SQL Browser already running")
-            Else
-                Logg("Starting SQL Browser...")
-
-                If GetServiceStartMode(serviceName) <> ServiceStartMode.Automatic Then
-                    SetServiceStartMode(serviceName, ServiceStartMode.Automatic)
-                End If
-
-                If StartService(serviceName) Then
-                    Logg("SQL Browser has been started")
-                End If
-            End If
-        Else
-            Logg("Stopping SQL Browser...")
-            SetServiceStartMode(serviceName, ServiceStartMode.Manual)
-
-            If StopService(serviceName) Then
-                Logg("SQL Browser has been stopped")
-            End If
-        End If
-    End Sub
-
-    Function IsServiceRunning(ByVal serviceName As String) As Boolean
-        Dim controller As New ServiceController(serviceName)
-        Return controller.Status = ServiceControllerStatus.Running
-    End Function
-
-    Function GetServiceStartMode(ByVal serviceName As String) As ServiceStartMode
-        Dim service As New ServiceController(serviceName)
-        Dim regKey As Microsoft.Win32.RegistryKey = Nothing
-
-        Try
-            regKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey($"SYSTEM\CurrentControlSet\Services\{serviceName}")
-            Dim startMode As Object = regKey.GetValue("Start")
-
-            If startMode IsNot Nothing Then
-                Return DirectCast(startMode, ServiceStartMode)
-            End If
-        Finally
-            regKey?.Close()
-        End Try
-
-        Return ServiceStartMode.Manual
-    End Function
-
-    Sub SetServiceStartMode(ByVal serviceName As String, ByVal startMode As ServiceStartMode)
-        Try
-            Dim regKey As RegistryKey = Registry.LocalMachine.OpenSubKey($"SYSTEM\CurrentControlSet\Services\{serviceName}", True)
-
-            If regKey IsNot Nothing Then
-                ' Change the start mode
-                Select Case startMode
-                    Case ServiceStartMode.Automatic
-                        regKey.SetValue("Start", 2) ' Value 2 represents automatic start
-                    Case ServiceStartMode.Manual
-                        regKey.SetValue("Start", 3) ' Value 3 represents manual start
-                    Case ServiceStartMode.Disabled
-                        regKey.SetValue("Start", 4) ' Value 4 represents that the service is disabled
-                End Select
-
-                ' Close the Registry key
-                regKey.Close()
-
-                ' Report the successful change
-                Logg($"Start mode of the service {serviceName} changed to {startMode}.")
-            Else
-                ' Registry entry not found
-                Logg("Error: Registry entry for the service is not found.")
-            End If
-        Catch ex As Exception
-            ' Another error while changing the service start mode
-            Logg("Error changing the service start mode: " & ex.Message)
-        End Try
-    End Sub
-
-
-    Function StartService(ByVal serviceName As String)
-        Try
-            Using controller As New ServiceController(serviceName)
-                If controller.Status = ServiceControllerStatus.Stopped Then
-                    ' Start the service
-                    controller.Start()
-                    ' Wait until the service is in the 'Running' state
-                    controller.WaitForStatus(ServiceControllerStatus.Running)
-                    Logg($"The service {serviceName} has been started successfully.")
-                    Return True
-                Else
-                    Logg($"The service {serviceName} is already running.")
-                    Return True
-                End If
-            End Using
-        Catch ex As InvalidOperationException
-            ' The exception occurs if the service does not exist or if the service cannot be controlled (e.g., may require elevated privileges).
-            Logg($"Error attempting to start the service {serviceName}: {ex.Message}")
-            Return False
-        Catch ex As TimeoutException
-            ' The exception occurs if the timeout is exceeded while waiting for the service to reach the 'Running' state.
-            Logg($"Timeout error while starting the service {serviceName}: {ex.Message}")
-            Return False
-        Catch ex As Exception
-            ' Catch other unexpected exceptions
-            Logg($"Unexpected error while starting the service {serviceName}: {ex.Message}")
-            Return False
-        End Try
-    End Function
-
-
-    Function StopService(ByVal serviceName As String)
-        Dim controller As New ServiceController(serviceName)
-
-        If controller.Status = ServiceControllerStatus.Running Then
-            Try
-                controller.Stop()
-                controller.WaitForStatus(ServiceControllerStatus.Stopped)
-                Return True
-            Catch ex As InvalidOperationException
-                ' The exception occurs if the service does not exist or if the service cannot be controlled (e.g., may require elevated privileges).
-                Logg($"Error attempting to stopping the service {serviceName}: {ex.Message}")
-                Return False
-            Catch ex As TimeoutException
-                ' The exception occurs if the timeout is exceeded while waiting for the service to reach the 'Running' state.
-                Logg($"Timeout error while stopping the service {serviceName}: {ex.Message}")
-                Return False
-            Catch ex As Exception
-                ' Catch other unexpected exceptions
-                Logg($"Unexpected error while stopping the service {serviceName}: {ex.Message}")
-                Return False
-            End Try
-        End If
-        Return True
-    End Function
-
 
     Private Sub cmdadd_Click(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles cmdadd.Click
         Dim SelectedFile As String
@@ -1158,11 +979,8 @@ xc:
             If Not frmlogin Is Nothing AndAlso Not frmlogin.IsDisposed Then
                 frmlogin.Close()
             End If
-        Else
-
         End If
     End Sub
-
 
     Private Sub cmdQueryEditor_Click(sender As Object, e As EventArgs) Handles cmdQueryEditor.Click
         frmqueryeditor.Icon = Me.Icon
