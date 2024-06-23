@@ -106,6 +106,7 @@ Module Module1
             Using connection As New SqlConnection(strlogin)
                 connection.Open()
                 Using cmd As New SqlCommand(sql, connection)
+                    cmd.CommandTimeout = 0 ' No timeout
                     cmd.ExecuteNonQuery()
                 End Using
             End Using
@@ -160,6 +161,7 @@ ErrorHandler:
             Using connection As New SqlConnection(strlogin)
                 connection.Open()
                 Using cmd As New SqlCommand(query, connection)
+                    cmd.CommandTimeout = 0 ' No timeout
                     Using reader As SqlDataReader = cmd.ExecuteReader()
                         If reader.Read() Then
                             dbname = reader("LogicalName").ToString()
@@ -502,6 +504,7 @@ ErrorHandler:
                     commandText = $"RESTORE DATABASE [{db1}] FROM DISK='{bckpath}' WITH FILE=1, RECOVERY, MOVE '{dbfile}' TO '{NewDBDatapath}{db1}.mdf', MOVE '{logfile}' TO '{NewDBLogpath}{db1}_log.ldf'"
                 End If
                 Using cmd As New SqlCommand(commandText, connnection)
+                    cmd.CommandTimeout = 0 ' No timeout
                     cmd.ExecuteNonQuery()
                 End Using
             End Using
@@ -538,6 +541,7 @@ ErrorHandler:
                 Dim commandText As String = $"RESTORE DATABASE [{dbname}] FROM DISK = '{bckfile}' WITH REPLACE"
 
                 Using cmd As New SqlCommand(commandText, connection)
+                    cmd.CommandTimeout = 0 ' No timeout
                     cmd.ExecuteNonQuery()
                 End Using
             End Using
@@ -707,8 +711,7 @@ ErrorHandler:
                 For Each query As String In queries
                     ' Execute the query
                     Using command As New SqlCommand(query, connection)
-                        ' Adjust the execution timeout (in seconds)
-                        command.CommandTimeout = 600 ' 10 minutes
+                        command.CommandTimeout = 0 ' No timeout
                         Dim rowsAffected As Integer = command.ExecuteNonQuery()
                         ' Handle the execution result
                         If rowsAffected >= 0 Then totalRowsAffected += rowsAffected
@@ -948,6 +951,7 @@ ErrorHandler:
                 End If
 
                 Using cmd As New SqlCommand(commandSqlClient, connection)
+                    cmd.CommandTimeout = 0 ' No timeout
                     cmd.ExecuteNonQuery()
                 End Using
             End Using
@@ -993,6 +997,7 @@ ErrorHandler:
                 Dim commandText As String = $"DROP DATABASE [{dbname}]"
 
                 Using cmd As New SqlCommand(commandText, connection)
+                    cmd.CommandTimeout = 0 ' No timeout
                     cmd.ExecuteNonQuery()
                 End Using
             End Using
@@ -1621,6 +1626,7 @@ ErrorHandler:
                 connection.Open()
                 Dim commandText As String = $"sp_detach_db '{dbname}'"
                 Using cmd As New SqlCommand(commandText, connection)
+                    cmd.CommandTimeout = 0 ' No timeout
                     cmd.ExecuteNonQuery()
                 End Using
             End Using
