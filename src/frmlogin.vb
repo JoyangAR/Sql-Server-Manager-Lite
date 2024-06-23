@@ -56,7 +56,7 @@ Friend Class frmlogin
             End If
         End If
         Debug.WriteLine(connectionString)
-        If ConnectToDatabase(connectionString) Then
+        If ConnectToDatabaseEngine(connectionString) Then
             cUser = txtname.Text
             cPwd = txtpwd.Text
             servername = If(String.IsNullOrEmpty(txtsvr.Text), "localhost", txtsvr.Text)
