@@ -154,7 +154,7 @@ Friend Class frmmain
 
                 ' Ensure that there is a selected item in the ListBox
                 If lstdb.SelectedIndex <> -1 Then
-                    Dim selectedDatabase As String = lstdb.Items(lstdb.SelectedIndex).ToString()
+                    Dim selectedDatabase As String = DirectCast(lstdb.SelectedItem, Object).DatabaseName
 
                     ' Call the DeleteDatabase function and handle the result
                     If DeleteDatabase(selectedDatabase, err1) Then
@@ -488,30 +488,6 @@ xc:
         End If
         e.DrawFocusRectangle()
     End Sub
-
-    'Sub LoadDatabase()
-
-    '    lstdb.Items.Clear()
-
-    '    Dim col1 As Collection
-    '    Dim d As Integer
-
-    '    cmdguest.Text = "Guest"
-    '    cmdguest.BackColor = System.Drawing.ColorTranslator.FromOle(vGray)
-
-    '    col1 = ListDatabases()
-
-    '    For d = 1 To col1.Count()
-    '        lstdb.Items.Add(col1.Item(d))
-    '    Next d
-
-    '    If lstdb.Items.Count > 0 Then
-    '        KeyDb(True)
-    '    Else
-    '        KeyDb(False)
-    '    End If
-
-    'End Sub
 
     Sub ProcessUpload(ByRef bakfile As String)
         Dim newpath As String = "" ' Temporal .bak path
