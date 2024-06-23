@@ -361,6 +361,7 @@
         '
         Me.lstdb.BackColor = System.Drawing.SystemColors.Window
         Me.lstdb.Cursor = System.Windows.Forms.Cursors.Default
+        Me.lstdb.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed
         Me.lstdb.ForeColor = System.Drawing.SystemColors.WindowText
         Me.lstdb.Location = New System.Drawing.Point(8, 24)
         Me.lstdb.Name = "lstdb"

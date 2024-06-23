@@ -21,8 +21,8 @@ Friend Class frmrepairdialog
 		Me.Hide()
 		' Ensure that there is a selected item in the ListBox
 		If frmmain.lstdb.SelectedIndex <> -1 Then
-			Dim selectedItem As String = frmmain.lstdb.SelectedItem.ToString()
-			frmmain.ProcessRepair(selectedItem, pmode1)
+			Dim selectedDatabase As String = DirectCast(frmmain.lstdb.SelectedItem, Object).DatabaseName
+			frmmain.ProcessRepair(selectedDatabase, pmode1)
 		End If
 		Me.Close()
 	End Sub

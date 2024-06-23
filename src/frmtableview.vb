@@ -1,8 +1,7 @@
 ﻿Imports System.Collections.Generic
 
 Public Class frmtableview
-
-    Private selectedDatabase As String = frmmain.lstdb.SelectedItem.ToString()
+    Private selectedDatabase As String = DirectCast(frmmain.lstdb.SelectedItem, Object).DatabaseName
 
     Private Sub frmtableview_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         ' Get table names for the selected database

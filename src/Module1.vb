@@ -246,24 +246,24 @@ ErrorHandler:
         Return False
     End Function
 
-    Function ConnectToDatabase(ByRef str_Renamed As String) As Boolean
+    Function ConnectToDatabaseEngine(ByRef GivenConnectionString As String) As Boolean
         On Error GoTo ErrorHandler
 
-        Debug.Print(str_Renamed)
-            If prov = 1 OrElse prov = 2 Then
-                ' Using ADODB
-                con.CommandTimeout = 0
-                con.CursorLocation = ADODB.CursorLocationEnum.adUseServer
-                con.Open(str_Renamed)
-                con.Close()
-            Else
-                ' Using System.Data.SqlClient
-                connection.ConnectionString = str_Renamed
-                connection.Open()
-                connection.Close()
-            End If
+        Debug.Print(GivenConnectionString)
+        If prov = 1 OrElse prov = 2 Then
+            ' Using ADODB
+            con.CommandTimeout = 0
+            con.CursorLocation = ADODB.CursorLocationEnum.adUseServer
+            con.Open(GivenConnectionString)
+            con.Close()
+        Else
+            ' Using System.Data.SqlClient
+            connection.ConnectionString = GivenConnectionString
+            connection.Open()
+            connection.Close()
+        End If
 
-            Return True
+        Return True
 
 
         Exit Function
@@ -449,22 +449,26 @@ ErrorHandler:
     Function ListDatabases() As Collection
         On Error GoTo ErrorHandler
         Dim col As New Collection
-        Dim tmp As String
+        Dim dbName As String
+        Dim dbStatus As String
 
         If prov = 1 OrElse prov = 2 Then
             ' Using ADODB
             Dim rs1 As New ADODB.Recordset
             con.Open(strlogin)
-            rs1 = con.Execute("sp_databases")
+            rs1 = con.Execute("SELECT name, state_desc FROM sys.databases WHERE name NOT IN ('master', 'msdb', 'tempdb', 'model')")
 
             Do Until rs1.EOF
-                tmp = ""
-                tmp = rs1.Fields(0).Value
+                dbName = rs1.Fields("name").Value
+                dbStatus = rs1.Fields("state_desc").Value
 
-                If LCase(tmp) <> "master" And LCase(tmp) <> "msdb" And LCase(tmp) <> "tempdb" And LCase(tmp) <> "model" Then
-                    col.Add(tmp)
+                Dim displayName As String = dbName
+                If LCase(dbStatus) <> "online" Then
+                    displayName &= " (!)"
                 End If
 
+                Dim db = New With {.DatabaseName = dbName, .DisplayName = displayName}
+                col.Add(db)
                 rs1.MoveNext()
             Loop
 
@@ -475,14 +479,21 @@ ErrorHandler:
             Using connection As New SqlConnection(strlogin)
                 connection.Open()
 
-                Dim query As String = "SELECT name FROM sys.databases WHERE name NOT IN ('master', 'msdb', 'tempdb', 'model')"
+                Dim query As String = "SELECT name, state_desc FROM sys.databases WHERE name NOT IN ('master', 'msdb', 'tempdb', 'model')"
                 Using cmd As New SqlCommand(query, connection)
                     Dim reader As SqlDataReader = cmd.ExecuteReader()
 
                     While reader.Read()
-                        tmp = ""
-                        tmp = reader("name").ToString()
-                        col.Add(tmp)
+                        dbName = reader("name").ToString()
+                        dbStatus = reader("state_desc").ToString()
+
+                        Dim displayName As String = dbName
+                        If LCase(dbStatus) <> "online" Then
+                            displayName &= " (!)"
+                        End If
+
+                        Dim db = New With {.DatabaseName = dbName, .DisplayName = displayName}
+                        col.Add(db)
                     End While
                 End Using
             End Using
@@ -501,6 +512,7 @@ ErrorHandler:
             connection.Close()
         End If
     End Function
+
     Function ExecuteQuery(ByRef queryText As String, ByRef queryResult As String, Optional ByRef errorMessage As String = "") As Boolean
         On Error GoTo ErrorHandler
 
@@ -891,7 +903,6 @@ ErrorHandler:
         errmsg = Err.Description
         BackupDatabase = False
     End Function
-
     Sub FilterInput(ByRef KeyAscii As Short)
         KeyAscii = Format(KeyAscii, GetKeyAsciiMode())
     End Sub

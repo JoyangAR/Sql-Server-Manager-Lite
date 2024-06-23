@@ -15,6 +15,37 @@ Friend Class frmmain
     Dim bckpath As String
     Public islocaldb As Boolean
 
+    Private Sub frmmain_Load(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles MyBase.Load
+        LoadUser()
+        LoadDatabase()
+        windrive = System.IO.Path.GetPathRoot(System.Environment.SystemDirectory)
+        If Not islocaldb Then
+            dbpath = GetDefaultDataAndLogLocations()
+        Else
+            dbpath = GetDatabasePath()
+        End If
+
+        'Check If port 1433 Is open
+        If Not islocaldb Then chkfirewall.CheckState = IsPortOpen(1433)
+        If islocaldb Then chkfirewall.Enabled = False
+
+        'Check If the SQLBrowser service Is installed And running
+        Dim serviceName As String = "SQLBrowser"
+        chksqlbrowser.Enabled = ServiceController.GetServices().Any(Function(s) s.ServiceName = serviceName)
+
+        If chksqlbrowser.Enabled Then
+            Dim serviceController As New ServiceController(serviceName)
+            chksqlbrowser.CheckState = If(serviceController.Status = ServiceControllerStatus.Running, CheckState.Checked, CheckState.Unchecked)
+        End If
+        Dim errmsg As String = ""
+        Dim version As String = ""
+        If GetInstanceVersion(version, errmsg) Then
+            'Display SQL Server version
+            Logg($"SQL Server version: {version}")
+        Else
+            Logg(errmsg)
+        End If
+    End Sub
 
     Private Sub adduser_Click(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles adduser.Click
         ' Replace VB6.ShowForm
@@ -263,8 +294,7 @@ Friend Class frmmain
         Wait(True)
         ' Ensure that there is a selected item in the ListBox
         If lstdb.SelectedIndex <> -1 Then
-            Dim selectedItem As String = lstdb.SelectedItem.ToString()
-            ProcessBackup(selectedItem)
+            ProcessBackup(DirectCast(lstdb.SelectedItem, Object).DatabaseName)
         End If
         Wait(False)
 
@@ -439,7 +469,7 @@ ErrorHandler:
         If MsgBox("Are you sure do you want to clear the log file for this database?" & vbCrLf & "The database might be less reliable", MsgBoxStyle.Exclamation + MsgBoxStyle.YesNo, "") = MsgBoxResult.Yes Then
             ' Ensure that there is a selected item in the ListBox
             If lstdb.SelectedIndex <> -1 Then
-                Dim selectedDatabase As String = lstdb.SelectedItem.ToString()
+                Dim selectedDatabase As String = DirectCast(lstdb.SelectedItem, Object).DatabaseName
 
                 ' Call the RebuildLog function
                 RebuildLog(selectedDatabase)
@@ -484,7 +514,8 @@ ErrorHandler:
         End If
 
         Wait(True)
-        ProcessRestore(RstFile, lstdb.SelectedItem.ToString())
+        Dim selectedDatabase As String = DirectCast(lstdb.SelectedItem, Object).DatabaseName
+        ProcessRestore(RstFile, selectedDatabase.ToString())
         Wait(False)
 
         Exit Sub
@@ -510,19 +541,21 @@ xc:
             If PromptForRandomSecurityCheck("Detach database") = True Then
                 System.Windows.Forms.Application.DoEvents()
 
-                Dim selectedDatabase As String = If(lstdb.SelectedIndex <> -1, lstdb.SelectedItem.ToString(), String.Empty)
+                If lstdb.SelectedIndex <> -1 Then
+                    Dim selectedDatabase As String = DirectCast(lstdb.SelectedItem, Object).DatabaseName
 
-                If DetachDatabase(selectedDatabase, err1) Then
-                    Logg("Database " & selectedDatabase & " detached!")
-                    Me.LoadDatabase()
-                Else
-                    Logg("Cannot detach database: " & err1)
+                    If DetachDatabase(selectedDatabase, err1) Then
+                        Logg("Database " & selectedDatabase & " detached!")
+                        Me.LoadDatabase()
+                    Else
+                        Logg("Cannot detach database: " & err1)
+                    End If
                 End If
             Else
                 Logg("Random check not passed")
             End If
-
         End If
+
 
     End Sub
 
@@ -539,16 +572,16 @@ xc:
 
             If PromptForRandomSecurityCheck("Kill connections") = True Then
                 System.Windows.Forms.Application.DoEvents()
-                Dim selectedDatabase As String = If(lstdb.SelectedIndex <> -1, lstdb.SelectedItem.ToString(), String.Empty)
-
-
-                If KillConnections(selectedDatabase, err1) Then
-                    Logg("Existing connections to the database " & selectedDatabase & " killed!")
-                Else
-                    Logg("Cannot kill connections to the database: " & err1)
+                If lstdb.SelectedIndex <> -1 Then
+                    Dim selectedDatabase As String = DirectCast(lstdb.SelectedItem, Object).DatabaseName
+                    If KillConnections(selectedDatabase, err1) Then
+                        Logg("Existing connections to the database " & selectedDatabase & " killed!")
+                    Else
+                        Logg("Cannot kill connections to the database: " & err1)
+                    End If
                 End If
             Else
-                Logg("Random check not passed")
+                    Logg("Random check not passed")
             End If
 
         End If
@@ -565,43 +598,10 @@ xc:
         Dim tablesForm As New frmtableview()
 
         ' Show frmtables
-        tablesForm.Text = lstdb.SelectedItem
+        tablesForm.Text = DirectCast(lstdb.SelectedItem, Object).DatabaseName
         tablesForm.Icon = Me.Icon
         tablesForm.Show()
     End Sub
-
-    Private Sub frmmain_Load(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles MyBase.Load
-        LoadUser()
-        LoadDatabase()
-        windrive = System.IO.Path.GetPathRoot(System.Environment.SystemDirectory)
-        If Not islocaldb Then
-            dbpath = GetDefaultDataAndLogLocations()
-        Else
-            dbpath = GetDatabasePath()
-        End If
-
-        'Check If port 1433 Is open
-        If Not islocaldb Then chkfirewall.CheckState = IsPortOpen(1433)
-        If islocaldb Then chkfirewall.Enabled = False
-
-        'Check If the SQLBrowser service Is installed And running
-        Dim serviceName As String = "SQLBrowser"
-        chksqlbrowser.Enabled = ServiceController.GetServices().Any(Function(s) s.ServiceName = serviceName)
-
-        If chksqlbrowser.Enabled Then
-            Dim serviceController As New ServiceController(serviceName)
-            chksqlbrowser.CheckState = If(serviceController.Status = ServiceControllerStatus.Running, CheckState.Checked, CheckState.Unchecked)
-        End If
-        Dim errmsg As String = ""
-        Dim version As String = ""
-        If GetInstanceVersion(version, errmsg) Then
-            'Display SQL Server version
-            Logg($"SQL Server version: {version}")
-        Else
-            Logg(errmsg)
-        End If
-    End Sub
-
 
     Private Function IsPortOpen(port As Integer) As Boolean
         Try
@@ -640,28 +640,55 @@ xc:
     End Sub
 
     Sub LoadDatabase()
-
         lstdb.Items.Clear()
 
-        Dim col1 As Collection
-        Dim d As Integer
+        Dim col1 As Collection = ListDatabases()
 
         cmdguest.Text = "Guest"
         cmdguest.BackColor = System.Drawing.ColorTranslator.FromOle(vGray)
 
-        col1 = ListDatabases()
-
-        For d = 1 To col1.Count()
-            lstdb.Items.Add(col1.Item(d))
-        Next d
+        For Each item As Object In col1
+            lstdb.Items.Add(item)
+        Next
 
         If lstdb.Items.Count > 0 Then
             KeyDb(True)
         Else
             KeyDb(False)
         End If
-
     End Sub
+    Private Sub lstdb_DrawItem(sender As Object, e As DrawItemEventArgs) Handles lstdb.DrawItem
+        e.DrawBackground()
+        If e.Index >= 0 Then
+            Dim item = lstdb.Items(e.Index)
+            e.Graphics.DrawString(item.DisplayName, e.Font, Brushes.Black, e.Bounds)
+        End If
+        e.DrawFocusRectangle()
+    End Sub
+
+    'Sub LoadDatabase()
+
+    '    lstdb.Items.Clear()
+
+    '    Dim col1 As Collection
+    '    Dim d As Integer
+
+    '    cmdguest.Text = "Guest"
+    '    cmdguest.BackColor = System.Drawing.ColorTranslator.FromOle(vGray)
+
+    '    col1 = ListDatabases()
+
+    '    For d = 1 To col1.Count()
+    '        lstdb.Items.Add(col1.Item(d))
+    '    Next d
+
+    '    If lstdb.Items.Count > 0 Then
+    '        KeyDb(True)
+    '    Else
+    '        KeyDb(False)
+    '    End If
+
+    'End Sub
 
     Sub ProcessUpload(ByRef bakfile As String)
         Dim newpath As String = "" ' Temporal .bak path
@@ -1067,7 +1094,7 @@ xc:
         If Not prov = 3 Then cmdguest.Enabled = True
         ' Ensure that there is a selected item in the ListBox
         If lstdb.SelectedIndex <> -1 Then
-            Dim selectedDatabase As String = lstdb.SelectedItem.ToString()
+            Dim selectedDatabase As String = DirectCast(lstdb.SelectedItem, Object).DatabaseName
 
             ' Call the LookGuest function if islocaldb is False
             If Not prov = 3 Then LookGuest(selectedDatabase)
