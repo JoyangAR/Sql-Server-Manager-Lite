@@ -15,11 +15,11 @@ SQL Server Manager Lite is a simple tool designed for interacting with Microsoft
 - **Repair:** Repair a corrupted SQL Server database.
 - **Size Information:** Retrieve and display the size information of MDF and LDF files for a database.
 - **Kill Connections:** Terminate active connections to a SQL Server database.
-- **Show Tables:** View a list of tables in a SQL Server database.
+- **Show Tables:** View a database's tables and it's rows.
 - **Show Rows:** Display rows of a specific table in a SQL Server database.
-- **Set Guest User:** Set the guest user for a SQL Server database.
+- **Set Guest User:** Set a database's guest user.
 - **User Management:** Add, change passwords, and delete users for a SQL Server instance.
-- **Default MDF/LDF Location Selection:** Set the default location for MDF and LDF files of a SQL Server database.
+- **Default MDF/LDF Location Selection:** Set the default location for MDF and LDF files of new SQL Server databases.
 - **Query Editor:** Use the included basic query editor for the creation, editing, and execution of SQL queries.
 
 ## Acknowledgments
