@@ -209,10 +209,15 @@ Friend Class frmlogin
         Me.txtprovider.Enabled = Me.optoledb.Checked
         Me.txtdriver.Enabled = Me.optodbc.Checked
         If Not chkautologin.Checked Then Me.Enabled = True
+        txtsvr.Enabled = Not chklocaldb.Checked
+        txtinst.Enabled = Not chklocaldb.Checked
     End Sub
 
     Private Sub optintegrated_CheckedChanged(sender As Object, e As EventArgs) Handles optintegrated.CheckedChanged
         RefreshObjects()
     End Sub
 
+    Private Sub chklocaldb_CheckedChanged(sender As Object, e As EventArgs) Handles chklocaldb.CheckedChanged
+        RefreshObjects()
+    End Sub
 End Class
