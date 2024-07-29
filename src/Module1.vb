@@ -630,7 +630,7 @@ ErrorHandler:
 
                 Dim displayName As String = dbName
                 If LCase(dbStatus) <> "online" Then
-                    displayName &= " (!)"
+                    displayName &= $" ({LCase(dbStatus)})"
                 End If
 
                 Dim db = New With {.DatabaseName = dbName, .DisplayName = displayName}
@@ -655,7 +655,7 @@ ErrorHandler:
 
                         Dim displayName As String = dbName
                         If LCase(dbStatus) <> "online" Then
-                            displayName &= " (!)"
+                            displayName &= $" ({LCase(dbStatus)})"
                         End If
 
                         Dim db = New With {.DatabaseName = dbName, .DisplayName = displayName}
