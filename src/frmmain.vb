@@ -28,7 +28,7 @@ Friend Class frmmain
         End If
 
         'Check If port 1433 Is open
-        If Not islocaldb Then chkfirewall.CheckState = IsPortOpen(1433)
+        If Not islocaldb Then chkfirewall.Checked = IsPortOpen(1433)
         If islocaldb Then chkfirewall.Enabled = False
 
         'Check If the SQLBrowser service Is installed And running
@@ -37,7 +37,7 @@ Friend Class frmmain
 
         If chksqlbrowser.Enabled Then
             Dim serviceController As New ServiceController(serviceName)
-            chksqlbrowser.CheckState = If(serviceController.Status = ServiceControllerStatus.Running, CheckState.Checked, CheckState.Unchecked)
+            chksqlbrowser.Checked = If(serviceController.Status = ServiceControllerStatus.Running, CheckState.Checked, CheckState.Unchecked)
         End If
         Dim errmsg As String = ""
         Dim version As String = ""
@@ -61,15 +61,6 @@ Friend Class frmmain
                 Exit Sub
             End If
         End If
-        Wait(True)
-        Logg("Applying firewall exception...")
-        Logg(FirewallExcepted(chkfirewall.Checked))
-        Wait(False)
-
-    End Sub
-
-    Private Sub chksqlbrowser_CheckStateChanged(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles chksqlbrowser.CheckStateChanged
-        ManageSQLBrowser(chksqlbrowser.Checked)
     End Sub
 
     Private Sub cmdadd_Click(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles cmdadd.Click
@@ -189,7 +180,7 @@ Friend Class frmmain
 
                 ' Ensure that there is a selected item in the ListBox
                 If lstuser.SelectedIndex <> -1 Then
-                    Dim selectedUser As String = lstuser.Items(lstuser.SelectedIndex).ToString()
+                    Dim selectedUser As String = DirectCast(lstdb.SelectedItem, Object).DatabaseName.ToString()
 
                     ' Call the DeleteAccount function and handle the result
                     If DeleteSqlAccount(selectedUser, err1) Then
@@ -225,7 +216,7 @@ Friend Class frmmain
             Exit Sub
         End If
 
-        GetDatabaseFilesLocation(lstdb.Items(lstdb.SelectedIndex).ToString(), mdf, ldf)
+        GetDatabaseFilesLocation(DirectCast(lstdb.SelectedItem, Object).DatabaseName.ToString(), mdf, ldf)
         mdfsize = New System.IO.FileInfo(mdf).Length
         ldfsize = New System.IO.FileInfo(ldf).Length
 
@@ -253,7 +244,7 @@ Friend Class frmmain
             strldf = System.Math.Round(ldfsize, 3) & " B"
         End If
 
-        msg1 = "DB Name: " & lstdb.Items(lstdb.SelectedIndex).ToString() & vbCrLf & "DB Filesize: " & strmdf & vbCrLf & "Log Filesize: " & strldf & vbCrLf & "DB Data: " & mdf & vbCrLf & "DB Log: " & ldf
+        msg1 = "DB Name: " & DirectCast(lstdb.SelectedItem, Object).DatabaseName.ToString() & vbCrLf & "DB Filesize: " & strmdf & vbCrLf & "Log Filesize: " & strldf & vbCrLf & "DB Data: " & mdf & vbCrLf & "DB Log: " & ldf
         Logg(msg1)
         Exit Sub
 
@@ -271,14 +262,14 @@ ErrorHandler:
 
 
         If UCase(cmdguest.Text) = "GUEST ON" Then
-            ConfigureGuestAccess(lstdb.Items(lstdb.SelectedIndex).ToString(), False)
-            Logg("Guest account for " & lstdb.Items(lstdb.SelectedIndex).ToString() & " disabled")
+            ConfigureGuestAccess(DirectCast(lstdb.SelectedItem, Object).DatabaseName.ToString(), False)
+            Logg("Guest account for " & DirectCast(lstdb.SelectedItem, Object).DatabaseName.ToString() & " disabled")
         ElseIf UCase(cmdguest.Text) = "GUEST OFF" Then
-            ConfigureGuestAccess(lstdb.Items(lstdb.SelectedIndex).ToString(), True)
-            Logg("Guest account for " & lstdb.Items(lstdb.SelectedIndex).ToString() & " enabled")
+            ConfigureGuestAccess(DirectCast(lstdb.SelectedItem, Object).DatabaseName.ToString(), True)
+            Logg("Guest account for " & DirectCast(lstdb.SelectedItem, Object).DatabaseName.ToString() & " enabled")
         End If
 
-        LookGuest(lstdb.Items(lstdb.SelectedIndex).ToString())
+        LookGuest(DirectCast(lstdb.SelectedItem, Object).DatabaseName.ToString())
 
 
     End Sub
@@ -986,4 +977,5 @@ xc:
         Me.Close()
         frmlogin.Show()
     End Sub
+
 End Class
