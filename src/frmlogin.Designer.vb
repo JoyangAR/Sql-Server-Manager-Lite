@@ -42,10 +42,10 @@
         Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(frmlogin))
         Me.ToolTip1 = New System.Windows.Forms.ToolTip(Me.components)
         Me.txtprovider = New System.Windows.Forms.TextBox()
+        Me.txtdriver = New System.Windows.Forms.TextBox()
         Me.Frame1 = New System.Windows.Forms.GroupBox()
         Me.optintegrated = New System.Windows.Forms.RadioButton()
         Me.txtparam = New System.Windows.Forms.TextBox()
-        Me.txtdriver = New System.Windows.Forms.TextBox()
         Me.optodbc = New System.Windows.Forms.RadioButton()
         Me.optoledb = New System.Windows.Forms.RadioButton()
         Me.Label5 = New System.Windows.Forms.Label()
@@ -82,6 +82,22 @@
         Me.txtprovider.TabIndex = 10
         Me.txtprovider.Text = "MSOLEDBSQL"
         Me.ToolTip1.SetToolTip(Me.txtprovider, "SQLOLEDB(Legacy)" & Global.Microsoft.VisualBasic.ChrW(13) & Global.Microsoft.VisualBasic.ChrW(10) & "MSOLEDBSQL" & Global.Microsoft.VisualBasic.ChrW(13) & Global.Microsoft.VisualBasic.ChrW(10) & "SQLNCLI11")
+        '
+        'txtdriver
+        '
+        Me.txtdriver.AcceptsReturn = True
+        Me.txtdriver.BackColor = System.Drawing.SystemColors.Window
+        Me.txtdriver.Cursor = System.Windows.Forms.Cursors.IBeam
+        Me.txtdriver.Enabled = False
+        Me.txtdriver.ForeColor = System.Drawing.SystemColors.WindowText
+        Me.txtdriver.Location = New System.Drawing.Point(80, 145)
+        Me.txtdriver.MaxLength = 0
+        Me.txtdriver.Name = "txtdriver"
+        Me.txtdriver.RightToLeft = System.Windows.Forms.RightToLeft.No
+        Me.txtdriver.Size = New System.Drawing.Size(185, 20)
+        Me.txtdriver.TabIndex = 14
+        Me.txtdriver.Text = "SQL Server"
+        Me.ToolTip1.SetToolTip(Me.txtdriver, resources.GetString("txtdriver.ToolTip"))
         '
         'Frame1
         '
@@ -131,22 +147,6 @@
         Me.txtparam.RightToLeft = System.Windows.Forms.RightToLeft.No
         Me.txtparam.Size = New System.Drawing.Size(148, 20)
         Me.txtparam.TabIndex = 15
-        '
-        'txtdriver
-        '
-        Me.txtdriver.AcceptsReturn = True
-        Me.txtdriver.BackColor = System.Drawing.SystemColors.Window
-        Me.txtdriver.Cursor = System.Windows.Forms.Cursors.IBeam
-        Me.txtdriver.Enabled = False
-        Me.txtdriver.ForeColor = System.Drawing.SystemColors.WindowText
-        Me.txtdriver.Location = New System.Drawing.Point(80, 145)
-        Me.txtdriver.MaxLength = 0
-        Me.txtdriver.Name = "txtdriver"
-        Me.txtdriver.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.txtdriver.Size = New System.Drawing.Size(185, 20)
-        Me.txtdriver.TabIndex = 14
-        Me.txtdriver.Text = "SQL Server"
-        Me.ToolTip1.SetToolTip(Me.txtdriver, resources.GetString("txtdriver.ToolTip"))
         '
         'optodbc
         '
