@@ -1820,7 +1820,7 @@ ErrorHandler:
             ' Using ADODB
             Dim rsTables As New ADODB.Recordset
             con.Open(strlogin)
-            con.Execute("USE " & selectedDatabase)
+            con.Execute("USE [" & selectedDatabase & "]")
 
             ' Query to get table names
             rsTables.Open("SELECT table_name FROM information_schema.tables WHERE table_type = 'BASE TABLE'", con, ADODB.CursorTypeEnum.adOpenStatic, ADODB.LockTypeEnum.adLockOptimistic)
@@ -1835,7 +1835,7 @@ ErrorHandler:
             ' Using System.Data.SqlClient
             Using sqlCon As New SqlConnection(strlogin)
                 sqlCon.Open()
-                Dim query As String = $"USE {selectedDatabase} Select TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'"
+                Dim query As String = $"USE [{selectedDatabase}] Select TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'"
                 Using cmd As New SqlCommand(query, sqlCon)
                     Dim reader As SqlDataReader = cmd.ExecuteReader()
                     While reader.Read()
@@ -1934,7 +1934,7 @@ ErrorHandler:
             ' Using ADODB
 
             con.Open(strlogin)
-            Dim query As String = $"SELECT TABLE_SCHEMA FROM {databaseName}.INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = '{tableName}'"
+            Dim query As String = $"SELECT TABLE_SCHEMA FROM [{databaseName}].[INFORMATION_SCHEMA].[TABLES] WHERE TABLE_NAME = '{tableName}'"
 
             ' ADODB uses a Recordset to execute queries and obtain results
             Dim rs As Recordset = con.Execute(query)
@@ -1947,7 +1947,7 @@ ErrorHandler:
             ' Using System.Data.SqlClient
             Using sqlCon As New SqlConnection(strlogin)
                 sqlCon.Open()
-                Dim query As String = $"SELECT TABLE_SCHEMA FROM {databaseName}.INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = @TableName"
+                Dim query As String = $"SELECT TABLE_SCHEMA FROM [{databaseName}].[INFORMATION_SCHEMA].[TABLES] WHERE TABLE_NAME = @TableName"
                 Using cmd As New SqlCommand(query, sqlCon)
                     cmd.Parameters.AddWithValue("@TableName", tableName)
                     Dim result As Object = cmd.ExecuteScalar()
@@ -2032,7 +2032,7 @@ ErrorHandler:
         Dim columnNames As New List(Of String)()
         Dim schemaName As String = GetTableSchema(databaseName, tableName)
 
-        Dim query As String = $"SELECT COLUMN_NAME FROM {databaseName}.INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '{schemaName}' AND TABLE_NAME = '{tableName}'"
+        Dim query As String = $"SELECT COLUMN_NAME FROM [{databaseName}].[INFORMATION_SCHEMA].[COLUMNS] WHERE TABLE_SCHEMA = '{schemaName}' AND TABLE_NAME = '{tableName}'"
 
         If prov = 1 OrElse prov = 2 Then
             ' Using ADODB
