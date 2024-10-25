@@ -251,23 +251,7 @@ Public Class frmqueryeditor
         If openFileDialog.ShowDialog() = DialogResult.OK Then
             ' Gets the name of the selected file
             Dim selectedFile As String = openFileDialog.FileName
-            loadedFile = selectedFile
-            ' Tries to read the file content
-            Try
-                Dim fileContent As String = File.ReadAllText(selectedFile)
-
-                ' Checks the length of the file content
-                If fileContent.Length > 2147483647 Then ' Int32.MaxValue
-                    MessageBox.Show("The file is too large to be loaded.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning)
-                Else
-                    ' Places the content in the RichTextBox if it doesn't exceed the limit
-                    TxtQueryBox.Text = fileContent
-                    Me.Text = System.IO.Path.GetFileName(selectedFile)
-                    ColourLoadedText()
-                End If
-            Catch ex As Exception
-                MessageBox.Show("Error reading file: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-            End Try
+            LoadQuery(selectedFile)
         End If
     End Sub
 
@@ -426,6 +410,55 @@ Public Class frmqueryeditor
             ' If TxtResult is hidden, show it and decrease the height of TxtQueryBox
             TxtResult.Visible = True
             TxtQueryBox.Height -= adjustmentHeight
+        End If
+    End Sub
+
+    Private Sub LoadQuery(FileToLoad As String)
+        ' Tries to read the file content
+        Try
+            Dim fileContent As String = File.ReadAllText(FileToLoad)
+
+            ' Checks the length of the file content
+            If fileContent.Length > 2147483647 Then ' Int32.MaxValue
+                MessageBox.Show("The file is too large to be loaded.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            Else
+                loadedFile = FileToLoad
+                ' Places the content in the RichTextBox if it doesn't exceed the limit
+                TxtQueryBox.Text = fileContent
+                Me.Text = System.IO.Path.GetFileName(FileToLoad)
+                ColourLoadedText()
+            End If
+        Catch ex As Exception
+            MessageBox.Show("Error reading file: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
+
+    ' This event handles the action of dropping a file onto the control
+    Private Sub TxtQueryBox_DragDrop(sender As Object, e As DragEventArgs) Handles TxtQueryBox.DragDrop
+        ' Check if the dragged data is of file type
+        If e.Data.GetDataPresent(DataFormats.FileDrop) Then
+            ' Get the list of dragged files (can be multiple)
+            Dim files As String() = CType(e.Data.GetData(DataFormats.FileDrop), String())
+
+            ' Check if more than one file was selected
+            If files.Length > 1 Then
+                MessageBox.Show("Multiple files cannot be dragged. Please select only one.", "Selection Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            Else
+                If files(0).EndsWith(".sql", StringComparison.OrdinalIgnoreCase) Then
+                    ' Load query with first line of file
+                    LoadQuery(files(0))
+                End If
+            End If
+        End If
+    End Sub
+
+    ' This event allows file dragging
+    Private Sub TxtQueryBox_DragEnter(sender As Object, e As DragEventArgs) Handles TxtQueryBox.DragEnter
+        ' Check if the data format is file; if so, allow the drag operation
+        If e.Data.GetDataPresent(DataFormats.FileDrop) Then
+            e.Effect = DragDropEffects.Copy
+        Else
+            e.Effect = DragDropEffects.None
         End If
     End Sub
 

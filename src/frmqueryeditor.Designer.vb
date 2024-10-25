@@ -63,6 +63,7 @@ Partial Class frmqueryeditor
         Me.TxtQueryBox.Size = New System.Drawing.Size(1099, 596)
         Me.TxtQueryBox.TabIndex = 4
         Me.TxtQueryBox.Text = ""
+        Me.TxtQueryBox.AllowDrop = True
         Me.TxtQueryBox.WordWrap = False
         '
         'MenuStrip1
