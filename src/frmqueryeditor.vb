@@ -24,11 +24,11 @@ Public Class frmqueryeditor
 }
 
     Private loadedFile As String
-    Private endNow As Boolean
-    Private suspended As Boolean = False
+    Private allowClose As Boolean = True
+    Private suspendColouring As Boolean = False
 
     Private Sub ColourLoadedText()
-        suspended = True
+        suspendColouring = True
         If colourQE = True Then
             ' Saves the current cursor position
             Dim originalSelectionStart As Integer = TxtQueryBox.SelectionStart
@@ -53,12 +53,12 @@ Public Class frmqueryeditor
             TxtQueryBox.Select(originalSelectionStart, originalSelectionLength)
             TxtQueryBox.SelectionColor = TxtQueryBox.ForeColor
 
-            suspended = False
+            suspendColouring = False
         End If
     End Sub
 
     Private Sub TxtQueryBox_TextChanged(sender As Object, e As EventArgs) Handles TxtQueryBox.TextChanged
-        If colourQE AndAlso Not suspended Then
+        If colourQE AndAlso Not suspendColouring Then
             ' Obtains the current cursor position
             Dim currentText As String = TxtQueryBox.Text
             Dim currentPos As Integer = TxtQueryBox.SelectionStart
@@ -93,6 +93,7 @@ Public Class frmqueryeditor
                 TxtQueryBox.SelectionColor = Color.Black
             End If
         End If
+        allowClose = False
     End Sub
 
     Private Sub CmdFont(sender As Object, e As EventArgs) Handles FontMS.Click
@@ -118,7 +119,7 @@ Public Class frmqueryeditor
     End Sub
 
     Private Sub CmdSearch(sender As Object, e As EventArgs) Handles SearchMS.Click, SearchRC.Click
-        suspended = True
+        suspendColouring = True
         Dim selectedText As String = If(Not String.IsNullOrEmpty(TxtQueryBox.SelectedText), TxtQueryBox.SelectedText, "")
         ' Displays a dialog box for the user to enter the search word
         Dim searchWord As String = InputBox("Search", "Search Input", selectedText)
@@ -144,7 +145,7 @@ Public Class frmqueryeditor
                 ' Moves the start index to continue the search
                 startIndex = wordIndex + searchWord.Length
             End While
-            suspended = False
+            suspendColouring = False
         End If
     End Sub
 
@@ -153,6 +154,7 @@ Public Class frmqueryeditor
         If TxtQueryBox.SelectedText.Length > 0 Then
             ' Cuts the selected text
             TxtQueryBox.Cut()
+            allowClose = False
         End If
     End Sub
 
@@ -177,6 +179,7 @@ Public Class frmqueryeditor
             If colourQE = True Then
                 ColourLoadedText()
             End If
+            allowClose = False
         End If
     End Sub
 
@@ -185,6 +188,7 @@ Public Class frmqueryeditor
         If Not String.IsNullOrEmpty(TxtQueryBox.SelectedText) Then
             ' Sets the selected text to an empty string, effectively deleting it
             TxtQueryBox.SelectedText = ""
+            allowClose = False
         End If
     End Sub
 
@@ -236,6 +240,7 @@ Public Class frmqueryeditor
 
                 ' Performs the replacement in the RichTextBox
                 TxtQueryBox.Text = TxtQueryBox.Text.Replace(searchText, replaceText)
+                allowClose = False
             End If
         End Using
     End Sub
@@ -252,6 +257,7 @@ Public Class frmqueryeditor
             ' Gets the name of the selected file
             Dim selectedFile As String = openFileDialog.FileName
             LoadQuery(selectedFile)
+            allowClose = True
         End If
     End Sub
 
@@ -262,6 +268,7 @@ Public Class frmqueryeditor
                 ' Saves the current content of the RichTextBox to the existing file
                 File.WriteAllText(loadedFile, TxtQueryBox.Text)
                 MessageBox.Show("Successfully saved.", "Save", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                allowClose = True
             Catch ex As Exception
                 MessageBox.Show("Error saving file: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
             End Try
@@ -285,6 +292,7 @@ Public Class frmqueryeditor
 
                     ' Updates the name of the loaded file
                     loadedFile = filePath
+                    allowClose = True
                 Catch ex As Exception
                     MessageBox.Show("Error saving file: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
                 End Try
@@ -310,6 +318,8 @@ Public Class frmqueryeditor
 
                 ' Updates the name of the loaded file
                 loadedFile = filePath
+
+                allowClose = True
             Catch ex As Exception
                 MessageBox.Show("Error saving file: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
             End Try
@@ -385,17 +395,16 @@ Public Class frmqueryeditor
     End Sub
 
     Public Sub QueryInput_FormClosing(ByVal sender As System.Object, ByVal e As System.Windows.Forms.FormClosingEventArgs) Handles MyBase.FormClosing
-        If Not endNow = True Then
+        If Not allowClose = True Then
             Dim confirmation As DialogResult = MessageBox.Show("Are you sure you want to exit? If you press 'No', the 'Save As' window will open to save any unsaved changes.", "Confirm Exit", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
 
             If confirmation = DialogResult.Yes Then
-                endNow = True
+                allowClose = True
                 Me.Close()
             Else
                 e.Cancel = True
                 CmdSaveQueryAs(sender, e)
             End If
-        Else
         End If
     End Sub
 
@@ -447,6 +456,7 @@ Public Class frmqueryeditor
                 If files(0).EndsWith(".sql", StringComparison.OrdinalIgnoreCase) Then
                     ' Load query with first line of file
                     LoadQuery(files(0))
+                    allowClose = True
                 End If
             End If
         End If
