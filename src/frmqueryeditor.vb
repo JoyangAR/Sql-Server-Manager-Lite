@@ -1,5 +1,6 @@
 ﻿Imports System.Collections.Generic
 Imports System.IO
+Imports System.Linq
 Imports System.Text.RegularExpressions
 
 Public Class frmqueryeditor
@@ -29,16 +30,16 @@ Public Class frmqueryeditor
 
     Private Sub ColourLoadedText()
         suspendColouring = True
-        If colourQE = True Then
-            ' Saves the current cursor position
-            Dim originalSelectionStart As Integer = TxtQueryBox.SelectionStart
-            Dim originalSelectionLength As Integer = TxtQueryBox.SelectionLength
+        If colourQE Then
 
-            ' Applies a default style to all text
+            ' Disable the RichTextBox to prevent visual changes
+            TxtQueryBox.Enabled = False
+
+            ' Apply a default style to all text
             TxtQueryBox.SelectAll()
-            TxtQueryBox.SelectionColor = TxtQueryBox.ForeColor ' Sets the default color
+            TxtQueryBox.SelectionColor = TxtQueryBox.ForeColor
 
-            ' Iterates through each group of keywords and applies highlighting
+            ' Iterate through each group of keywords and apply highlighting
             For Each kvp As KeyValuePair(Of String, Color) In sqlKeywordsPatterns
                 Dim regex As New Regex(kvp.Key, RegexOptions.IgnoreCase)
                 Dim matches As MatchCollection = regex.Matches(TxtQueryBox.Text)
@@ -49,49 +50,65 @@ Public Class frmqueryeditor
                 Next
             Next
 
-            ' Restores the original cursor position and selection
-            TxtQueryBox.Select(originalSelectionStart, originalSelectionLength)
-            TxtQueryBox.SelectionColor = TxtQueryBox.ForeColor
-
-            suspendColouring = False
+            ' Re-enable the RichTextBox
+            TxtQueryBox.Enabled = True
         End If
+        suspendColouring = False
     End Sub
 
     Private Sub TxtQueryBox_TextChanged(sender As Object, e As EventArgs) Handles TxtQueryBox.TextChanged
         If colourQE AndAlso Not suspendColouring Then
-            ' Obtains the current cursor position
             Dim currentText As String = TxtQueryBox.Text
             Dim currentPos As Integer = TxtQueryBox.SelectionStart
 
-            ' Checks if the last entered character is a space or an enter and that it is not the first character of the text
+            ' Check if the last entered character is a space or Enter and that it is not the first character
             If currentPos > 1 AndAlso (currentText(currentPos - 1) = " " OrElse currentText(currentPos - 1) = Chr(10)) Then
-                ' Finds the start of the last word
-                Dim wordStart As Integer = currentText.LastIndexOfAny(New Char() {" "c, Chr(10)}, currentPos - 2) + 1
-                Dim wordLength As Integer = (currentPos - 1) - wordStart
+                ' Find the start of the last word and its length in one step
+                Dim lastWordStart As Integer = currentText.LastIndexOfAny({" "c, Chr(10)}, currentPos - 2) + 1
+                Dim wordLength As Integer = currentPos - lastWordStart
 
-                ' Extracts the last word
-                Dim lastWord As String = currentText.Substring(wordStart, wordLength)
+                ' Extract the last word and ensure it is not empty
+                Dim lastWord As String = currentText.Substring(lastWordStart, wordLength).Trim()
+                If String.IsNullOrWhiteSpace(lastWord) Then Exit Sub
 
-                ' Resets the text color in that range to black before applying the new color
-                TxtQueryBox.Select(wordStart, wordLength)
-                TxtQueryBox.SelectionColor = Color.Black
+                ' Identify the line where the last word is located
+                Dim lineStart As Integer
+                If lastWordStart > 0 Then
+                    lineStart = currentText.LastIndexOf(Chr(10), lastWordStart - 1) + 1
+                Else
+                    lineStart = 0 ' For the very first line
+                End If
 
-                ' Checks the last word against the keyword patterns
-                For Each kvp As KeyValuePair(Of String, Color) In sqlKeywordsPatterns
-                    Dim regex As New Regex(kvp.Key, RegexOptions.IgnoreCase)
-                    Dim match As Match = regex.Match(lastWord)
-                    If match.Success Then
-                        ' If the word matches a keyword, changes the color
-                        TxtQueryBox.Select(wordStart, wordLength)
-                        TxtQueryBox.SelectionColor = kvp.Value
-                        Exit For ' If a match is found, there is no need to check more patterns
-                    End If
-                Next
+                Dim lineText As String = currentText.Substring(lineStart)
 
-                ' Restores the cursor position without changing the text color
-                TxtQueryBox.Select(currentPos, 0)
-                TxtQueryBox.SelectionColor = Color.Black
+                ' If the line starts with '--', set the entire line to green and skip keyword checks
+                If lineText.StartsWith("--") Then
+                    Dim lineEnd As Integer = currentText.IndexOf(Chr(10), lineStart)
+                    If lineEnd = -1 Then lineEnd = currentText.Length
+                    TxtQueryBox.Select(lineStart, lineEnd - lineStart)
+                    TxtQueryBox.SelectionColor = Color.Green
+                ElseIf lastWord.Equals("*/") Then
+                    ' Call ColourLoadedText if the last word is */
+                    ColourLoadedText()
+                Else
+                    ' If not a comment line, apply keyword coloring to the last word
+                    TxtQueryBox.Select(lastWordStart, wordLength)
+                    TxtQueryBox.SelectionColor = Color.Black
+
+                    For Each kvp As KeyValuePair(Of String, Color) In sqlKeywordsPatterns
+                        If Regex.IsMatch(lastWord, kvp.Key, RegexOptions.IgnoreCase) Then
+                            TxtQueryBox.Select(lastWordStart, wordLength)
+                            TxtQueryBox.SelectionColor = kvp.Value
+                            Exit For
+                        End If
+                    Next
+                End If
             End If
+
+            ' Restore the cursor position
+            TxtQueryBox.Select(currentPos, 0)
+            TxtQueryBox.SelectionColor = Color.Black
+            TxtQueryBox.Focus()
         End If
         allowClose = False
     End Sub
@@ -167,18 +184,40 @@ Public Class frmqueryeditor
     End Sub
 
     Private Sub CmdPaste(sender As Object, e As EventArgs) Handles PasteMS.Click, PasteRC.Click
-        ' Checks if there is text in the clipboard
+        ' Check if there is text in the clipboard
         If Clipboard.ContainsText() Then
-            ' Gets the text from the clipboard
+            ' Get the text from the clipboard
             Dim clipboardText As String = Clipboard.GetText()
 
-            ' Pastes the text at the current cursor position replacing the selected text
+            ' Save the current cursor position
+            Dim originalSelectionStart As Integer = TxtQueryBox.SelectionStart
+
+            ' Paste the text at the current cursor position, replacing any selected text
             TxtQueryBox.SelectedText = clipboardText
 
-            ' Applies coloring to the newly pasted text
+            ' Apply coloring to the newly pasted text
             If colourQE = True Then
                 ColourLoadedText()
             End If
+
+            ' Calculate the new cursor position
+            Dim newSelectionStart As Integer = originalSelectionStart + clipboardText.Length
+
+            ' Ensure it doesn't exceed the limits of the text
+            If newSelectionStart > TxtQueryBox.Text.Length Then
+                newSelectionStart = TxtQueryBox.Text.Length
+            End If
+
+            ' Adjust the cursor position considering line breaks
+            Dim lineCount As Integer = clipboardText.Count(Function(c) c = vbLf) ' Count line breaks
+
+            ' Restore the cursor position just after the pasted text
+            TxtQueryBox.SelectionStart = newSelectionStart - lineCount
+            TxtQueryBox.SelectionLength = 0 ' Ensure no text is selected
+
+            ' Set focus back to the RichTextBox
+            TxtQueryBox.Focus()
+
             allowClose = False
         End If
     End Sub
@@ -258,6 +297,9 @@ Public Class frmqueryeditor
             Dim selectedFile As String = openFileDialog.FileName
             LoadQuery(selectedFile)
             allowClose = True
+            ' Set starting point at the start of the document
+            TxtQueryBox.SelectionStart = 0
+            TxtQueryBox.Focus()
         End If
     End Sub
 
@@ -379,6 +421,11 @@ Public Class frmqueryeditor
                 Case Keys.S
                     ' Call the CmdSaveQuery method
                     CmdSaveQuery(sender, e)
+                Case Keys.Z
+                    ' Disable Undo & Redo if colour text enabled
+                    If Not colourQE Then
+                        If Not e.Shift Then TxtQueryBox.Undo()  Else TxtQueryBox.Redo()
+                    End If
             End Select
 
             ' Optionally: Prevent the event from propagating further
