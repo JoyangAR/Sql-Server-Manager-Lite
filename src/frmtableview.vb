@@ -35,11 +35,23 @@ Public Class frmtableview
     Private Sub CmdRefresh_Click(sender As Object, e As EventArgs) Handles CmdRefresh.Click
         lsttables_SelectedIndexChanged(sender, e)
     End Sub
-    Private Sub dtgridtable_MouseClick(sender As Object, e As MouseEventArgs) Handles dtgridtable.MouseClick
-        ' Checks if the right mouse button was pressed
+    Private Sub dtgridtable_CellMouseDown(sender As Object, e As DataGridViewCellMouseEventArgs) Handles dtgridtable.CellMouseDown
+        ' Checks if the right mouse button was clicked
         If e.Button = MouseButtons.Right Then
-            ' Displays the ContextMenuStrip at the cursor position
-            ContextMenuStrip1.Show(dtgridtable, e.Location)
+            ' Checks if the click was within a valid cell
+            If e.RowIndex >= 0 AndAlso e.ColumnIndex >= 0 Then
+                ' Selects the current cell
+                dtgridtable.CurrentCell = dtgridtable.Rows(e.RowIndex).Cells(e.ColumnIndex)
+            Else
+                ' Exits the subroutine if the click was outside a cell
+                Exit Sub
+            End If
+
+            ' Gets the cursor position relative to the DataGridView
+            Dim cellLocation As Point = dtgridtable.PointToClient(Cursor.Position)
+
+            ' Shows the context menu at the correct location
+            ContextMenuStrip1.Show(dtgridtable, cellLocation)
         End If
     End Sub
 
@@ -105,5 +117,16 @@ Public Class frmtableview
             End If
 
         End Using
+    End Sub
+
+    Private Sub CopyToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles CopyToolStripMenuItem.Click
+        ' Checks if there is selected text in the DataGridView
+        If dtgridtable.SelectedCells.Count > 0 Then
+            Dim selectedCell As DataGridViewCell = dtgridtable.SelectedCells(0)
+            If Not selectedCell Is Nothing Then
+                ' Copys the selected text
+                Clipboard.SetText(selectedCell.Value.ToString())
+            End If
+        End If
     End Sub
 End Class

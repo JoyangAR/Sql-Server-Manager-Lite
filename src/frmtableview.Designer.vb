@@ -31,6 +31,7 @@ Partial Class frmtableview
         Me.ToolTip1 = New System.Windows.Forms.ToolTip(Me.components)
         Me.ContextMenuStrip1 = New System.Windows.Forms.ContextMenuStrip(Me.components)
         Me.SearchRC = New System.Windows.Forms.ToolStripMenuItem()
+        Me.CopyToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         CType(Me.dtgridtable, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.ContextMenuStrip1.SuspendLayout()
         Me.SuspendLayout()
@@ -90,15 +91,21 @@ Partial Class frmtableview
         '
         'ContextMenuStrip1
         '
-        Me.ContextMenuStrip1.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.SearchRC})
+        Me.ContextMenuStrip1.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.SearchRC, Me.CopyToolStripMenuItem})
         Me.ContextMenuStrip1.Name = "ContextMenuStrip1"
-        Me.ContextMenuStrip1.Size = New System.Drawing.Size(110, 26)
+        Me.ContextMenuStrip1.Size = New System.Drawing.Size(181, 70)
         '
         'SearchRC
         '
         Me.SearchRC.Name = "SearchRC"
-        Me.SearchRC.Size = New System.Drawing.Size(109, 22)
+        Me.SearchRC.Size = New System.Drawing.Size(180, 22)
         Me.SearchRC.Text = "Search"
+        '
+        'CopyToolStripMenuItem
+        '
+        Me.CopyToolStripMenuItem.Name = "CopyToolStripMenuItem"
+        Me.CopyToolStripMenuItem.Size = New System.Drawing.Size(180, 22)
+        Me.CopyToolStripMenuItem.Text = "Copy"
         '
         'frmtableview
         '
@@ -128,4 +135,5 @@ Partial Class frmtableview
     Friend WithEvents ToolTip1 As ToolTip
     Friend WithEvents ContextMenuStrip1 As ContextMenuStrip
     Friend WithEvents SearchRC As ToolStripMenuItem
+    Friend WithEvents CopyToolStripMenuItem As ToolStripMenuItem
 End Class
