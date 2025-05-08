@@ -29,7 +29,9 @@ Public Class frmqueryeditor
     Private suspendColouring As Boolean = False
 
     Private Sub ColourLoadedText()
+        ' Suspend colouring
         suspendColouring = True
+
         If colourQE Then
 
             ' Disable the RichTextBox to prevent visual changes
@@ -52,7 +54,12 @@ Public Class frmqueryeditor
 
             ' Re-enable the RichTextBox
             TxtQueryBox.Enabled = True
+
+            ' Hide loading panel
+            LoadingPanel.Visible = False
+
         End If
+
         suspendColouring = False
     End Sub
 
@@ -89,7 +96,11 @@ Public Class frmqueryeditor
                     TxtQueryBox.SelectionColor = Color.Green
                 ElseIf lastWord.Equals("*/") Then
                     ' Call ColourLoadedText if the last word is */
+                    ' Show loading panel
+                    LoadingPanel.Visible = True
                     ColourLoadedText()
+                    ' Hide Loading Panel
+                    LoadingPanel.Visible = False
                 Else
                     ' If not a comment line, apply keyword coloring to the last word
                     TxtQueryBox.Select(lastWordStart, wordLength)
@@ -109,6 +120,9 @@ Public Class frmqueryeditor
             TxtQueryBox.Select(currentPos, 0)
             TxtQueryBox.SelectionColor = Color.Black
             TxtQueryBox.Focus()
+        End If
+        If Not suspendColouring Then
+            SetPositions()
         End If
         allowClose = False
     End Sub
@@ -143,6 +157,11 @@ Public Class frmqueryeditor
 
         ' Checks if a word was entered
         If Not String.IsNullOrEmpty(searchWord) Then
+            'Show loading panel
+            LoadingPanel.Visible = True
+
+            ' Disable the RichTextBox to prevent visual changes
+            TxtQueryBox.Enabled = False
 
             ' Clears previous highlighting
             TxtQueryBox.SelectAll()
@@ -163,6 +182,11 @@ Public Class frmqueryeditor
                 startIndex = wordIndex + searchWord.Length
             End While
             suspendColouring = False
+
+            ' Re-enable the RichTextBox
+            TxtQueryBox.Enabled = True
+            ' Hide loading panel
+            LoadingPanel.Visible = False
         End If
     End Sub
 
@@ -184,6 +208,11 @@ Public Class frmqueryeditor
     End Sub
 
     Private Sub CmdPaste(sender As Object, e As EventArgs) Handles PasteMS.Click, PasteRC.Click
+        If colourQE = True Then
+            ' Show loading panel
+            LoadingPanel.Visible = True
+        End If
+
         ' Check if there is text in the clipboard
         If Clipboard.ContainsText() Then
             ' Get the text from the clipboard
@@ -273,6 +302,11 @@ Public Class frmqueryeditor
 
             ' Performs the replacement if "Ok" was clicked
             If result = DialogResult.OK Then
+                ' Show loading panel
+                LoadingPanel.Visible = True
+
+                ' Disable the RichTextBox to prevent visual changes
+                TxtQueryBox.Enabled = False
                 ' Obtains the text to search for and the replacement text
                 Dim searchText As String = searchTextBox.Text
                 Dim replaceText As String = replaceTextBox.Text
@@ -280,6 +314,11 @@ Public Class frmqueryeditor
                 ' Performs the replacement in the RichTextBox
                 TxtQueryBox.Text = TxtQueryBox.Text.Replace(searchText, replaceText)
                 allowClose = False
+                ' Disable the RichTextBox to prevent visual changes
+                TxtQueryBox.Enabled = True
+
+                ' Show loading panel
+                LoadingPanel.Visible = False
             End If
         End Using
     End Sub
@@ -299,6 +338,7 @@ Public Class frmqueryeditor
             allowClose = True
             ' Set starting point at the start of the document
             TxtQueryBox.SelectionStart = 0
+            TxtQueryBox.SelectionLength = 0 ' Ensure no text is selected
             TxtQueryBox.Focus()
         End If
     End Sub
@@ -343,6 +383,10 @@ Public Class frmqueryeditor
     End Sub
 
     Private Sub CmdSaveQueryAs(sender As Object, e As EventArgs) Handles SaveQueryAsMS.Click
+        SaveQueryAs()
+    End Sub
+
+    Private Function SaveQueryAs() As Boolean
         Dim saveFileDialog As New SaveFileDialog()
         saveFileDialog.Title = "Save File"
         saveFileDialog.Filter = "SQL Files (*.sql)|*.sql|Text Files (*.txt)|*.txt|All Files (*.*)|*.*"
@@ -362,11 +406,15 @@ Public Class frmqueryeditor
                 loadedFile = filePath
 
                 allowClose = True
+
+                Return True
             Catch ex As Exception
                 MessageBox.Show("Error saving file: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                Return True
             End Try
         End If
-    End Sub
+        Return False
+    End Function
 
     Private Sub CmdExit(sender As Object, e As EventArgs) Handles ExitMS.Click
         Me.Close()
@@ -393,7 +441,7 @@ Public Class frmqueryeditor
 
     Private Sub QueryEditor_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         CenterToScreen()
-        TxtQueryBox.ContextMenuStrip = ContextMenuStrip1
+        TxtQueryBox.ContextMenuStrip = QueryEditorContextMenuStrip
     End Sub
 
     Private Sub GotKeyDown(sender As Object, e As KeyEventArgs) Handles TxtQueryBox.KeyDown
@@ -404,6 +452,7 @@ Public Class frmqueryeditor
                     ' Call the CmdExecute method
                     CmdExecute(sender, e)
                 Case Keys.V
+
                     ' Call the CmdPaste method
                     CmdPaste(sender, e)
                 Case Keys.C
@@ -424,12 +473,16 @@ Public Class frmqueryeditor
                 Case Keys.Z
                     ' Disable Undo & Redo if colour text enabled
                     If Not colourQE Then
-                        If Not e.Shift Then TxtQueryBox.Undo()  Else TxtQueryBox.Redo()
+                        If Not e.Shift Then TxtQueryBox.Undo() Else TxtQueryBox.Redo()
                     End If
             End Select
 
             ' Optionally: Prevent the event from propagating further
             e.SuppressKeyPress = True
+        Else
+            If e.KeyCode >= Keys.Left And e.KeyCode <= Keys.Down Then
+                SetPositions()
+            End If
         End If
     End Sub
 
@@ -437,7 +490,7 @@ Public Class frmqueryeditor
         ' Checks if the right mouse button was pressed
         If e.Button = MouseButtons.Right Then
             ' Displays the ContextMenuStrip at the cursor position
-            ContextMenuStrip1.Show(TxtQueryBox, e.Location)
+            QueryEditorContextMenuStrip.Show(TxtQueryBox, e.Location)
         End If
     End Sub
 
@@ -449,8 +502,9 @@ Public Class frmqueryeditor
                 allowClose = True
                 Me.Close()
             Else
-                e.Cancel = True
-                CmdSaveQueryAs(sender, e)
+                If Not SaveQueryAs() Then
+                    e.Cancel = True
+                End If
             End If
         End If
     End Sub
@@ -491,6 +545,10 @@ Public Class frmqueryeditor
 
     ' This event handles the action of dropping a file onto the control
     Private Sub TxtQueryBox_DragDrop(sender As Object, e As DragEventArgs) Handles TxtQueryBox.DragDrop
+        If colourQE = True Then
+            ' Show loading panel
+            LoadingPanel.Visible = True
+        End If
         ' Check if the dragged data is of file type
         If e.Data.GetDataPresent(DataFormats.FileDrop) Then
             ' Get the list of dragged files (can be multiple)
@@ -504,8 +562,13 @@ Public Class frmqueryeditor
                     ' Load query with first line of file
                     LoadQuery(files(0))
                     allowClose = True
+                    TxtQueryBox.SelectionStart = 0
+                    TxtQueryBox.SelectionLength = 0 ' Ensure no text is selected
+                    TxtQueryBox.Focus()
                 End If
             End If
+            ' Hide loading panel
+            LoadingPanel.Visible = False
         End If
     End Sub
 
@@ -519,5 +582,52 @@ Public Class frmqueryeditor
         End If
     End Sub
 
+    Private Sub TxtQueryBox_Click(sender As Object, e As EventArgs) Handles TxtQueryBox.Click
+        SetPositions()
+    End Sub
 
+    Private Sub SetPositions()
+        ' Obtains the current selection start position
+        Dim selectionStart As Integer = TxtQueryBox.SelectionStart
+
+        ' Updates the labels with the current line and column numbers
+        LineLabel.Text = "Línea: " & GetLineNumber(TxtQueryBox, selectionStart)
+        ColumLabel.Text = "Columna: " & selectionStart + 1 ' Sumamos 1 porque el índice comienza en 0
+    End Sub
+    Private Function GetLineNumber(textBox As RichTextBox, index As Integer) As Integer
+        ' Calculates the line number based on the index
+        Dim lines() As String = textBox.Lines
+        Dim currentLine As Integer = 0
+        Dim currentPosition As Integer = 0
+
+        For Each line As String In lines
+            If currentPosition + line.Length >= index Then
+                Return currentLine + 1
+            End If
+            currentPosition += line.Length + 1 ' Add 1 for the line break
+            currentLine += 1
+        Next
+
+        Return currentLine + 1
+    End Function
+
+    Private Sub NewQueryToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles NewQueryToolStripMenuItem.Click
+        If Not allowClose = True Then
+            Dim confirmation As DialogResult = MessageBox.Show("Are you sure you want to start a new query deleting the current one? If you press 'No', the 'Save As' window will open to save any unsaved changes.", "Confirm Exit", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
+
+            If confirmation = DialogResult.Yes Then
+                allowClose = True
+                TxtQueryBox.Clear()
+            Else
+                If SaveQueryAs() Then
+                    TxtQueryBox.Clear()
+                End If
+            End If
+        End If
+    End Sub
+
+    Private Sub SelectAllToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles SelectAllMS.Click, SelectAllRC.Click
+        ' Set the selection to the entire text in the RichTextBox
+        TxtQueryBox.Select(0, TxtQueryBox.TextLength)
+    End Sub
 End Class

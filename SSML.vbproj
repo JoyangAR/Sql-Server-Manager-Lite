@@ -112,7 +112,17 @@
     <Import Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="src\AssemblyInfo.vb" />
+    <Compile Include="My Project\Application.Designer.vb">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Application.myapp</DependentUpon>
+    </Compile>
+    <Compile Include="AssemblyInfo.vb" />
+    <Compile Include="My Project\Resources.Designer.vb">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="src\frmbakdir.Designer.vb">
       <DependentUpon>frmbakdir.vb</DependentUpon>
     </Compile>
@@ -177,7 +187,7 @@
     <Compile Include="src\frmtableview.vb">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="src\Module1.vb">
+    <Compile Include="src\MainModule.vb">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="src\frmpwd.Designer.vb">
@@ -187,6 +197,11 @@
     <Compile Include="src\frmpwd.vb">
       <SubType>Form</SubType>
     </Compile>
+    <EmbeddedResource Include="My Project\Resources.resx">
+      <CustomToolNamespace>My.Resources</CustomToolNamespace>
+      <Generator>VbMyResourcesResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.vb</LastGenOutput>
+    </EmbeddedResource>
     <EmbeddedResource Include="src\frmbakdir.resx">
       <DependentUpon>frmbakdir.vb</DependentUpon>
     </EmbeddedResource>
@@ -229,11 +244,25 @@
   <ItemGroup>
     <Folder Include="My Project\" />
   </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
+    <None Include="My Project\Application.myapp">
+      <Generator>MyApplicationCodeGenerator</Generator>
+      <LastGenOutput>Application.Designer.vb</LastGenOutput>
+    </None>
+    <None Include="My Project\LoadingImage.png" />
+    <None Include="Resources\LoadingImage.png" />
     <Content Include="src\icons\SSML-ico.ico" />
     <Content Include="src\icons\SSML-ico2.ico" />
     <Content Include="src\icons\SSML-ico3.ico" />
     <Content Include="src\icons\SSML.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>

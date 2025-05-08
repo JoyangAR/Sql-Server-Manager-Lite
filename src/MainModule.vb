@@ -2,8 +2,6 @@ Option Strict Off
 Option Explicit On
 
 Imports System.Collections.Generic
-Imports System.Data.Odbc
-Imports System.Data.OleDb
 Imports System.Data.SqlClient
 Imports System.Net
 Imports System.Net.NetworkInformation
@@ -17,7 +15,7 @@ Imports Microsoft.Win32
 Imports Newtonsoft.Json.Linq
 
 
-Module Module1
+Module MainModule
     Public con As New ADODB.Connection
     Public connection As New SqlConnection
     Public strlogin As String
@@ -736,6 +734,7 @@ ErrorHandler:
         End If
         Return False
     End Function
+
 
     Private Function BuildConnectionString(ByVal databaseName As String) As String
         If frmmain.islocaldb Then

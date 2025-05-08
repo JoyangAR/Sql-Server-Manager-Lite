@@ -1,12 +1,9 @@
 Option Strict Off
 Option Explicit On
-Imports System.Data.Common
 Imports System.IO
 Imports System.Linq
-Imports System.Net.NetworkInformation
 Imports System.Net.Sockets
 Imports System.ServiceProcess
-Imports Microsoft.Win32
 
 Friend Class frmmain
     Inherits System.Windows.Forms.Form
@@ -792,17 +789,17 @@ xc:
         End If
     End Sub
 
-    Sub ProcessShrink(ByRef dbname As String, ByVal forced As Module1.pShrinkMode)
+    Sub ProcessShrink(ByRef dbname As String, ByVal forced As MainModule.pShrinkMode)
         Dim err1 As String = ""
         Dim mode1 As String = ""
 
         Wait(True)
 
-        If forced = Module1.pShrinkMode.pReleaseUnused Then
+        If forced = MainModule.pShrinkMode.pReleaseUnused Then
             mode1 = "Release Unused"
-        ElseIf forced = Module1.pShrinkMode.pReorganizeFirst Then
+        ElseIf forced = MainModule.pShrinkMode.pReorganizeFirst Then
             mode1 = "Reorganize First"
-        ElseIf forced = Module1.pShrinkMode.pEmptyLog Then
+        ElseIf forced = MainModule.pShrinkMode.pEmptyLog Then
             mode1 = "Empty Log"
         End If
 
@@ -820,17 +817,17 @@ xc:
 
     End Sub
 
-    Sub ProcessRepair(ByRef dbname As String, ByVal forced As Module1.pRepairMode)
+    Sub ProcessRepair(ByRef dbname As String, ByVal forced As MainModule.pRepairMode)
         Dim err1 As String = ""
         Dim mode1 As String = ""
 
         Wait(True)
 
-        If forced = Module1.pRepairMode.pFast Then
+        If forced = MainModule.pRepairMode.pFast Then
             mode1 = "Fast mode"
-        ElseIf forced = Module1.pRepairMode.pForced Then
+        ElseIf forced = MainModule.pRepairMode.pForced Then
             mode1 = "Forced mode"
-        ElseIf forced = Module1.pRepairMode.pStandard Then
+        ElseIf forced = MainModule.pRepairMode.pStandard Then
             mode1 = "Standard mode"
         End If
 
