@@ -66,7 +66,7 @@ Friend Class frmlogin
             trusted = chktrust.CheckState
             localdb = chklocaldb.CheckState
             autologin = chkautologin.CheckState
-            WriteConfigurationToXml()
+            WriteConfigurationToIni()
             frmmain.islocaldb = chklocaldb.Checked
             frmmain.Loadstr(connectionString)
             frmmain.Show()
@@ -87,85 +87,27 @@ Friend Class frmlogin
         Me.Enabled = False
         Try
             ' Check if the XML configuration file exists
-            If System.IO.File.Exists(configFilePath) Then
-                ' Create an XML reader
-                Using reader As New XmlTextReader(configFilePath)
-                    ' Read the XML file
-                    While reader.Read()
-                        If reader.NodeType = XmlNodeType.Element Then
-                            Select Case reader.Name
-                                Case "Username"
-                                    reader.Read()
-                                    cUser = reader.Value
-                                Case "Password"
-                                    reader.Read()
-                                    cPwd = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(reader.Value))
-                                Case "ConnectMode"
-                                    reader.Read()
-                                    connectMode = reader.Value
-                                Case "Provider"
-                                    reader.Read()
-                                    provider = reader.Value
-                                Case "Driver"
-                                    reader.Read()
-                                    driver = reader.Value
-                                Case "Server"
-                                    reader.Read()
-                                    servername = reader.Value
-                                Case "Instance"
-                                    reader.Read()
-                                    instance = reader.Value
-                                Case "Trusted"
-                                    reader.Read()
-                                    trusted = (reader.Value = "1")
-                                Case "LocalDB"
-                                    reader.Read()
-                                    localdb = (reader.Value = "1")
-                                Case "AutoLogin"
-                                    reader.Read()
-                                    autologin = (reader.Value = "1")
-                                Case "LogToFile"
-                                    reader.Read()
-                                    logtofile = (reader.Value = "1")
-                                Case "ColourQE"
-                                    reader.Read()
-                                    colourQE = (reader.Value = "1")
-                                Case "DisableRND"
-                                    reader.Read()
-                                    disableRND = (reader.Value = "1")
-                                Case "AutoCheckforUpd"
-                                    reader.Read()
-                                    UpdCheck = (reader.Value = "1")
-                                Case "DefaultMDFPath"
-                                    reader.Read()
-                                    mdfpath = reader.Value
-                                Case "DefaultLDFPath"
-                                    reader.Read()
-                                    ldfpath = reader.Value
-                            End Select
-                        End If
-                    End While
-                    ' Apply the configuration
-                    txtname.Text = cUser
-                    txtpwd.Text = cPwd
-                    txtsvr.Text = servername
-                    txtinst.Text = instance
-                    txtprovider.Text = provider
-                    txtdriver.Text = driver
-                    chklocaldb.Checked = localdb
-                    chktrust.Checked = trusted
-                    chkautologin.Checked = autologin
-                    If connectMode = "Integrated" Then
-                        optintegrated.Checked = True
-                    ElseIf connectMode = "ODBC" Then
-                        optodbc.Checked = True
-                    ElseIf connectMode = "OLEDB" Then
-                        optoledb.Checked = True
-                    End If
-                End Using
+            If System.IO.File.Exists(configFileName) Then
+                GetConfigValues()
+                ' Apply the configuration
+                txtname.Text = cUser
+                txtpwd.Text = cPwd
+                txtsvr.Text = servername
+                txtinst.Text = instance
+                txtprovider.Text = provider
+                txtdriver.Text = driver
+                chklocaldb.Checked = localdb
+                chktrust.Checked = trusted
+                chkautologin.Checked = autologin
+                If connectMode = "Integrated" Then
+                    optintegrated.Checked = True
+                ElseIf connectMode = "ODBC" Then
+                    optodbc.Checked = True
+                ElseIf connectMode = "OLEDB" Then
+                    optoledb.Checked = True
+                End If
             Else
-                ' The XML configuration file does not exist
-                ' You can handle this according to your needs
+                ' The Ini configuration file does not exist
             End If
             RefreshObjects()
             sh = True
@@ -174,8 +116,27 @@ Friend Class frmlogin
             If chkautologin.Checked Then Timerstart()
 
         Catch ex As Exception
-            ' Handle exceptions as needed
+            ' Failed to read the configuration file or apply settings
         End Try
+    End Sub
+
+    Private Sub GetConfigValues()
+        cUser = configFile.ReadString("Login", "UserName", "")
+        cPwd = configFile.ReadString("Login", "Password", "")
+        servername = configFile.ReadString("Login", "Server", "")
+        instance = configFile.ReadString("Login", "Instance", "")
+        connectMode = configFile.ReadString("Login", "ConnectMode", "Integrated")
+        provider = configFile.ReadString("Login", "Provider", "MSOLEDBSQL")
+        driver = configFile.ReadString("Login", "Driver", "SQL Server")
+        trusted = configFile.ReadBoolean("Login", "Trusted", False)
+        localdb = configFile.ReadBoolean("Login", "LocalDB", False)
+        autologin = configFile.ReadBoolean("Login", "AutoLogin", False)
+        logtofile = configFile.ReadBoolean("Settings", "LogToFile", False)
+        colourQE = configFile.ReadBoolean("Settings", "ColourQE", False)
+        disableRND = configFile.ReadBoolean("Settings", "DisableRND", False)
+        UpdCheck = configFile.ReadBoolean("Settings", "AutoCheckforUpd", False)
+        mdfpath = configFile.ReadString("Settings", "DefaultMDFPath", "")
+        ldfpath = configFile.ReadString("Settings", "DefaultLDFPath", "")
     End Sub
 
     Private Sub Timerstart()

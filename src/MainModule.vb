@@ -8,7 +8,6 @@ Imports System.Net.NetworkInformation
 Imports System.Security.Principal
 Imports System.ServiceProcess
 Imports System.Text
-Imports System.Xml
 Imports ADODB
 Imports Microsoft.VisualBasic.Compatibility.VB6
 Imports Microsoft.Win32
@@ -20,9 +19,9 @@ Module MainModule
     Public connection As New SqlConnection
     Public strlogin As String
 
-    ' Path to the configuration XML file in the application directory
-    Public configFileName As String = "SSMLConf.xml"
-    Public configFilePath As String = System.IO.Path.Combine(Application.StartupPath, configFileName)
+    ' Path to the configuration INI file in the application directory
+    Public configFileName As String = Application.ExecutablePath.Replace(".exe", ".ini")
+    Public configFile As New IniClass(configFileName)
     Public mdfpath As String
     Public ldfpath As String
 
@@ -1379,49 +1378,33 @@ ErrorHandler:
         Return path
     End Function
 
-    Sub WriteConfigurationToXml()
+    Sub WriteConfigurationToIni()
         On Error GoTo ErrorHandler
-        ' Create a new XML configuration file
-        Using writer As New XmlTextWriter(configFilePath, Nothing)
-            ' Start the XML document
-            writer.WriteStartDocument()
+        ' Create a new Ini configuration file
+        configFile.WriteString("Login", "UserName", cUser)
+        configFile.WriteString("Login", "Password", Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(cPwd)))
+        configFile.WriteString("Login", "Server", servername)
+        configFile.WriteString("Login", "Instance", instance)
+        configFile.WriteBoolean("Login", "Trusted", trusted)
+        configFile.WriteBoolean("Login", "LocalDB", localdb)
+        configFile.WriteBoolean("Settings", "AutoLogin", autologin)
+        configFile.WriteBoolean("Settings", "LogToFile", logtofile)
+        configFile.WriteBoolean("Settings", "ColourQE", colourQE)
+        configFile.WriteBoolean("Settings", "DisableRND", disableRND)
+        configFile.WriteBoolean("Settings", "AutoCheckforUpd", UpdCheck)
+        configFile.WriteString("Settings", "DefaultMDFPath", mdfpath)
+        configFile.WriteString("Settings", "DefaultLDFPath", ldfpath)
+        Select Case prov
+            Case 1
+                configFile.WriteString("Login", "ConnectMode", "OLEDB")
+                configFile.WriteString("Login", "Provider", provider)
+            Case 2
+                configFile.WriteString("Login", "ConnectMode", "ODBC")
+                configFile.WriteString("Login", "Driver", driver)
+            Case 3
+                configFile.WriteString("Login", "ConnectMode", "Integrated")
+        End Select
 
-            ' Root element <Configuration>
-            writer.WriteStartElement("Configuration")
-
-            ' Elements within <Configuration>
-            writer.WriteElementString("Username", cUser)
-            'writer.WriteElementString("Password", cPwd)
-            writer.WriteElementString("Password", Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(cPwd)))
-            If prov = 1 Then
-                writer.WriteElementString("ConnectMode", "OLEDB")
-                writer.WriteElementString("Provider", provider)
-            ElseIf prov = 2 Then
-                writer.WriteElementString("ConnectMode", "ODBC")
-                writer.WriteElementString("Driver", driver)
-            ElseIf prov = 3 Then
-                writer.WriteElementString("ConnectMode", "Integrated")
-            End If
-
-
-            writer.WriteElementString("Server", servername)
-            writer.WriteElementString("Instance", instance)
-            writer.WriteElementString("Trusted", If(trusted = 1, "1", "0"))
-            writer.WriteElementString("LocalDB", If(localdb = 1, "1", "0"))
-            writer.WriteElementString("AutoLogin", If(autologin = 1, "1", "0"))
-            writer.WriteElementString("LogToFile", If(logtofile = True, "1", "0"))
-            writer.WriteElementString("ColourQE", If(colourQE = True, "1", "0"))
-            writer.WriteElementString("DisableRND", If(disableRND = True, "1", "0"))
-            writer.WriteElementString("AutoCheckforUpd", If(UpdCheck = True, "1", "0"))
-            writer.WriteElementString("DefaultMDFPath", mdfpath)
-            writer.WriteElementString("DefaultLDFPath", ldfpath)
-
-            ' Close the root element <Configuration>
-            writer.WriteEndElement()
-
-            ' Finish the XML document
-            writer.WriteEndDocument()
-        End Using
         Exit Sub
 
 ErrorHandler:

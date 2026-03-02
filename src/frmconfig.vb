@@ -15,7 +15,7 @@
         colourQE = chkcolourQE.Checked
         disableRND = chkdisablerandom.Checked
         UpdCheck = chkUpdates.Checked
-        WriteConfigurationToXml()
+        WriteConfigurationToIni()
     End Sub
 
     Private Sub frmconfig_Load(sender As Object, e As EventArgs) Handles MyBase.Load
