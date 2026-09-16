@@ -6,29 +6,30 @@ Imports System.Text.RegularExpressions
 Public Class frmqueryeditor
 
     ' Define the patterns for SQL keywords and their corresponding colors
-    Private sqlKeywordsPatterns As Dictionary(Of String, Color) = New Dictionary(Of String, Color) From {
-    {"\b(SELECT|FROM|WHERE|JOIN|INNER|LEFT|RIGHT|OUTER|FULL|CROSS)\b", Color.Blue},
-    {"\b(ALTER|INDEX|CREATE|DROP|REBUILD|WITH|REORGANIZE)\b", Color.Brown},
-    {"\b(AND|OR|NOT|IN|AS|ON|IS|NULL)\b", Color.Green},
-    {"\b(GO|SET|USE|DELETE|UPDATE|INSERT|INTO|VALUES|CREATE|TABLE|VIEW|PROCEDURE|FUNCTION|TRIGGER)\b", Color.Red},
-    {"\b(BEGIN|END|DECLARE|INT|VARCHAR|DATE|DATETIME|BOOLEAN|FLOAT|DOUBLE|DECIMAL)\b", Color.Purple},
-    {"\b(CASE|WHEN|THEN|ELSE|END)\b", Color.Magenta},
-    {"\b(GETDATE|DATEPART|DATEDIFF|DATEADD|CONVERT|CAST)\b", Color.DarkMagenta},
-    {"\b(TOP|LIMIT|GROUP|BY|ORDER|HAVING|DISTINCT)\b", Color.Orange},
-    {"\b(COMMIT|ROLLBACK|TRANSACTION|SAVE)\b", Color.DarkOrange},
-    {"\b(UNION|ALL|INTERSECT|EXCEPT)\b", Color.DarkCyan},
-    {"\b(EXEC|EXECUTE)\b", Color.Gray},
-    {"\b(COUNT|SUM|AVG|MIN|MAX)\b", Color.Teal},
-    {"\b(UPDATE STATISTICS|DBCC|RECONFIGURE)\b", Color.Sienna},
-    {"\b(BACKUP|DATABASE|RESTORE)\b", Color.DarkSalmon},
-    {"--.*|/\*[\s\S]*?\*/", Color.DarkGreen} ' For single-line and multi-line comments
-}
+    Private sqlKeywordsPatterns As New List(Of SqlKeywordPattern) From {
+    New SqlKeywordPattern("\b(SELECT|FROM|WHERE|JOIN|INNER|LEFT|RIGHT|OUTER|FULL|CROSS)\b", Color.Blue),
+    New SqlKeywordPattern("\b(ALTER|INDEX|CREATE|DROP|REBUILD|WITH|REORGANIZE)\b", Color.Brown),
+    New SqlKeywordPattern("\b(AND|OR|NOT|IN|AS|ON|IS|NULL)\b", Color.Green),
+    New SqlKeywordPattern("\b(GO|SET|USE|DELETE|UPDATE|INSERT|INTO|VALUES|CREATE|TABLE|VIEW|PROCEDURE|FUNCTION|TRIGGER)\b", Color.Red),
+    New SqlKeywordPattern("\b(BEGIN|END|DECLARE|INT|VARCHAR|DATE|DATETIME|BOOLEAN|FLOAT|DOUBLE|DECIMAL)\b", Color.Purple),
+    New SqlKeywordPattern("\b(CASE|WHEN|THEN|ELSE|END)\b", Color.Magenta),
+    New SqlKeywordPattern("\b(GETDATE|DATEPART|DATEDIFF|DATEADD|CONVERT|CAST)\b", Color.DarkMagenta),
+    New SqlKeywordPattern("\b(TOP|LIMIT|GROUP|BY|ORDER|HAVING|DISTINCT)\b", Color.Orange),
+    New SqlKeywordPattern("\b(COMMIT|ROLLBACK|TRANSACTION|SAVE)\b", Color.DarkOrange),
+    New SqlKeywordPattern("\b(UNION|ALL|INTERSECT|EXCEPT)\b", Color.DarkCyan),
+    New SqlKeywordPattern("\b(EXEC|EXECUTE)\b", Color.Gray),
+    New SqlKeywordPattern("\b(COUNT|SUM|AVG|MIN|MAX)\b", Color.Teal),
+    New SqlKeywordPattern("\b(UPDATE STATISTICS|DBCC|RECONFIGURE)\b", Color.Sienna),
+    New SqlKeywordPattern("\b(BACKUP|DATABASE|RESTORE)\b", Color.DarkSalmon),
+    New SqlKeywordPattern("--.*|/\*[\s\S]*?\*/", Color.DarkGreen) ' For single-line and multi-line comments
+    }
 
     Private loadedFile As String
     Private allowClose As Boolean = True
     Private suspendColouring As Boolean = False
 
     Private Sub ColourLoadedText()
+        Application.DoEvents() ' Ensures the loading panel is displayed before processing
         ' Suspend colouring
         suspendColouring = True
 
@@ -42,13 +43,13 @@ Public Class frmqueryeditor
             TxtQueryBox.SelectionColor = TxtQueryBox.ForeColor
 
             ' Iterate through each group of keywords and apply highlighting
-            For Each kvp As KeyValuePair(Of String, Color) In sqlKeywordsPatterns
-                Dim regex As New Regex(kvp.Key, RegexOptions.IgnoreCase)
+            For Each pat As SqlKeywordPattern In sqlKeywordsPatterns
+                Dim regex As New Regex(pat.Pattern, RegexOptions.IgnoreCase)
                 Dim matches As MatchCollection = regex.Matches(TxtQueryBox.Text)
 
                 For Each match As Match In matches
                     TxtQueryBox.Select(match.Index, match.Length)
-                    TxtQueryBox.SelectionColor = kvp.Value
+                    TxtQueryBox.SelectionColor = pat.Color
                 Next
             Next
 
@@ -106,10 +107,10 @@ Public Class frmqueryeditor
                     TxtQueryBox.Select(lastWordStart, wordLength)
                     TxtQueryBox.SelectionColor = Color.Black
 
-                    For Each kvp As KeyValuePair(Of String, Color) In sqlKeywordsPatterns
-                        If Regex.IsMatch(lastWord, kvp.Key, RegexOptions.IgnoreCase) Then
+                    For Each pat As SqlKeywordPattern In sqlKeywordsPatterns
+                        If Regex.IsMatch(lastWord, pat.Pattern, RegexOptions.IgnoreCase) Then
                             TxtQueryBox.Select(lastWordStart, wordLength)
-                            TxtQueryBox.SelectionColor = kvp.Value
+                            TxtQueryBox.SelectionColor = pat.Color
                             Exit For
                         End If
                     Next
@@ -159,6 +160,7 @@ Public Class frmqueryeditor
         If Not String.IsNullOrEmpty(searchWord) Then
             'Show loading panel
             LoadingPanel.Visible = True
+            Application.DoEvents() ' Ensures the loading panel is displayed before processing
 
             ' Disable the RichTextBox to prevent visual changes
             TxtQueryBox.Enabled = False
@@ -211,6 +213,7 @@ Public Class frmqueryeditor
         If colourQE = True Then
             ' Show loading panel
             LoadingPanel.Visible = True
+            Application.DoEvents() ' Ensures the loading panel is displayed before processing
         End If
 
         ' Check if there is text in the clipboard
@@ -268,12 +271,16 @@ Public Class frmqueryeditor
             replacementForm.StartPosition = FormStartPosition.CenterScreen
 
             Dim searchLabel As New Label()
-            searchLabel.Text = "Search:"
-            searchLabel.Location = New Point(10, 10)
+            With searchLabel
+                .Text = "Search:"
+                .Location = New Point(10, 10)
+            End With
 
             Dim searchTextBox As New TextBox()
-            searchTextBox.Location = New Point(120, 10)
-            searchTextBox.Size = New Size(150, 20)
+            With searchTextBox
+                .Location = New Point(120, 10)
+                .Size = New Size(150, 20)
+            End With
 
             ' Pre-fills searchTextBox with the selected text in TxtQueryBox, if any
             If Not String.IsNullOrEmpty(TxtQueryBox.SelectedText) Then
@@ -281,17 +288,23 @@ Public Class frmqueryeditor
             End If
 
             Dim replaceLabel As New Label()
-            replaceLabel.Text = "Replace with:"
-            replaceLabel.Location = New Point(10, 40)
+            With replaceLabel
+                .Text = "Replace with:"
+                .Location = New Point(10, 40)
+            End With
 
             Dim replaceTextBox As New TextBox()
-            replaceTextBox.Location = New Point(120, 40)
-            replaceTextBox.Size = New Size(150, 20)
+            With replaceTextBox
+                .Location = New Point(120, 40)
+                .Size = New Size(150, 20)
+            End With
 
             Dim acceptButton As New Button()
-            acceptButton.Text = "Ok"
-            acceptButton.Location = New Point(120, 70)
-            acceptButton.DialogResult = DialogResult.OK
+            With acceptButton
+                .Text = "Ok"
+                .Location = New Point(120, 70)
+                .DialogResult = DialogResult.OK
+            End With
 
             replacementForm.ShowIcon = False
             replacementForm.FormBorderStyle = FormBorderStyle.Fixed3D
@@ -422,21 +435,35 @@ Public Class frmqueryeditor
 
     Private Sub CmdExecute(sender As Object, e As EventArgs) Handles ExecuteMS.Click, ExecuteRC.Click
         Dim errMessage As String = ""
-        Dim queryResult As String = ""
-        If ExecuteQuery(TxtQueryBox.Text, queryResult, errMessage) Then
-            If Not String.IsNullOrEmpty(TxtQueryBox.Text) Then
-                TxtResult.Text = ""
+        Dim rowsAffected As Integer = 0
+        Dim queryResult As New DataTable
+
+        If ExecuteQuery(TxtQueryBox.Text, rowsAffected, queryResult, errMessage) Then
+            If queryResult IsNot Nothing AndAlso queryResult.Rows.Count > 0 Then
+                ' Display the results in the QueryResultDGV
+                QueryResultDGV.DataSource = queryResult
+                If rowsAffected > 0 Then
+                    TxtResult.Text = $"{rowsAffected} row(s) affected."
+                    If logtofile Then frmmain.Logg(CStr(rowsAffected))
+                    frmmain.LoadDatabase()
+                Else
+                    TxtResult.Text = "Query executed successfully. Results displayed."
+                End If
+
+            ElseIf rowsAffected > 0 Then
+                ' If there are rows affected, display a message
+                TxtResult.Text = $"{rowsAffected} row(s) affected."
+                If logtofile Then frmmain.Logg(CStr(rowsAffected))
+                frmmain.LoadDatabase()
+            Else
+                ' If there are no results and no rows were affected, display a message
+                TxtResult.Text = "Query executed successfully. No results to display."
             End If
-            TxtResult.Text = queryResult
-            If logtofile Then frmmain.Logg(queryResult)
         Else
             TxtResult.Text = errMessage
             If logtofile Then frmmain.Logg(errMessage)
         End If
-        Const adjustmentHeight As Integer = 96 ' The height to adjust TxtQueryBox by
-        If Not TxtResult.Visible = True Then TxtQueryBox.Height -= adjustmentHeight
-        TxtResult.Visible = True
-        frmmain.LoadDatabase()
+
     End Sub
 
     Private Sub QueryEditor_Load(sender As Object, e As EventArgs) Handles MyBase.Load
@@ -494,9 +521,9 @@ Public Class frmqueryeditor
         End If
     End Sub
 
-    Public Sub QueryInput_FormClosing(ByVal sender As System.Object, ByVal e As System.Windows.Forms.FormClosingEventArgs) Handles MyBase.FormClosing
+    Public Sub frmqueryeditor_FormClosing(ByVal sender As System.Object, ByVal e As System.Windows.Forms.FormClosingEventArgs) Handles MyBase.FormClosing
         If Not allowClose = True Then
-            Dim confirmation As DialogResult = MessageBox.Show("Are you sure you want to exit? If you press 'No', the 'Save As' window will open to save any unsaved changes.", "Confirm Exit", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
+            Dim confirmation As DialogResult = MessageBox.Show("Are you sure you want to exit without saving?", "Confirm Exit", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
 
             If confirmation = DialogResult.Yes Then
                 allowClose = True
@@ -506,20 +533,6 @@ Public Class frmqueryeditor
                     e.Cancel = True
                 End If
             End If
-        End If
-    End Sub
-
-    Private Sub CmdShowHideResult() Handles ResultBoxMS.Click
-        Const adjustmentHeight As Integer = 96 ' The height to adjust TxtQueryBox by
-
-        If TxtResult.Visible Then
-            ' If TxtResult is visible, hide it and increase the height of TxtQueryBox
-            TxtResult.Visible = False
-            TxtQueryBox.Height += adjustmentHeight
-        Else
-            ' If TxtResult is hidden, show it and decrease the height of TxtQueryBox
-            TxtResult.Visible = True
-            TxtQueryBox.Height -= adjustmentHeight
         End If
     End Sub
 
@@ -591,9 +604,10 @@ Public Class frmqueryeditor
         Dim selectionStart As Integer = TxtQueryBox.SelectionStart
 
         ' Updates the labels with the current line and column numbers
-        LineLabel.Text = "Línea: " & GetLineNumber(TxtQueryBox, selectionStart)
-        ColumLabel.Text = "Columna: " & selectionStart + 1 ' Sumamos 1 porque el índice comienza en 0
+        LineLabel.Text = "Line: " & GetLineNumber(TxtQueryBox, selectionStart)
+        ColumLabel.Text = "Column: " & selectionStart + 1 ' We add 1 to make it 1-based index for user-friendliness
     End Sub
+
     Private Function GetLineNumber(textBox As RichTextBox, index As Integer) As Integer
         ' Calculates the line number based on the index
         Dim lines() As String = textBox.Lines
@@ -630,4 +644,5 @@ Public Class frmqueryeditor
         ' Set the selection to the entire text in the RichTextBox
         TxtQueryBox.Select(0, TxtQueryBox.TextLength)
     End Sub
+
 End Class

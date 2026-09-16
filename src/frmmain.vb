@@ -637,7 +637,7 @@ xc:
         System.Windows.Forms.Application.DoEvents()
 
         ' Ask the user about the location to attach the database
-        Dim userChoice As MsgBoxResult = MsgBox("Do you want to attach the database using the default location or the location of the MDF file?" & vbCrLf & "Yes: Default Location" & vbCrLf & "No: Location of the MDF file", MsgBoxStyle.Question + MsgBoxStyle.YesNoCancel, "Select Location")
+        Dim userChoice As MsgBoxResult = MsgBox("Do you want to attach the database in the default location?" & vbCrLf & "If not, it will be attached in the location of the MDF file.", MsgBoxStyle.Question + MsgBoxStyle.YesNoCancel, "Select Location")
 
         ' Cancel if the user chooses Cancel
         If userChoice = MsgBoxResult.Cancel Then

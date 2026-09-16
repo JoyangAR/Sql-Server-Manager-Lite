@@ -1,7 +1,7 @@
 Option Strict Off
 Option Explicit On
 
-Imports System.Xml
+Imports System.Text
 
 Friend Class frmlogin
     Inherits System.Windows.Forms.Form

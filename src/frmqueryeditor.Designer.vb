@@ -41,7 +41,6 @@ Partial Class frmqueryeditor
         Me.SelectAllMS = New System.Windows.Forms.ToolStripMenuItem()
         Me.VerToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
         Me.FontMS = New System.Windows.Forms.ToolStripMenuItem()
-        Me.ResultBoxMS = New System.Windows.Forms.ToolStripMenuItem()
         Me.QueryEditorContextMenuStrip = New System.Windows.Forms.ContextMenuStrip(Me.components)
         Me.CutRC = New System.Windows.Forms.ToolStripMenuItem()
         Me.CopyRC = New System.Windows.Forms.ToolStripMenuItem()
@@ -56,21 +55,32 @@ Partial Class frmqueryeditor
         Me.LineLabel = New System.Windows.Forms.ToolStripStatusLabel()
         Me.ColumLabel = New System.Windows.Forms.ToolStripStatusLabel()
         Me.LoadingPanel = New System.Windows.Forms.PictureBox()
+        Me.QueryResultDGV = New System.Windows.Forms.DataGridView()
+        Me.QueryEditorSPC = New System.Windows.Forms.SplitContainer()
+        Me.ResultTBC = New System.Windows.Forms.TabControl()
+        Me.TextTB = New System.Windows.Forms.TabPage()
+        Me.RowsTB = New System.Windows.Forms.TabPage()
         Me.QueryEditorMenuStrip.SuspendLayout()
         Me.QueryEditorContextMenuStrip.SuspendLayout()
         Me.QueryEditorStatusStrip.SuspendLayout()
         CType(Me.LoadingPanel, System.ComponentModel.ISupportInitialize).BeginInit()
+        CType(Me.QueryResultDGV, System.ComponentModel.ISupportInitialize).BeginInit()
+        CType(Me.QueryEditorSPC, System.ComponentModel.ISupportInitialize).BeginInit()
+        Me.QueryEditorSPC.Panel1.SuspendLayout()
+        Me.QueryEditorSPC.Panel2.SuspendLayout()
+        Me.QueryEditorSPC.SuspendLayout()
+        Me.ResultTBC.SuspendLayout()
+        Me.TextTB.SuspendLayout()
+        Me.RowsTB.SuspendLayout()
         Me.SuspendLayout()
         '
         'TxtQueryBox
         '
         Me.TxtQueryBox.AllowDrop = True
-        Me.TxtQueryBox.Anchor = CType((((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Bottom) _
-            Or System.Windows.Forms.AnchorStyles.Left) _
-            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.TxtQueryBox.Location = New System.Drawing.Point(0, 27)
+        Me.TxtQueryBox.Dock = System.Windows.Forms.DockStyle.Fill
+        Me.TxtQueryBox.Location = New System.Drawing.Point(0, 0)
         Me.TxtQueryBox.Name = "TxtQueryBox"
-        Me.TxtQueryBox.Size = New System.Drawing.Size(1099, 596)
+        Me.TxtQueryBox.Size = New System.Drawing.Size(1099, 467)
         Me.TxtQueryBox.TabIndex = 4
         Me.TxtQueryBox.Text = ""
         Me.TxtQueryBox.WordWrap = False
@@ -172,7 +182,7 @@ Partial Class frmqueryeditor
         '
         'VerToolStripMenuItem
         '
-        Me.VerToolStripMenuItem.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.FontMS, Me.ResultBoxMS})
+        Me.VerToolStripMenuItem.DropDownItems.AddRange(New System.Windows.Forms.ToolStripItem() {Me.FontMS})
         Me.VerToolStripMenuItem.Name = "VerToolStripMenuItem"
         Me.VerToolStripMenuItem.Size = New System.Drawing.Size(44, 20)
         Me.VerToolStripMenuItem.Text = "View"
@@ -180,14 +190,8 @@ Partial Class frmqueryeditor
         'FontMS
         '
         Me.FontMS.Name = "FontMS"
-        Me.FontMS.Size = New System.Drawing.Size(143, 22)
+        Me.FontMS.Size = New System.Drawing.Size(180, 22)
         Me.FontMS.Text = "Font Options"
-        '
-        'ResultBoxMS
-        '
-        Me.ResultBoxMS.Name = "ResultBoxMS"
-        Me.ResultBoxMS.Size = New System.Drawing.Size(143, 22)
-        Me.ResultBoxMS.Text = "Result Box"
         '
         'QueryEditorContextMenuStrip
         '
@@ -245,16 +249,14 @@ Partial Class frmqueryeditor
         '
         'TxtResult
         '
-        Me.TxtResult.Anchor = CType(((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Left) _
-            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.TxtResult.Location = New System.Drawing.Point(0, 526)
+        Me.TxtResult.Dock = System.Windows.Forms.DockStyle.Fill
+        Me.TxtResult.Location = New System.Drawing.Point(3, 3)
         Me.TxtResult.Multiline = True
         Me.TxtResult.Name = "TxtResult"
         Me.TxtResult.ReadOnly = True
         Me.TxtResult.ScrollBars = System.Windows.Forms.ScrollBars.Both
-        Me.TxtResult.Size = New System.Drawing.Size(1099, 97)
+        Me.TxtResult.Size = New System.Drawing.Size(1085, 74)
         Me.TxtResult.TabIndex = 5
-        Me.TxtResult.Visible = False
         '
         'QueryEditorStatusStrip
         '
@@ -287,15 +289,80 @@ Partial Class frmqueryeditor
         Me.LoadingPanel.TabStop = False
         Me.LoadingPanel.Visible = False
         '
+        'QueryResultDGV
+        '
+        Me.QueryResultDGV.AllowUserToAddRows = False
+        Me.QueryResultDGV.AllowUserToDeleteRows = False
+        Me.QueryResultDGV.AllowUserToOrderColumns = True
+        Me.QueryResultDGV.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize
+        Me.QueryResultDGV.Dock = System.Windows.Forms.DockStyle.Fill
+        Me.QueryResultDGV.EditMode = System.Windows.Forms.DataGridViewEditMode.EditOnKeystroke
+        Me.QueryResultDGV.Location = New System.Drawing.Point(3, 3)
+        Me.QueryResultDGV.Name = "QueryResultDGV"
+        Me.QueryResultDGV.ReadOnly = True
+        Me.QueryResultDGV.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect
+        Me.QueryResultDGV.Size = New System.Drawing.Size(1085, 74)
+        Me.QueryResultDGV.TabIndex = 9
+        '
+        'QueryEditorSPC
+        '
+        Me.QueryEditorSPC.Dock = System.Windows.Forms.DockStyle.Fill
+        Me.QueryEditorSPC.Location = New System.Drawing.Point(0, 24)
+        Me.QueryEditorSPC.Name = "QueryEditorSPC"
+        Me.QueryEditorSPC.Orientation = System.Windows.Forms.Orientation.Horizontal
+        '
+        'QueryEditorSPC.Panel1
+        '
+        Me.QueryEditorSPC.Panel1.Controls.Add(Me.TxtQueryBox)
+        '
+        'QueryEditorSPC.Panel2
+        '
+        Me.QueryEditorSPC.Panel2.Controls.Add(Me.ResultTBC)
+        Me.QueryEditorSPC.Size = New System.Drawing.Size(1099, 577)
+        Me.QueryEditorSPC.SplitterDistance = 467
+        Me.QueryEditorSPC.TabIndex = 10
+        '
+        'ResultTBC
+        '
+        Me.ResultTBC.Controls.Add(Me.TextTB)
+        Me.ResultTBC.Controls.Add(Me.RowsTB)
+        Me.ResultTBC.Dock = System.Windows.Forms.DockStyle.Fill
+        Me.ResultTBC.Location = New System.Drawing.Point(0, 0)
+        Me.ResultTBC.Name = "ResultTBC"
+        Me.ResultTBC.SelectedIndex = 0
+        Me.ResultTBC.Size = New System.Drawing.Size(1099, 106)
+        Me.ResultTBC.TabIndex = 5
+        '
+        'TextTB
+        '
+        Me.TextTB.Controls.Add(Me.TxtResult)
+        Me.TextTB.Location = New System.Drawing.Point(4, 22)
+        Me.TextTB.Name = "TextTB"
+        Me.TextTB.Padding = New System.Windows.Forms.Padding(3)
+        Me.TextTB.Size = New System.Drawing.Size(1091, 80)
+        Me.TextTB.TabIndex = 0
+        Me.TextTB.Text = "Text"
+        Me.TextTB.UseVisualStyleBackColor = True
+        '
+        'RowsTB
+        '
+        Me.RowsTB.Controls.Add(Me.QueryResultDGV)
+        Me.RowsTB.Location = New System.Drawing.Point(4, 22)
+        Me.RowsTB.Name = "RowsTB"
+        Me.RowsTB.Padding = New System.Windows.Forms.Padding(3)
+        Me.RowsTB.Size = New System.Drawing.Size(1091, 80)
+        Me.RowsTB.TabIndex = 1
+        Me.RowsTB.Text = "Rows"
+        Me.RowsTB.UseVisualStyleBackColor = True
+        '
         'frmqueryeditor
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.ClientSize = New System.Drawing.Size(1099, 623)
+        Me.Controls.Add(Me.QueryEditorSPC)
         Me.Controls.Add(Me.LoadingPanel)
         Me.Controls.Add(Me.QueryEditorStatusStrip)
-        Me.Controls.Add(Me.TxtResult)
-        Me.Controls.Add(Me.TxtQueryBox)
         Me.Controls.Add(Me.QueryEditorMenuStrip)
         Me.Name = "frmqueryeditor"
         Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
@@ -306,6 +373,15 @@ Partial Class frmqueryeditor
         Me.QueryEditorStatusStrip.ResumeLayout(False)
         Me.QueryEditorStatusStrip.PerformLayout()
         CType(Me.LoadingPanel, System.ComponentModel.ISupportInitialize).EndInit()
+        CType(Me.QueryResultDGV, System.ComponentModel.ISupportInitialize).EndInit()
+        Me.QueryEditorSPC.Panel1.ResumeLayout(False)
+        Me.QueryEditorSPC.Panel2.ResumeLayout(False)
+        CType(Me.QueryEditorSPC, System.ComponentModel.ISupportInitialize).EndInit()
+        Me.QueryEditorSPC.ResumeLayout(False)
+        Me.ResultTBC.ResumeLayout(False)
+        Me.TextTB.ResumeLayout(False)
+        Me.TextTB.PerformLayout()
+        Me.RowsTB.ResumeLayout(False)
         Me.ResumeLayout(False)
         Me.PerformLayout()
 
@@ -336,7 +412,6 @@ Partial Class frmqueryeditor
     Friend WithEvents ReplaceRC As ToolStripMenuItem
     Friend WithEvents ExecuteRC As ToolStripMenuItem
     Friend WithEvents TxtResult As TextBox
-    Friend WithEvents ResultBoxMS As ToolStripMenuItem
     Friend WithEvents NewQueryToolStripMenuItem As ToolStripMenuItem
     Friend WithEvents SelectAllMS As ToolStripMenuItem
     Friend WithEvents QueryEditorStatusStrip As StatusStrip
@@ -344,4 +419,9 @@ Partial Class frmqueryeditor
     Friend WithEvents ColumLabel As ToolStripStatusLabel
     Friend WithEvents SelectAllRC As ToolStripMenuItem
     Friend WithEvents LoadingPanel As PictureBox
+    Friend WithEvents QueryResultDGV As DataGridView
+    Friend WithEvents QueryEditorSPC As SplitContainer
+    Friend WithEvents ResultTBC As TabControl
+    Friend WithEvents TextTB As TabPage
+    Friend WithEvents RowsTB As TabPage
 End Class

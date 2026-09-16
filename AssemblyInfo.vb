@@ -1,7 +1,4 @@
 Imports System.Reflection
-Imports System.Runtime.CompilerServices
-Imports System.Runtime.InteropServices
-Imports System.Security.Principal
 
 ' General Information about an assembly is controlled through the following
 ' set of attributes. Change these attribute values to modify the information
@@ -29,5 +26,5 @@ Imports System.Security.Principal
 ' You can specify all the values or you can default the Build and Revision Numbers
 ' by using the '*' as shown below:
 
-<Assembly: AssemblyVersion("1.5.*")>
-<Assembly: AssemblyFileVersion("1.5")>
+<Assembly: AssemblyVersion("1.6.*")>
+<Assembly: AssemblyFileVersion("1.6")>

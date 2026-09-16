@@ -11,8 +11,6 @@ Imports System.Text
 Imports ADODB
 Imports Microsoft.VisualBasic.Compatibility.VB6
 Imports Microsoft.Win32
-Imports Newtonsoft.Json.Linq
-
 
 Module MainModule
     Public con As New ADODB.Connection
@@ -40,9 +38,9 @@ Module MainModule
     Public colourQE As Boolean
     Public disableRND As Boolean
     Public UpdCheck As Boolean
+    Private ReadOnly versionInfoUrl As String = "https://raw.githubusercontent.com/JoyangAR/Sql-Server-Manager-Lite/master/VersionInfo.ini"
 
     Public fullsvr As String
-
 
     Enum pShrinkMode
         pReleaseUnused = 0
@@ -55,6 +53,16 @@ Module MainModule
         pStandard
         pForced
     End Enum
+
+    Class SqlKeywordPattern
+        Public Pattern As String
+        Public Color As Color
+
+        Public Sub New(ByVal Pattern As String, ByVal Color As Color)
+            Me.Pattern = Pattern
+            Me.Color = Color
+        End Sub
+    End Class
 
     Function IsUserAdministrator() As Boolean
         Dim identity = WindowsIdentity.GetCurrent()
@@ -99,7 +107,7 @@ Module MainModule
             con.Execute(sql)
             con.Close()
         Else
-            ' Using System.Data.SqlClient 
+            ' Using System.Data.SqlClient
             Using connection As New SqlConnection(strlogin)
                 connection.Open()
                 Using cmd As New SqlCommand(sql, connection)
@@ -152,7 +160,6 @@ ErrorHandler:
                 con.Close()
                 Return False
             End If
-
         Else
             ' Using System.Data.SqlClient
             Using connection As New SqlConnection(strlogin)
@@ -174,7 +181,6 @@ ErrorHandler:
                 End Using
             End Using
         End If
-
 
         Exit Function
 
@@ -382,7 +388,6 @@ ErrorHandler:
         End Try
     End Function
 
-
     Function StopService(ByVal serviceName As String)
         Dim controller As New ServiceController(serviceName)
 
@@ -425,7 +430,6 @@ ErrorHandler:
         End If
 
         Return True
-
 
         Exit Function
 
@@ -676,49 +680,73 @@ ErrorHandler:
         End If
     End Function
 
-    Function ExecuteQuery(ByRef queryText As String, ByRef queryResult As String, Optional ByRef errorMessage As String = "") As Boolean
+    Function ExecuteQuery(ByRef queryText As String, ByRef rowsAffected As Integer, ByRef queryResult As DataTable, Optional ByRef errorMessage As String = "") As Boolean
         On Error GoTo ErrorHandler
 
-        ' Split the query text into individual queries using the SplitQueries function
-        Dim queries As List(Of String) = SplitQueries(queryText)
-        If queries Is Nothing OrElse queries.Count = 0 Then
-            errorMessage = "No valid queries provided."
+        ' Get a complete query without comments and handle "GO" statements
+        Dim queryComplete As String = GetCleanQuery(queryText)
+        If String.IsNullOrWhiteSpace(queryComplete) Then
+            errorMessage = "No query provided."
             Return False
         End If
 
-        Dim totalRowsAffected As Integer = 0
 
         If prov = 1 OrElse prov = 2 Then
             ' Using ADODB
-            con.Open(strlogin) '
-            Dim recordsAffected As Object = CType(0, Object)
-            For Each query As String In queries
-                ' Execute query and get amount of rows affected in recordsAffected
-                con.Execute(query, recordsAffected, -1)
-                Dim rowsAffected As Integer = CInt(recordsAffected)
-                If rowsAffected >= 0 Then totalRowsAffected += rowsAffected
-            Next
+            con.Open(strlogin)
 
+            Dim recordsAffected As Object = CType(0, Object)
+            Dim rs As ADODB.Recordset = con.Execute(queryComplete, recordsAffected, -1)
+            rowsAffected = CInt(recordsAffected)
+
+            ' 1) Skip any recordsets that are not open or have no fields
+            While rs IsNot Nothing AndAlso (rs.State <> ADODB.ObjectStateEnum.adStateOpen OrElse rs.Fields.Count = 0)
+                rs = rs.NextRecordset()
+            End While
+
+            ' 2) Now let's read the rows from the good recordset
+            If rs IsNot Nothing AndAlso rs.State = ADODB.ObjectStateEnum.adStateOpen Then
+                If rs.Fields.Count > 0 Then
+                    For i As Integer = 0 To rs.Fields.Count - 1
+                        queryResult.Columns.Add(rs.Fields(i).Name, GetType(Object))
+                    Next
+
+                    While Not rs.EOF
+                        Dim row As DataRow = queryResult.NewRow()
+
+                        For i As Integer = 0 To rs.Fields.Count - 1
+                            If IsDBNull(rs.Fields(i).Value) Then
+                                row(i) = DBNull.Value
+                            Else
+                                row(i) = rs.Fields(i).Value
+                            End If
+                        Next
+
+                        queryResult.Rows.Add(row)
+                        rs.MoveNext()
+                    End While
+                End If
+                rs.Close()
+            End If
             con.Close()
         Else
             ' Using System.Data.SqlClient
             Using connection As New SqlConnection(strlogin)
                 connection.Open()
 
-                For Each query As String In queries
-                    ' Execute the query
-                    Using command As New SqlCommand(query, connection)
-                        command.CommandTimeout = 0 ' No timeout
-                        Dim rowsAffected As Integer = command.ExecuteNonQuery()
-                        ' Handle the execution result
-                        If rowsAffected >= 0 Then totalRowsAffected += rowsAffected
+                Using command As New SqlCommand(queryComplete, connection)
+                    command.CommandTimeout = 0
+
+                    Using reader As SqlDataReader = command.ExecuteReader()
+                        queryResult.Load(reader, LoadOption.OverwriteChanges)
+
+                        rowsAffected = reader.RecordsAffected
                     End Using
-                Next
+                End Using
             End Using
         End If
 
         ' Set the query result
-        queryResult = $"Total rows affected: {totalRowsAffected}"
         Return True
         Exit Function
 
@@ -734,7 +762,6 @@ ErrorHandler:
         Return False
     End Function
 
-
     Private Function BuildConnectionString(ByVal databaseName As String) As String
         If frmmain.islocaldb Then
             Return $"Data Source=(LocalDB)\MSSQLLocalDB;Initial Catalog={databaseName};Integrated Security=True;"
@@ -747,53 +774,53 @@ ErrorHandler:
         End If
     End Function
 
-    Private Function SplitQueries(queryText As String) As List(Of String)
-        ' Initialize a new list to hold individual queries
-        Dim queries As New List(Of String)()
-        ' Use StringBuilder to efficiently build each query
+    Private Function GetCleanQuery(queryText As String) As String
+        Dim cleanQuery As String = String.Empty
         Dim currentQuery As New StringBuilder()
-        ' Split the input text into lines
-        Dim lines As String() = queryText.Split(New String() {vbCrLf, vbLf, vbCr}, StringSplitOptions.None)
-        ' Track whether we are inside a block comment
+        Dim queryLines As String() = queryText.Split(New String() {vbCrLf, vbLf, vbCr}, StringSplitOptions.None)
         Dim insideComment As Boolean = False
 
-        For Each line As String In lines
+        For Each queryLine As String In queryLines
             If insideComment Then
-                ' If we're inside a comment, check if the line contains the end of the comment
-                If line.Contains("*/") Then
-                    insideComment = False ' End the block comment
+                ' If we are inside a block comment, check if the line contains the end of the comment
+                If queryLine.Contains("*/") Then
+                    insideComment = False ' Fin del bloque de comentario
                 End If
             Else
-                ' Check if the line starts a block comment
-                If line.Contains("/*") Then
-                    If line.Contains("*/") Then
-                        ' If the start and end of the comment are on the same line, ignore the whole line
+                ' Check if the line contains the start of a block comment
+                If queryLine.Contains("/*") Then
+                    If queryLine.Contains("*/") Then
+                        ' If the line contains both the start and end of a block comment, we can ignore it
                     Else
-                        ' Otherwise, we're starting a block comment
+                        ' Only the start of a block comment is found, so we set the flag to true
                         insideComment = True
                     End If
-                ElseIf Not line.Trim().StartsWith("--") Then ' Ignore single line comments
-                    ' If the trimmed line equals "GO", consider it as the end of the current query
-                    If line.Trim().ToUpper() = "GO" Then
-                        queries.Add(currentQuery.ToString()) ' Add the current query to the list
-                        currentQuery.Clear() ' Start a new query
+                ElseIf Not queryLine.Trim().StartsWith("--") Then ' Ignore single-line comments
+                    ' If the trimmed line is equal to "GO", it is considered the end of the current query
+                    If queryLine.Trim().ToUpper() = "GO" Then
+                        Dim queryGO As String = currentQuery.ToString().TrimEnd()
+
+                        If Not queryGO.EndsWith(";") Then
+                            queryGO += ";"
+                        End If
+
+                        cleanQuery &= queryGO & Environment.NewLine
+                        currentQuery.Clear()
                     Else
-                        ' Add the current line to the current query
-                        currentQuery.AppendLine(line)
+                        ' Add the line to the current query
+                        currentQuery.AppendLine(queryLine)
                     End If
                 End If
             End If
         Next
 
-        ' After processing all lines, if there's an unfinished query, add it to the list
+        ' After processing all lines, if there is still a query in currentQuery, we add it to cleanQuery
         If currentQuery.Length > 0 Then
-            queries.Add(currentQuery.ToString())
+            cleanQuery += currentQuery.ToString
         End If
 
-        Return queries
+        Return cleanQuery
     End Function
-
-
 
     Function ChangePassword(ByRef username As String, ByRef pwd As String, Optional ByRef errmsg As String = "") As Boolean
         On Error GoTo ErrorHandler
@@ -917,7 +944,6 @@ ErrorHandler:
     End Function
 
     Function RepairDatabase(ByRef dbname As String, Optional ByRef forced As pRepairMode = pRepairMode.pStandard, Optional ByRef errmsg As String = "", Optional ByRef rs As ADODB.Recordset = Nothing) As Boolean
-
 
         On Error GoTo ErrorHandler
 
@@ -1068,15 +1094,13 @@ ErrorHandler:
         errmsg = Err.Description
         BackupDatabase = False
     End Function
+
     Sub FilterInput(ByRef KeyAscii As Short)
         KeyAscii = Format(KeyAscii, GetKeyAsciiMode())
     End Sub
 
     Function GetKeyAsciiMode() As Integer
-        ' You can implement logic to determine the KeyAscii mode here
-        ' For example, you could use regular expressions to detect SQL injection patterns.
         Dim keyAsciiMode As Integer = 0 ' Default mode
-        ' ... additional logic ...
         Return keyAsciiMode
     End Function
 
@@ -1192,7 +1216,6 @@ ErrorHandler:
     Function GetDatabasePath(Optional ByRef errmsg As String = "") As String
         On Error GoTo ErrorHandler
         Dim tmp As String = ""
-
 
         If prov = 1 OrElse prov = 2 Then
             ' Using ADODB
@@ -1482,7 +1505,6 @@ ErrorHandler:
             End Using
         End If
 
-
         ShrinkLog = True
         Exit Function
 
@@ -1552,7 +1574,6 @@ ErrorHandler:
         Exit Function
 
     End Function
-
 
     Function CalculatePathDepth(ByVal path As String) As Integer
         Dim tmp As String = ""
@@ -1722,76 +1743,51 @@ ErrorHandler:
         Return False
     End Function
 
-
-    Private ReadOnly apiUrl As String = "https://api.github.com/repos/JoyangAR/Sql-Server-Manager-Lite/releases/latest"
-
     Sub CheckForUpdates()
-        ' Check for update
         Dim updUrl As String = GetUpdateLink()
 
-        ' If update is available
         If Not String.IsNullOrEmpty(updUrl) Then
-            ' Show message box informing user about the update
             Dim result As DialogResult = MessageBox.Show("A new update is available. Do you want to download it?", "Update Available", MessageBoxButtons.OKCancel, MessageBoxIcon.Information)
 
-            ' If user clicks OK
             If result = DialogResult.OK Then
-                ' Open the download link in default browser
                 Process.Start(updUrl)
             End If
         Else
-            ' If no update is available, show informational message 
-            If Not frmlogin.sh = True Then MessageBox.Show("There are no updates available at this time.", "No Updates Available", MessageBoxButtons.OK, MessageBoxIcon.Information)
+            If Not frmlogin.sh = True Then
+                MessageBox.Show("There are no updates available at this time.", "No Updates Available", MessageBoxButtons.OK, MessageBoxIcon.Information)
+            End If
         End If
     End Sub
 
     Public Function GetUpdateLink() As String
         On Error GoTo ErrorHandler
-        Dim latestReleaseInfo As String = GetLatestReleaseInfo()
-        If latestReleaseInfo IsNot Nothing Then
-            Dim latestversion As String = GetLatestVersion(latestReleaseInfo)
-            If latestversion > Application.ProductVersion Then
-                Dim downloadUrl As String = GetDownloadUrl(latestReleaseInfo)
-                If Not String.IsNullOrEmpty(downloadUrl) Then
-                    Debug.Print(downloadUrl)
-                    Return downloadUrl
-                End If
+
+        Dim versionInfo As String = GetVersionInfo()
+
+            If String.IsNullOrEmpty(versionInfo) Then Return Nothing
+
+            Dim tempFile As String = IO.Path.Combine(IO.Path.GetTempPath(), "VersionInfo.ini")
+            IO.File.WriteAllText(tempFile, versionInfo)
+            Dim ini As New IniClass(tempFile)
+
+            Dim onlineVersion As String = ini.ReadString("General", "OnlineVersion", "")
+            Dim downloadUrl As String = ini.ReadString("General", "DownloadUrl", "")
+
+            If Version.Parse(onlineVersion) > Version.Parse(Application.ProductVersion) Then
+                Return downloadUrl
             End If
-        End If
-        Exit Function
 
 ErrorHandler:
         Return Nothing
     End Function
 
-    Private Function GetLatestReleaseInfo() As String
+    Private Function GetVersionInfo() As String
         System.Net.ServicePointManager.SecurityProtocol = CType(3072, SecurityProtocolType)
-        Dim request As HttpWebRequest = WebRequest.Create(apiUrl)
-        request.UserAgent = "SSML"
-        request.Method = "GET"
 
-        Using response As HttpWebResponse = CType(request.GetResponse(), HttpWebResponse)
-            Using reader As New System.IO.StreamReader(response.GetResponseStream())
-                Return reader.ReadToEnd()
-            End Using
+        Using client As New Net.WebClient()
+            client.Headers.Add("User-Agent", "SSML")
+            Return client.DownloadString(versionInfoUrl)
         End Using
-    End Function
-
-    Private Function GetLatestVersion(ByVal releaseInfo As String) As String
-        Dim releaseData As JObject = JObject.Parse(releaseInfo)
-        Dim tagName As String = releaseData("tag_name").ToString()
-        Return tagName
-    End Function
-    Private Function GetDownloadUrl(ByVal releaseInfo As String) As String
-        Dim releaseData As JObject = JObject.Parse(releaseInfo)
-        Dim assets As JArray = JArray.Parse(releaseData("assets").ToString())
-
-        For Each asset As JObject In assets
-            Dim downloadUrl As String = asset("browser_download_url").ToString()
-            Return downloadUrl
-        Next
-
-        Return Nothing
     End Function
 
     Function GetTableNames(ByVal selectedDatabase As String) As List(Of String)
