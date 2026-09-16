@@ -122,7 +122,7 @@ Friend Class frmlogin
 
     Private Sub GetConfigValues()
         cUser = configFile.ReadString("Login", "UserName", "")
-        cPwd = configFile.ReadString("Login", "Password", "")
+        cPwd = Encoding.UTF8.GetString(Convert.FromBase64String(configFile.ReadString("Login", "Password", "")))
         servername = configFile.ReadString("Login", "Server", "")
         instance = configFile.ReadString("Login", "Instance", "")
         connectMode = configFile.ReadString("Login", "ConnectMode", "Integrated")
